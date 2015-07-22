@@ -13,7 +13,9 @@ from openmdao.core.group import Group
 from openmdao.core.problem import Problem
 from openmdao.test.testutil import assert_rel_error
 
-from CADRE.attitude import Attitude_Angular
+from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
+     Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
+     Attitude_RotationMtxRates
 
 #from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
      #Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
@@ -108,6 +110,56 @@ class Testcase_CADRE(unittest.TestCase):
         compname = 'Attitude_Angular'
         inputs = ['O_BI', 'Odot_BI']
         outputs = ['w_B']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Attitude_AngularRates(self):
+
+        compname = 'Attitude_AngularRates'
+        inputs = ['w_B']
+        outputs = ['wdot_B']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Attitude_Attitude(self):
+
+        compname = 'Attitude_Attitude'
+        inputs = ['r_e2b_I']
+        outputs = ['O_RI']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Attitude_Roll(self):
+
+        compname = 'Attitude_Roll'
+        inputs = ['Gamma']
+        outputs = ['O_BR']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Attitude_RotationMtx(self):
+
+        compname = 'Attitude_RotationMtx'
+        inputs = ['O_BR', 'O_RI']
+        outputs = ['O_BI']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Attitude_RotationMtxRates(self):
+
+        compname = 'Attitude_RotationMtxRates'
+        inputs = ['O_BI']
+        outputs = ['Odot_BI']
 
         self.setup(compname, inputs)
         self.run_model()
@@ -258,56 +310,6 @@ class Testcase_CADRE(unittest.TestCase):
         #compname = 'ThermalTemperature'
         #inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
         #outputs = ['temperature']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_AngularRates(self):
-
-        #compname = 'Attitude_AngularRates'
-        #inputs = ['w_B']
-        #outputs = ['wdot_B']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_Attitude(self):
-
-        #compname = 'Attitude_Attitude'
-        #inputs = ['r_e2b_I']
-        #outputs = ['O_RI']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_Roll(self):
-
-        #compname = 'Attitude_Roll'
-        #inputs = ['Gamma']
-        #outputs = ['O_BR']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_RotationMtx(self):
-
-        #compname = 'Attitude_RotationMtx'
-        #inputs = ['O_BR', 'O_RI']
-        #outputs = ['O_BI']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_RotationMtxRates(self):
-
-        #compname = 'Attitude_RotationMtxRates'
-        #inputs = ['O_BI']
-        #outputs = ['Odot_BI']
 
         #self.setup(compname, inputs)
         #self.run_model()

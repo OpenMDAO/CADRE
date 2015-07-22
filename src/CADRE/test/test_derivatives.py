@@ -13,7 +13,9 @@ from openmdao.core.group import Group
 from openmdao.core.problem import Problem
 from openmdao.test.testutil import assert_rel_error
 
-from CADRE.attitude import Attitude_Angular
+from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
+     Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
+     Attitude_RotationMtxRates
 
 #from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
     #Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
@@ -36,7 +38,7 @@ from CADRE.attitude import Attitude_Angular
 
 import os
 
-NTIME = 1
+NTIME = 5
 
 # Ignore the numerical warnings from performing the rel error calc.
 warnings.simplefilter("ignore")
@@ -86,7 +88,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         # Some components have a time step as a non-differentiable input.
         if 'h' in self.model.root.comp._params_dict:
-            self.model['comp.h'] = 0.01
+            self.model['h'] = 0.01
         self.model.run()
 
     def compare_derivatives(self, var_in, var_out, rel_error=False):
@@ -126,6 +128,61 @@ class Testcase_CADRE(unittest.TestCase):
         compname = 'Attitude_Angular'
         inputs = ['O_BI', 'Odot_BI']
         outputs = ['w_B']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Attitude_AngularRates(self):
+
+        compname = 'Attitude_AngularRates'
+        inputs = ['w_B']
+        outputs = ['wdot_B']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Attitude_Attitude(self):
+
+        compname = 'Attitude_Attitude'
+        inputs = ['r_e2b_I']
+        outputs = ['O_RI']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Attitude_Roll(self):
+
+        compname = 'Attitude_Roll'
+        inputs = ['Gamma']
+        outputs = ['O_BR']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Attitude_RotationMtx(self):
+
+        compname = 'Attitude_RotationMtx'
+        inputs = ['O_BR', 'O_RI']
+        outputs = ['O_BI']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Attitude_RotationMtxRates(self):
+
+        compname = 'Attitude_RotationMtxRates'
+        inputs = ['O_BI']
+        outputs = ['Odot_BI']
         state0 = []
 
         self.setup(compname, inputs, state0)
@@ -311,61 +368,6 @@ class Testcase_CADRE(unittest.TestCase):
         #inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
         #outputs = ['temperature']
         #state0 = ['T0']
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_AngularRates(self):
-
-        #compname = 'Attitude_AngularRates'
-        #inputs = ['w_B']
-        #outputs = ['wdot_B']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_Attitude(self):
-
-        #compname = 'Attitude_Attitude'
-        #inputs = ['r_e2b_I']
-        #outputs = ['O_RI']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_Roll(self):
-
-        #compname = 'Attitude_Roll'
-        #inputs = ['Gamma']
-        #outputs = ['O_BR']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_RotationMtx(self):
-
-        #compname = 'Attitude_RotationMtx'
-        #inputs = ['O_BR', 'O_RI']
-        #outputs = ['O_BI']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_RotationMtxRates(self):
-
-        #compname = 'Attitude_RotationMtxRates'
-        #inputs = ['O_BI']
-        #outputs = ['Odot_BI']
-        #state0 = []
 
         #self.setup(compname, inputs, state0)
         #self.run_model()
