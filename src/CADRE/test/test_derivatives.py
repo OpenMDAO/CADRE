@@ -36,7 +36,7 @@ from CADRE.attitude import Attitude_Angular
 
 import os
 
-NTIME = 5
+NTIME = 1
 
 # Ignore the numerical warnings from performing the rel error calc.
 warnings.simplefilter("ignore")
