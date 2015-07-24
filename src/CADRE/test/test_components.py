@@ -18,13 +18,11 @@ from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
      Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque
 from CADRE.battery import BatterySOC, BatteryPower, BatteryConstraints
 from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMtx, \
-     Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern
+     Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern, \
+     Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, Comm_VectorBody, \
+     Comm_VectorECI, Comm_VectorSpherical
+from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
 
-#from CADRE.comm import Comm_AntRotation, Comm_AntRotationMtx, Comm_BitRate, \
-     #Comm_DataDownloaded, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, \
-     #Comm_GainPattern, Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, \
-     #Comm_VectorBody, Comm_VectorECI, Comm_VectorSpherical
-#from CADRE.orbit import Orbit_Initial, Orbit_Dynamics
 #from CADRE.parameters import BsplineParameters
 #from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 #from CADRE.reactionwheel import ReactionWheel_Power, \
@@ -294,71 +292,95 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_results(inputs)
 
-    #def test_Comm_GSposEarth(self):
+    def test_Comm_GSposEarth(self):
 
-        #compname = 'Comm_GSposEarth'
-        #inputs = ['lon', 'lat', 'alt']
-        #outputs = ['r_e2g_E']
+        compname = 'Comm_GSposEarth'
+        inputs = ['lon', 'lat', 'alt']
+        outputs = ['r_e2g_E']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_GSposECI(self):
+    def test_Comm_GSposECI(self):
 
-        #compname = 'Comm_GSposECI'
-        #inputs = ['O_IE', 'r_e2g_E']
-        #outputs = ['r_e2g_I']
+        compname = 'Comm_GSposECI'
+        inputs = ['O_IE', 'r_e2g_E']
+        outputs = ['r_e2g_I']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_LOS(self):
+    def test_Comm_LOS(self):
 
-        #compname = 'Comm_LOS'
-        #inputs = ['r_b2g_I', 'r_e2g_I']
-        #outputs = ['CommLOS']
+        compname = 'Comm_LOS'
+        inputs = ['r_b2g_I', 'r_e2g_I']
+        outputs = ['CommLOS']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_VectorAnt(self):
+    def test_Comm_VectorAnt(self):
 
-        #compname = 'Comm_VectorAnt'
-        #inputs = ['r_b2g_B', 'O_AB']
-        #outputs = ['r_b2g_A']
+        compname = 'Comm_VectorAnt'
+        inputs = ['r_b2g_B', 'O_AB']
+        outputs = ['r_b2g_A']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_VectorBody(self):
+    def test_Comm_VectorBody(self):
 
-        #compname = 'Comm_VectorBody'
-        #inputs = ['r_b2g_I', 'O_BI']
-        #outputs = ['r_b2g_B']
+        compname = 'Comm_VectorBody'
+        inputs = ['r_b2g_I', 'O_BI']
+        outputs = ['r_b2g_B']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_VectorECI(self):
+    def test_Comm_VectorECI(self):
 
-        #compname = 'Comm_VectorECI'
-        #inputs = ['r_e2g_I', 'r_e2b_I']
-        #outputs = ['r_b2g_I']
+        compname = 'Comm_VectorECI'
+        inputs = ['r_e2g_I', 'r_e2b_I']
+        outputs = ['r_b2g_I']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_VectorSpherical(self):
+    def test_Comm_VectorSpherical(self):
 
-        #compname = 'Comm_VectorSpherical'
-        #inputs = ['r_b2g_A']
-        #outputs = ['azimuthGS', 'elevationGS']
+        compname = 'Comm_VectorSpherical'
+        inputs = ['r_b2g_A']
+        outputs = ['azimuthGS', 'elevationGS']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Orbit_Dynamics(self):
+
+        compname = 'Orbit_Dynamics'
+        inputs = ['r_e2b_I0']
+        outputs = ['r_e2b_I']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Orbit_Initial(self):
+
+        # This component was not recorder in John's pickle.
+
+        pass
+        #compname = 'Orbit_Initial'
+        #inputs = ['altPerigee', 'altApogee', 'RAAN', 'Inc', 'argPerigee',
+                  #'trueAnomaly']
+        #outputs = ['r_e2b_I0']
 
         #self.setup(compname, inputs)
         #self.run_model()

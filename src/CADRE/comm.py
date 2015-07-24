@@ -643,669 +643,536 @@ class Comm_GainPattern(Component):
                 dparams['elevationGS'] += self.dg_del * dgain
 
 
-#class Comm_GSposEarth(Component):
-
-    #''' Returns position of the ground station in Earth frame. '''
-
-    ## constants
-    #Re = 6378.137
-    #d2r = np.pi / 180.
-
-    ## Inputs
-    #lon = Float(0.0, iotype="in", units="rad",
-                #desc="Longitude of ground station in Earth-fixed frame")
-    #lat = Float(0.0, iotype="in", units="rad",
-                #desc="Latitude of ground station in Earth-fixed frame")
-    #alt = Float(0.0, iotype="in", units="rad",
-                #desc="Altitude of ground station in Earth-fixed frame")
-
-    #def __init__(self, n):
-        #super(Comm_GSposEarth, self).__init__()
-
-        #self.n = n
-
-        ## Outputs
-        #self.add(
-            #'r_e2g_E',
-            #Array(
-                #np.zeros((3, self.n)),
-                #iotype='out',
-                #shape=(3, self.n),
-                #units="km",
-                #desc="Position vector from earth to ground station in Earth-fixed frame over time"
-            #)
-        #)
-
-    #def list_deriv_vars(self):
-        #input_keys = ('lon', 'lat','alt',)
-        #output_keys = ('r_e2g_E',)
-        #return input_keys, output_keys
-
-
-    #def provideJ(self):
-        #""" Calculate and save derivatives (i.e., Jacobian). """
-
-        #self.dr_dlon = np.zeros(3)
-        #self.dr_dlat = np.zeros(3)
-        #self.dr_dalt = np.zeros(3)
-
-        #cos_lat = np.cos(self.d2r * self.lat)
-        #sin_lat = np.sin(self.d2r * self.lat)
-        #cos_lon = np.cos(self.d2r * self.lon)
-        #sin_lon = np.sin(self.d2r * self.lon)
-
-        #r_GS = (self.Re + self.alt)
-
-        #self.dr_dlon[0] = -self.d2r * r_GS * cos_lat * sin_lon
-        #self.dr_dlat[0] = -self.d2r * r_GS * sin_lat * cos_lon
-        #self.dr_dalt[0] = cos_lat * cos_lon
-
-        #self.dr_dlon[1] = self.d2r * r_GS * cos_lat * cos_lon
-        #self.dr_dlat[1] = -self.d2r * r_GS * sin_lat * sin_lon
-        #self.dr_dalt[1] = cos_lat * sin_lon
-
-        #self.dr_dlon[2] = 0.
-        #self.dr_dlat[2] = self.d2r * r_GS * cos_lat
-        #self.dr_dalt[2] = sin_lat
-
-    #def execute(self):
-        #""" Calculate output. """
-
-        #cos_lat = np.cos(self.d2r * self.lat)
-        #r_GS = (self.Re + self.alt)
-
-        #self.r_e2g_E[0, :] = r_GS * cos_lat * np.cos(self.d2r*self.lon)
-        #self.r_e2g_E[1, :] = r_GS * cos_lat * np.sin(self.d2r*self.lon)
-        #self.r_e2g_E[2, :] = r_GS * np.sin(self.d2r*self.lat)
-
-    #def apply_deriv(self, arg, result):
-        #""" Matrix-vector product with the Jacobian. """
-
-        #if 'lon' in arg:
-            #for k in range(3):
-                #result['r_e2g_E'][k, :] += self.dr_dlon[k] * arg['lon']
-        #if 'lat' in arg:
-            #for k in range(3):
-                #result['r_e2g_E'][k, :] += self.dr_dlat[k] * arg['lat']
-        #if 'alt' in arg:
-            #for k in range(3):
-                #result['r_e2g_E'][k, :] += self.dr_dalt[k] * arg['alt']
-
-    #def apply_derivT(self, arg, result):
-        #""" Matrix-vector product with the transpose of the Jacobian. """
-
-        #if 'r_e2g_E' in arg:
-            #for k in range(3):
-                #if 'lon' in result:
-                    #result['lon'] += self.dr_dlon[k] * np.sum(arg['r_e2g_E'][k, :])
-                #if 'lat' in result:
-                    #result['lat'] += self.dr_dlat[k] * np.sum(arg['r_e2g_E'][k, :])
-                #if 'alt' in result:
-                    #result['alt'] += self.dr_dalt[k] * np.sum(arg['r_e2g_E'][k, :])
-
-
-#class Comm_GSposECI(Component):
-
-    #''' Convert time history of ground station position from earth frame
-    #to inertial frame.
-    #'''
-
-    #def __init__(self, n):
-        #super(Comm_GSposECI, self).__init__()
-        #self.n = n
-
-        ## Inputs
-        #self.add(
-            #'O_IE',
-            #Array(
-                #np.zeros((3, 3, self.n)),
-                #iotype='in',
-                #shape=(3, 3, self.n),
-                #units="unitless",
-                #desc="Rotation matrix from Earth-centered inertial frame to Earth-fixed frame over time"
-            #)
-        #)
-
-        #self.add(
-            #'r_e2g_E',
-            #Array(
-                #np.zeros((3, self.n)),
-                #iotype='in',
-                #shape=(3, self.n),
-                #units="km",
-                #desc="Position vector from earth to ground station in Earth-fixed frame over time"
-            #)
-        #)
-
-        ## Outputs
-        #self.add(
-            #'r_e2g_I',
-            #Array(
-                #np.zeros((3, self.n)),
-                #iotype='out',
-                #shape=(3, self.n),
-                #units="km",
-                #desc="Position vector from earth to ground station in Earth-centered inertial frame over time"
-            #)
-        #)
-
-    #def list_deriv_vars(self):
-        #input_keys = ('O_IE', 'r_e2g_E',)
-        #output_keys = ('r_e2g_I',)
-        #return input_keys, output_keys
-
-    #def provideJ(self):
-        #""" Calculate and save derivatives (i.e., Jacobian). """
-
-        #self.J1 = np.zeros((self.n, 3, 3, 3))
-
-        #for k in range(0, 3):
-            #for v in range(0, 3):
-                #self.J1[:, k, k, v] = self.r_e2g_E[v, :]
-
-        #self.J2 = np.transpose(self.O_IE, (2, 0, 1))
-
-    #def execute(self):
-        #""" Calculate output. """
-
-        #for i in range(0, self.n):
-            #self.r_e2g_I[:, i] = np.dot(self.O_IE[:, :, i],
-                                        #self.r_e2g_E[:, i])
-
-    #def apply_deriv(self, arg, result):
-        #""" Matrix-vector product with the Jacobian. """
-
-        #if 'r_e2g_I' in result:
-            #for k in range(3):
-                #for u in range(3):
-                    #if 'O_IE' in arg:
-                        #for v in range(3):
-                            #result['r_e2g_I'][k, :] += self.J1[:, k, u, v] * \
-                                #arg['O_IE'][u, v, :]
-
-                    #if 'r_e2g_E' in arg:
-                        #result['r_e2g_I'][k, :] += self.J2[:, k, u] * \
-                            #arg['r_e2g_E'][u, :]
-
-    #def apply_derivT(self, arg, result):
-        #""" Matrix-vector product with the transpose of the Jacobian. """
-
-        #if 'r_e2g_I' in arg:
-            #for k in range(3):
-                #if 'O_IE' in result:
-                    #for u in range(3):
-                        #for v in range(3):
-                            #result['O_IE'][u, v, :] += self.J1[:, k, u, v] * \
-                                #arg['r_e2g_I'][k, :]
-                #if 'r_e2g_E' in result:
-                    #for j in range(3):
-                        #result['r_e2g_E'][j, :] += self.J2[:, k, j] * \
-                            #arg['r_e2g_I'][k, :]
-
-
-#class Comm_LOS(Component):
-
-    #''' Determines if the Satellite has line of sight with the ground
-    #stations. '''
-
-    ## constants
-    #Re = 6378.137
-
-    #def __init__(self, n):
-        #super(Comm_LOS, self).__init__()
-        #self.n = n
-
-        ## Inputs
-        #self.add(
-            #'r_b2g_I',
-            #Array(
-                #np.zeros((3, n)),
-                #iotype='in',
-                #shape=(3, self.n),
-                #units="km",
-                #desc="Position vector from satellite to ground station in Earth-centered inertial frame over time"
-            #)
-        #)
-
-        #self.add(
-            #'r_e2g_I',
-            #Array(
-                #np.zeros((3, n)),
-                #iotype='in',
-                #shape=(3, self.n),
-                #units="km",
-                #desc="Position vector from earth to ground station in Earth-centered inertial frame over time"
-            #)
-        #)
-
-        ## Outputs
-        #self.add(
-            #'CommLOS',
-            #Array(
-                #np.zeros(n),
-                #iotype='out',
-                #shape=(self.n, ),
-                #units="unitless",
-                #desc="Satellite to ground station line of sight over time"
-            #)
-        #)
-
-    #def list_deriv_vars(self):
-        #input_keys = ('r_b2g_I', 'r_e2g_I',)
-        #output_keys = ('CommLOS',)
-        #return input_keys, output_keys
-
-    #def provideJ(self):
-        #""" Calculate and save derivatives (i.e., Jacobian). """
-
-        #self.dLOS_drb = np.zeros((self.n, 3))
-        #self.dLOS_dre = np.zeros((self.n, 3))
-
-        #Rb = 10.0
-        #for i in range(0, self.n):
-
-            #proj = np.dot(self.r_b2g_I[:, i], self.r_e2g_I[:, i]) / self.Re
-
-            #if proj > 0:
-                #self.dLOS_drb[i, :] = 0.
-                #self.dLOS_dre[i, :] = 0.
-            #elif proj < -Rb:
-                #self.dLOS_drb[i, :] = 0.
-                #self.dLOS_dre[i, :] = 0.
-            #else:
-                #x = (proj - 0) / (-Rb - 0)
-                #dx_dproj = -1. / Rb
-                #dLOS_dx = 6 * x - 6 * x ** 2
-                #dproj_drb = self.r_e2g_I[:, i]
-                #dproj_dre = self.r_b2g_I[:, i]
-
-                #self.dLOS_drb[i, :] = dLOS_dx * dx_dproj * dproj_drb
-                #self.dLOS_dre[i, :] = dLOS_dx * dx_dproj * dproj_dre
-
-    #def execute(self):
-        #""" Calculate output. """
-
-        #Rb = 100.0
-        #for i in range(0, self.n):
-            #proj = np.dot(self.r_b2g_I[:, i], self.r_e2g_I[:, i]) / self.Re
-
-            #if proj > 0:
-                #self.CommLOS[i] = 0.
-            #elif proj < -Rb:
-                #self.CommLOS[i] = 1.
-            #else:
-                #x = (proj - 0) / (-Rb - 0)
-                #self.CommLOS[i] = 3 * x ** 2 - 2 * x ** 3
-
-    #def apply_deriv(self, arg, result):
-        #""" Matrix-vector product with the Jacobian. """
-
-        #if 'CommLOS' in result:
-            #for k in range(3):
-                #if 'r_b2g_I' in arg:
-                    #result['CommLOS'] += self.dLOS_drb[:, k] * arg['r_b2g_I'][k, :]
-                #if 'r_e2g_I' in arg:
-                    #result['CommLOS'] += self.dLOS_dre[:, k] * arg['r_e2g_I'][k, :]
-
-    #def apply_derivT(self, arg, result):
-        #""" Matrix-vector product with the transpose of the Jacobian. """
-
-        #if 'CommLOS' in arg:
-            #for k in range(3):
-                #if 'r_b2g_I' in result:
-                    #result['r_b2g_I'][k, :] += self.dLOS_drb[:, k] * arg['CommLOS']
-                #if 'r_e2g_I' in result:
-                    #result['r_e2g_I'][k, :] += self.dLOS_dre[:, k] * arg['CommLOS']
-
-
-#class Comm_VectorAnt(Component):
-
-    #'''Transform from antenna to body frame'''
-
-    #def __init__(self, n):
-        #super(Comm_VectorAnt, self).__init__()
-        #self.n = n
-
-        ## Inputs
-        #self.add(
-            #'r_b2g_B',
-            #Array(
-                #np.zeros((3, n)),
-                #iotype='in',
-                #shape=(3, n),
-                #units="km",
-                #desc="Position vector from satellite to ground station in body-fixed frame over time"
-            #)
-        #)
-
-        #self.add(
-            #'O_AB',
-            #Array(
-                #np.zeros((3, 3, n)),
-                #iotype='in',
-                #shape=(3, 3, n),
-                #units="unitless",
-                #desc="Rotation matrix from antenna angle to body-fixed frame over time"
-            #)
-        #)
-
-        ## Outputs
-        #self.add(
-            #'r_b2g_A',
-            #Array(
-                #np.zeros((3, n)),
-                #iotype='out',
-                #shape=(3, n),
-                #units="km",
-                #desc="Position vector from satellite to ground station in antenna angle frame over time"
-            #)
-        #)
-
-    #def list_deriv_vars(self):
-        #input_keys = ('r_b2g_B', 'O_AB',)
-        #output_keys = ('r_b2g_A',)
-        #return input_keys, output_keys
-
-    #def provideJ(self):
-        #""" Calculate and save derivatives (i.e., Jacobian). """
-
-        #self.J1, self.J2 = computepositionrotdjacobian(self.n, self.r_b2g_B,
-                                                       #self.O_AB)
-
-    #def execute(self):
-        #""" Calculate output. """
-
-        #self.r_b2g_A = computepositionrotd(self.n, self.r_b2g_B, self.O_AB)
-
-    #def apply_deriv(self, arg, result):
-        #""" Matrix-vector product with the Jacobian. """
-
-        #if 'r_b2g_A' in result:
-            #for k in range(3):
-                #if 'O_AB' in arg:
-                    #for u in range(3):
-                        #for v in range(3):
-                            #result['r_b2g_A'][k, :] += self.J1[:, k, u, v] * \
-                                #arg['O_AB'][u, v, :]
-                #if 'r_b2g_B' in arg:
-                    #for j in range(3):
-                        #result['r_b2g_A'][k, :] += self.J2[:, k, j] * \
-                            #arg['r_b2g_B'][j, :]
-
-    #def apply_derivT(self, arg, result):
-        #""" Matrix-vector product with the transpose of the Jacobian. """
-
-        #if 'r_b2g_A' in arg:
-            #for k in range(3):
-                #if 'O_AB' in result:
-                    #for u in range(3):
-                        #for v in range(3):
-                            #result['O_AB'][u, v, :] += self.J1[:, k, u, v] * \
-                                #arg['r_b2g_A'][k, :]
-                #if 'r_b2g_B' in result:
-                    #for j in range(3):
-                        #result['r_b2g_B'][j, :] += self.J2[:, k, j] * \
-                            #arg['r_b2g_A'][k, :]
-
-
-#class Comm_VectorBody(Component):
-
-    #'''Transform from body to inertial frame.'''
-
-    #def __init__(self, n):
-        #super(Comm_VectorBody, self).__init__()
-        #self.n = n
-
-        ## Inputs
-        #self.add(
-            #'r_b2g_I',
-            #Array(
-                #np.zeros((3, n)),
-                #iotype='in',
-                #shape=(3, n),
-                #units="km",
-                #desc="Position vector from satellite to ground station in Earth-centered inertial frame over time"
-            #)
-        #)
-
-        #self.add(
-            #'O_BI',
-            #Array(
-                #np.zeros((3, 3, n)),
-                #iotype='in',
-                #shape=(3, 3, n),
-                #units="unitless",
-                #desc="Rotation matrix from body-fixed frame to Earth-centered inertial frame over time"
-            #)
-        #)
-
-        ## Outputs
-        #self.add(
-            #'r_b2g_B',
-            #Array(
-                #np.zeros((3, n)),
-                #iotype='out',
-                #shape=(3, n),
-                #units="km",
-                #desc="Position vector from satellite to ground station in body-fixed frame over time"
-            #)
-        #)
-
-    #def list_deriv_vars(self):
-        #input_keys = ('r_b2g_I', 'O_BI',)
-        #output_keys = ('r_b2g_B',)
-        #return input_keys, output_keys
-
-    #def provideJ(self):
-        #""" Calculate and save derivatives (i.e., Jacobian). """
-
-        #self.J1 = np.zeros((self.n, 3, 3, 3))
-
-        #for k in range(0, 3):
-            #for v in range(0, 3):
-                #self.J1[:, k, k, v] = self.r_b2g_I[v, :]
-
-        #self.J2 = np.transpose(self.O_BI, (2, 0, 1))
-
-    #def execute(self):
-        #""" Calculate output. """
-
-        #for i in range(0, self.n):
-            #self.r_b2g_B[:, i] = np.dot(self.O_BI[:, :, i], self.r_b2g_I[:, i])
-
-    #def apply_deriv(self, arg, result):
-        #""" Matrix-vector product with the Jacobian. """
-
-        #if 'r_b2g_B' in result:
-            #for k in range(3):
-                #if 'O_BI' in arg:
-                    #for u in range(3):
-                        #for v in range(3):
-                            #result['r_b2g_B'][k, :] += self.J1[:, k, u, v] * \
-                                #arg['O_BI'][u, v, :]
-                #if 'r_b2g_I' in arg:
-                    #for j in range(3):
-                        #result['r_b2g_B'][k, :] += self.J2[:, k, j] * \
-                            #arg['r_b2g_I'][j, :]
-
-    #def apply_derivT(self, arg, result):
-        #""" Matrix-vector product with the transpose of the Jacobian. """
-
-        #if 'r_b2g_B' in arg:
-            #for k in range(3):
-                #if 'O_BI' in result:
-                    #for u in range(3):
-                        #for v in range(3):
-                            #result['O_BI'][u, v, :] += self.J1[:, k, u, v] * \
-                                #arg['r_b2g_B'][k, :]
-                #if 'r_b2g_I' in result:
-                    #for j in range(3):
-                        #result['r_b2g_I'][j, :] += self.J2[:, k, j] * \
-                            #arg['r_b2g_B'][k, :]
-
-
-#class Comm_VectorECI(Component):
-
-    #'''Determine vector between satellite and ground station.'''
-
-    #def __init__(self, n):
-        #super(Comm_VectorECI, self).__init__()
-        #self.n = n
-
-        ## Inputs
-        #self.add(
-            #'r_e2g_I',
-            #Array(
-                #np.zeros((3, n)),
-                #iotype='in',
-                #shape=(3, n),
-                #units="km",
-                #desc="Position vector from earth to ground station in Earth-centered inertial frame over time"
-            #)
-        #)
-
-        #self.add(
-            #'r_e2b_I',
-            #Array(
-                #np.zeros((6, n)),
-                #iotype='in',
-                #shape=(6, n),
-                #units="unitless",
-                #desc="Position and velocity vector from earth to satellite in Earth-centered inertial frame over time"
-            #)
-        #)
-
-        ## Outputs
-        #self.add(
-            #'r_b2g_I',
-            #Array(
-                #np.zeros((3, n)),
-                #iotype='out',
-                #shape=(3, n),
-                #units="km",
-                #desc="Position vector from satellite to ground station in Earth-centered inertial frame over time"
-            #)
-        #)
-
-    #def list_deriv_vars(self):
-        #input_keys = ('r_e2g_I', 'r_e2b_I',)
-        #output_keys = ('r_b2g_I',)
-        #return input_keys, output_keys
-
-    #def provideJ(self):
-        #""" Calculate and save derivatives (i.e., Jacobian). """
-        ## Derivatives are simple
-        #return
-
-    #def execute(self):
-        #""" Calculate output. """
-
-        #self.r_b2g_I = self.r_e2g_I - self.r_e2b_I[:3, :]
-
-    #def apply_deriv(self, arg, result):
-        #""" Matrix-vector product with the Jacobian. """
-
-        #if 'r_e2g_I' in arg:
-            #result['r_b2g_I'] += arg['r_e2g_I']
-        #if 'r_e2b_I' in arg:
-            #result['r_b2g_I'] += -arg['r_e2b_I'][:3, :]
-
-    #def apply_derivT(self, arg, result):
-        #""" Matrix-vector product with the transpose of the Jacobian. """
-
-        #if 'r_b2g_I' in arg:
-            #if 'r_e2g_I' in result:
-                #result['r_e2g_I'] += arg['r_b2g_I']
-            #if 'r_e2b_I' in result:
-                #result['r_e2b_I'][:3, :] += -arg['r_b2g_I']
-
-
-#class Comm_VectorSpherical(Component):
-
-    #'''Convert satellite-ground vector into Az-El.'''
-
-    #def __init__(self, n):
-        #super(Comm_VectorSpherical, self).__init__()
-        #self.n = n
-
-        ## Inputs
-        #self.add(
-            #'r_b2g_A',
-            #Array(
-                #np.zeros((3, n)),
-                #iotype='in',
-                #shape=(3, self.n),
-                #units="km",
-                #desc="Position vector from satellite to ground station in antenna angle frame over time"
-            #)
-        #)
-
-        ## Outputs
-        #self.add(
-            #'azimuthGS',
-            #Array(
-                #np.zeros(n),
-                #iotype='out',
-                #shape=(n,),
-                #units="rad",
-                #desc="Azimuth angle from satellite to ground station in Earth-fixed frame over time"
-            #)
-        #)
-
-        #self.add(
-            #'elevationGS',
-            #Array(
-                #np.zeros(n),
-                #iotype='out',
-                #shape=(n,),
-                #units="rad",
-                #desc="Elevation angle from satellite to ground station in Earth-fixed frame over time"
-            #)
-        #)
-
-    #def list_deriv_vars(self):
-        #input_keys = ('r_b2g_A',)
-        #output_keys = ('azimuthGS','elevationGS',)
-        #return input_keys, output_keys
-
-    #def provideJ(self):
-        #""" Calculate and save derivatives (i.e., Jacobian). """
-
-        #self.Ja1, self.Ji1, self.Jj1, self.Ja2, self.Ji2, self.Jj2 = \
-            #computepositionsphericaljacobian(self.n, 3 * self.n, self.r_b2g_A)
-
-        #self.J1 = scipy.sparse.csc_matrix((self.Ja1, (self.Ji1, self.Jj1)),
-                                          #shape=(self.n, 3 * self.n))
-        #self.J2 = scipy.sparse.csc_matrix((self.Ja2, (self.Ji2, self.Jj2)),
-                                          #shape=(self.n, 3 * self.n))
-        #self.J1T = self.J1.transpose()
-        #self.J2T = self.J2.transpose()
-
-    #def execute(self):
-        #""" Calculate output. """
-
-        #azimuthGS, elevationGS = computepositionspherical(self.n, self.r_b2g_A)
-        #self.azimuthGS = azimuthGS
-        #self.elevationGS = elevationGS
-
-    #def apply_deriv(self, arg, result):
-        #""" Matrix-vector product with the Jacobian. """
-
-        #if 'r_b2g_A' in arg:
-            #r_b2g_A = arg['r_b2g_A'].reshape((3 * self.n), order='F')
-            #if 'azimuthGS' in result:
-                #result['azimuthGS'] += self.J1.dot(r_b2g_A)
-            #if 'elevationGS' in result:
-                #result['elevationGS'] += self.J2.dot(r_b2g_A)
-
-    #def apply_derivT(self, arg, result):
-        #""" Matrix-vector product with the transpose of the Jacobian. """
-
-        #if 'azimuthGS' in arg:
-            #az_GS = arg['azimuthGS']
-            #result['r_b2g_A'] += (self.J1T.dot(az_GS)).reshape((3, self.n),
-                                                               #order='F')
-        #if 'elevationGS' in arg:
-            #el_GS = arg['elevationGS']
-            #result['r_b2g_A'] += (self.J2T.dot(el_GS)).reshape((3, self.n),
-                                                               #order='F')
+class Comm_GSposEarth(Component):
+    ''' Returns position of the ground station in Earth frame. '''
+
+    # Constants
+    Re = 6378.137
+    d2r = np.pi / 180.
+
+    def __init__(self, n):
+        super(Comm_GSposEarth, self).__init__()
+
+        self.n = n
+
+        # Inputs
+        self.add_param('lon', 0.0, iotype="in", units="rad",
+                       desc="Longitude of ground station in Earth-fixed frame")
+        self.add_param('lat', 0.0, iotype="in", units="rad",
+                       desc="Latitude of ground station in Earth-fixed frame")
+        self.add_param('alt', 0.0, iotype="in", units="rad",
+                       desc="Altitude of ground station in Earth-fixed frame")
+
+        # Outputs
+        self.add_output('r_e2g_E', np.zeros((3, self.n)), units="km",
+                        desc="Position vector from earth to ground station in "
+                        "Earth-fixed frame over time")
+
+    def solve_nonlinear(self, params, unknowns, resids):
+        """ Calculate output. """
+
+        lat = params['lat']
+        lon = params['lon']
+        alt = params['alt']
+        r_e2g_E = unknowns['r_e2g_E']
+
+        cos_lat = np.cos(self.d2r * lat)
+        r_GS = (self.Re + alt)
+
+        r_e2g_E[0, :] = r_GS * cos_lat * np.cos(self.d2r*lon)
+        r_e2g_E[1, :] = r_GS * cos_lat * np.sin(self.d2r*lon)
+        r_e2g_E[2, :] = r_GS * np.sin(self.d2r*lat)
+
+    def jacobian(self, params, unknowns, resids):
+        """ Calculate and save derivatives. (i.e., Jacobian) """
+
+        lat = params['lat']
+        lon = params['lon']
+        alt = params['alt']
+
+        self.dr_dlon = np.zeros(3)
+        self.dr_dlat = np.zeros(3)
+        self.dr_dalt = np.zeros(3)
+
+        cos_lat = np.cos(self.d2r * lat)
+        sin_lat = np.sin(self.d2r * lat)
+        cos_lon = np.cos(self.d2r * lon)
+        sin_lon = np.sin(self.d2r * lon)
+
+        r_GS = (self.Re + alt)
+
+        self.dr_dlon[0] = -self.d2r * r_GS * cos_lat * sin_lon
+        self.dr_dlat[0] = -self.d2r * r_GS * sin_lat * cos_lon
+        self.dr_dalt[0] = cos_lat * cos_lon
+
+        self.dr_dlon[1] = self.d2r * r_GS * cos_lat * cos_lon
+        self.dr_dlat[1] = -self.d2r * r_GS * sin_lat * sin_lon
+        self.dr_dalt[1] = cos_lat * sin_lon
+
+        self.dr_dlon[2] = 0.
+        self.dr_dlat[2] = self.d2r * r_GS * cos_lat
+        self.dr_dalt[2] = sin_lat
+
+    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+        """ Matrix-vector product with the Jacobian. """
+
+        dr_e2g_E = dresids['r_e2g_E']
+
+        if mode == 'fwd':
+            if 'lon' in dparams:
+                for k in range(3):
+                    dr_e2g_E[k, :] += self.dr_dlon[k] * dparams['lon']
+            if 'lat' in dparams:
+                for k in range(3):
+                    dr_e2g_E[k, :] += self.dr_dlat[k] * dparams['lat']
+            if 'alt' in dparams:
+                for k in range(3):
+                    dr_e2g_E[k, :] += self.dr_dalt[k] * dparams['alt']
+
+        else:
+            for k in range(3):
+                if 'lon' in dparams:
+                    dparams['lon'] += self.dr_dlon[k] * np.sum(dr_e2g_E[k, :])
+                if 'lat' in dparams:
+                    dparams['lat'] += self.dr_dlat[k] * np.sum(dr_e2g_E[k, :])
+                if 'alt' in dparams:
+                    dparams['alt'] += self.dr_dalt[k] * np.sum(dr_e2g_E[k, :])
+
+
+class Comm_GSposECI(Component):
+    ''' Convert time history of ground station position from earth frame
+    to inertial frame.
+    '''
+
+    def __init__(self, n):
+        super(Comm_GSposECI, self).__init__()
+
+        self.n = n
+
+        # Inputs
+        self.add_param('O_IE', np.zeros((3, 3, self.n)), units="unitless",
+                       desc="Rotation matrix from Earth-centered inertial "
+                       "frame to Earth-fixed frame over time")
+
+        self.add_param('r_e2g_E', np.zeros((3, self.n)), units="km",
+                       desc="Position vector from earth to ground station in "
+                       "Earth-fixed frame over time")
+
+        # Outputs
+        self.add_output('r_e2g_I', np.zeros((3, self.n)), units="km",
+                        desc="Position vector from earth to ground station in "
+                        "Earth-centered inertial frame over time")
+
+    def solve_nonlinear(self, params, unknowns, resids):
+        """ Calculate output. """
+
+        O_IE = params['O_IE']
+        r_e2g_E = params['r_e2g_E']
+        r_e2g_I = unknowns['r_e2g_I']
+
+        for i in range(0, self.n):
+            r_e2g_I[:, i] = np.dot(O_IE[:, :, i], r_e2g_E[:, i])
+
+    def jacobian(self, params, unknowns, resids):
+        """ Calculate and save derivatives. (i.e., Jacobian) """
+
+        O_IE = params['O_IE']
+        r_e2g_E = params['r_e2g_E']
+
+        self.J1 = np.zeros((self.n, 3, 3, 3))
+
+        for k in range(0, 3):
+            for v in range(0, 3):
+                self.J1[:, k, k, v] = r_e2g_E[v, :]
+
+        self.J2 = np.transpose(O_IE, (2, 0, 1))
+
+    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+        """ Matrix-vector product with the Jacobian. """
+
+        dr_e2g_I = dresids['r_e2g_I']
+
+        if mode == 'fwd':
+            for k in range(3):
+                for u in range(3):
+                    if 'O_IE' in dparams:
+                        for v in range(3):
+                            dr_e2g_I[k, :] += self.J1[:, k, u, v] * \
+                                dparams['O_IE'][u, v, :]
+
+                    if 'r_e2g_E' in dparams:
+                        dr_e2g_I[k, :] += self.J2[:, k, u] * \
+                            dparams['r_e2g_E'][u, :]
+
+        else:
+            for k in range(3):
+                if 'O_IE' in dparams:
+                    for u in range(3):
+                        for v in range(3):
+                            dO_IE = dparams['O_IE']
+                            dO_IE[u, v, :] += self.J1[:, k, u, v] * \
+                                dr_e2g_I[k, :]
+                            dparams['O_IE'] = dO_IE
+                if 'r_e2g_E' in dparams:
+                    for j in range(3):
+                        dr_e2g_E = dparams['r_e2g_E']
+                        dr_e2g_E[j, :] += self.J2[:, k, j] * \
+                            dr_e2g_I[k, :]
+                        dparams['r_e2g_E'] = dr_e2g_E
+
+
+class Comm_LOS(Component):
+    ''' Determines if the Satellite has line of sight with the ground
+    stations. '''
+
+    # constants
+    Re = 6378.137
+
+    def __init__(self, n):
+        super(Comm_LOS, self).__init__()
+
+        self.n = n
+
+        # Inputs
+        self.add_param('r_b2g_I', np.zeros((3, n)), units="km",
+                       desc="Position vector from satellite to ground station "
+                       "in Earth-centered inertial frame over time")
+
+        self.add_param('r_e2g_I', np.zeros((3, n)), units="km",
+                       desc="Position vector from earth to ground station in "
+                       "Earth-centered inertial frame over time")
+
+        # Outputs
+        self.add_output('CommLOS', np.zeros(n), units="unitless",
+                        desc="Satellite to ground station line of sight over time")
+
+    def solve_nonlinear(self, params, unknowns, resids):
+        """ Calculate output. """
+
+        r_b2g_I = params['r_b2g_I']
+        r_e2g_I = params['r_e2g_I']
+        CommLOS = unknowns['CommLOS']
+
+        Rb = 100.0
+        for i in range(0, self.n):
+            proj = np.dot(r_b2g_I[:, i], r_e2g_I[:, i]) / self.Re
+
+            if proj > 0:
+                CommLOS[i] = 0.
+            elif proj < -Rb:
+                CommLOS[i] = 1.
+            else:
+                x = (proj - 0) / (-Rb - 0)
+                CommLOS[i] = 3 * x ** 2 - 2 * x ** 3
+
+    def jacobian(self, params, unknowns, resids):
+        """ Calculate and save derivatives. (i.e., Jacobian) """
+
+        r_b2g_I = params['r_b2g_I']
+        r_e2g_I = params['r_e2g_I']
+
+        self.dLOS_drb = np.zeros((self.n, 3))
+        self.dLOS_dre = np.zeros((self.n, 3))
+
+        Rb = 10.0
+        for i in range(0, self.n):
+
+            proj = np.dot(r_b2g_I[:, i], r_e2g_I[:, i]) / self.Re
+
+            if proj > 0:
+                self.dLOS_drb[i, :] = 0.
+                self.dLOS_dre[i, :] = 0.
+            elif proj < -Rb:
+                self.dLOS_drb[i, :] = 0.
+                self.dLOS_dre[i, :] = 0.
+            else:
+                x = (proj - 0) / (-Rb - 0)
+                dx_dproj = -1. / Rb
+                dLOS_dx = 6 * x - 6 * x ** 2
+                dproj_drb = r_e2g_I[:, i]
+                dproj_dre = r_b2g_I[:, i]
+
+                self.dLOS_drb[i, :] = dLOS_dx * dx_dproj * dproj_drb
+                self.dLOS_dre[i, :] = dLOS_dx * dx_dproj * dproj_dre
+
+    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+        """ Matrix-vector product with the Jacobian. """
+
+        dCommLOS = dresids['CommLOS']
+
+        if mode == 'fwd':
+            for k in range(3):
+                if 'r_b2g_I' in dparams:
+                    dCommLOS += self.dLOS_drb[:, k] * dparams['r_b2g_I'][k, :]
+                if 'r_e2g_I' in dparams:
+                    dCommLOS += self.dLOS_dre[:, k] * dparams['r_e2g_I'][k, :]
+
+        else:
+            for k in range(3):
+                if 'r_b2g_I' in dparams:
+                    dr_b2g_I = dparams['r_b2g_I']
+                    dr_b2g_I[k, :] += self.dLOS_drb[:, k] * dCommLOS
+                    dparams['r_b2g_I'] = dr_b2g_I
+                if 'r_e2g_I' in dparams:
+                    dr_e2g_I = dparams['r_e2g_I']
+                    dr_e2g_I[k, :] += self.dLOS_dre[:, k] * dCommLOS
+                    dparams['r_e2g_I'] = dr_e2g_I
+
+
+class Comm_VectorAnt(Component):
+    '''Transform from antenna to body frame'''
+
+    def __init__(self, n):
+        super(Comm_VectorAnt, self).__init__()
+
+        self.n = n
+
+        # Inputs
+        self.add_param('r_b2g_B', np.zeros((3, n)), units="km",
+                       desc="Position vector from satellite to ground station "
+                       "in body-fixed frame over time")
+
+        self.add_param('O_AB', np.zeros((3, 3, n)), units="unitless",
+                       desc="Rotation matrix from antenna angle to body-fixed "
+                       "frame over time")
+
+        # Outputs
+        self.add_output('r_b2g_A', np.zeros((3, n)), units="km",
+                        desc="Position vector from satellite to ground station "
+                        "in antenna angle frame over time")
+
+    def solve_nonlinear(self, params, unknowns, resids):
+        """ Calculate output. """
+
+        unknowns['r_b2g_A'] = computepositionrotd(self.n, params['r_b2g_B'],
+                                                  params['O_AB'])
+
+    def jacobian(self, params, unknowns, resids):
+        """ Calculate and save derivatives. (i.e., Jacobian) """
+
+        self.J1, self.J2 = computepositionrotdjacobian(self.n, params['r_b2g_B'],
+                                                       params['O_AB'])
+
+
+    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+        """ Matrix-vector product with the Jacobian. """
+
+        dr_b2g_A = dresids['r_b2g_A']
+
+        if mode == 'fwd':
+            for k in range(3):
+                if 'O_AB' in dparams:
+                    for u in range(3):
+                        for v in range(3):
+                            dr_b2g_A[k, :] += self.J1[:, k, u, v] * \
+                                dparams['O_AB'][u, v, :]
+                if 'r_b2g_B' in dparams:
+                    for j in range(3):
+                        dr_b2g_A[k, :] += self.J2[:, k, j] * \
+                            dparams['r_b2g_B'][j, :]
+
+        else:
+            for k in range(3):
+                if 'O_AB' in dparams:
+                    for u in range(3):
+                        for v in range(3):
+                            dO_AB = dparams['O_AB']
+                            dO_AB[u, v, :] += self.J1[:, k, u, v] * \
+                                dr_b2g_A[k, :]
+                            dparams['O_AB'] = dO_AB
+                if 'r_b2g_B' in dparams:
+                    for j in range(3):
+                        dr_b2g_B = dparams['r_b2g_B']
+                        dr_b2g_B[j, :] += self.J2[:, k, j] * \
+                            dr_b2g_A[k, :]
+                        dparams['r_b2g_B'] = dr_b2g_B
+
+
+class Comm_VectorBody(Component):
+    '''Transform from body to inertial frame.'''
+
+    def __init__(self, n):
+        super(Comm_VectorBody, self).__init__()
+
+        self.n = n
+
+        # Inputs
+        self.add_param('r_b2g_I', np.zeros((3, n)), units="km",
+                       desc="Position vector from satellite to ground station "
+                       "in Earth-centered inertial frame over time")
+
+        self.add_param('O_BI', np.zeros((3, 3, n)), units="unitless",
+                       desc="Rotation matrix from body-fixed frame to Earth-centered"
+                       "inertial frame over time")
+
+        # Outputs
+        self.add_output('r_b2g_B', np.zeros((3, n)), units="km",
+                        desc="Position vector from satellite to ground station "
+                        "in body-fixed frame over time")
+
+    def solve_nonlinear(self, params, unknowns, resids):
+        """ Calculate output. """
+
+        r_b2g_I = params['r_b2g_I']
+        O_BI = params['O_BI']
+        r_b2g_B = unknowns['r_b2g_B']
+
+        for i in range(0, self.n):
+            r_b2g_B[:, i] = np.dot(O_BI[:, :, i], r_b2g_I[:, i])
+
+    def jacobian(self, params, unknowns, resids):
+        """ Calculate and save derivatives. (i.e., Jacobian) """
+
+        r_b2g_I = params['r_b2g_I']
+        O_BI = params['O_BI']
+
+        self.J1 = np.zeros((self.n, 3, 3, 3))
+
+        for k in range(0, 3):
+            for v in range(0, 3):
+                self.J1[:, k, k, v] = r_b2g_I[v, :]
+
+        self.J2 = np.transpose(O_BI, (2, 0, 1))
+
+    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+        """ Matrix-vector product with the Jacobian. """
+
+        dr_b2g_B = dresids['r_b2g_B']
+
+        if mode == 'fwd':
+            for k in range(3):
+                if 'O_BI' in dparams:
+                    for u in range(3):
+                        for v in range(3):
+                            dr_b2g_B[k, :] += self.J1[:, k, u, v] * \
+                                dparams['O_BI'][u, v, :]
+                if 'r_b2g_I' in dparams:
+                    for j in range(3):
+                        dr_b2g_B[k, :] += self.J2[:, k, j] * \
+                            dparams['r_b2g_I'][j, :]
+
+        else:
+            for k in range(3):
+                if 'O_BI' in dparams:
+                    for u in range(3):
+                        for v in range(3):
+                            dO_BI = dparams['O_BI']
+                            dO_BI[u, v, :] += self.J1[:, k, u, v] * \
+                                dr_b2g_B[k, :]
+                            dparams['O_BI'] = dO_BI
+                if 'r_b2g_I' in dparams:
+                    for j in range(3):
+                        dr_b2g_I = dparams['r_b2g_I']
+                        dr_b2g_I[j, :] += self.J2[:, k, j] * \
+                            dr_b2g_B[k, :]
+                        dparams['r_b2g_I'] = dr_b2g_I
+
+
+class Comm_VectorECI(Component):
+    '''Determine vector between satellite and ground station.'''
+
+    def __init__(self, n):
+        super(Comm_VectorECI, self).__init__()
+
+        self.n = n
+
+        # Inputs
+        self.add_param('r_e2g_I', np.zeros((3, n)), units="km",
+                       desc="Position vector from earth to ground station in "
+                       "Earth-centered inertial frame over time")
+
+        self.add_param('r_e2b_I', np.zeros((6, n)), units="unitless",
+                       desc="Position and velocity vector from earth to satellite "
+                       "in Earth-centered inertial frame over time")
+
+        # Outputs
+        self.add_output('r_b2g_I', np.zeros((3, n)), units="km",
+                        desc="Position vector from satellite to ground station "
+                        "in Earth-centered inertial frame over time")
+
+    def solve_nonlinear(self, params, unknowns, resids):
+        """ Calculate output. """
+
+        unknowns['r_b2g_I'] = params['r_e2g_I'] - params['r_e2b_I'][:3, :]
+
+    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+        """ Matrix-vector product with the Jacobian. """
+
+        dr_b2g_I = dresids['r_b2g_I']
+
+        if mode == 'fwd':
+            if 'r_e2g_I' in dparams:
+                dr_b2g_I += dparams['r_e2g_I']
+            if 'r_e2b_I' in dparams:
+                dr_b2g_I += -dparams['r_e2b_I'][:3, :]
+
+        else:
+            if 'r_e2g_I' in dparams:
+                dparams['r_e2g_I'] += dr_b2g_I
+            if 'r_e2b_I' in dparams:
+                dr_e2b_I = dparams['r_e2b_I']
+                dr_e2b_I[:3, :] += -dr_b2g_I
+                dparams['r_e2b_I'] = dr_e2b_I
+
+
+class Comm_VectorSpherical(Component):
+    '''Convert satellite-ground vector into Az-El.'''
+
+    def __init__(self, n):
+        super(Comm_VectorSpherical, self).__init__()
+
+        self.n = n
+
+        # Inputs
+        self.add_param('r_b2g_A', np.zeros((3, n)), units="km",
+                       desc="Position vector from satellite to ground station "
+                       "in antenna angle frame over time")
+
+        # Outputs
+        self.add_output('azimuthGS', np.zeros(n), units="rad",
+                        desc="Azimuth angle from satellite to ground station in "
+                        "Earth-fixed frame over time")
+
+        self.add_output('elevationGS', np.zeros(n), units="rad",
+                        desc="Elevation angle from satellite to ground station "
+                        "in Earth-fixed frame over time")
+
+    def solve_nonlinear(self, params, unknowns, resids):
+        """ Calculate output. """
+
+        azimuthGS, elevationGS = computepositionspherical(self.n, params['r_b2g_A'])
+        unknowns['azimuthGS'] = azimuthGS
+        unknowns['elevationGS'] = elevationGS
+
+    def jacobian(self, params, unknowns, resids):
+        """ Calculate and save derivatives. (i.e., Jacobian) """
+
+        self.Ja1, self.Ji1, self.Jj1, self.Ja2, self.Ji2, self.Jj2 = \
+            computepositionsphericaljacobian(self.n, 3 * self.n, params['r_b2g_A'])
+
+        self.J1 = scipy.sparse.csc_matrix((self.Ja1, (self.Ji1, self.Jj1)),
+                                          shape=(self.n, 3 * self.n))
+        self.J2 = scipy.sparse.csc_matrix((self.Ja2, (self.Ji2, self.Jj2)),
+                                          shape=(self.n, 3 * self.n))
+        self.J1T = self.J1.transpose()
+        self.J2T = self.J2.transpose()
+
+    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+        """ Matrix-vector product with the Jacobian. """
+
+        if mode == 'fwd':
+            r_b2g_A = dparams['r_b2g_A'].reshape((3 * self.n), order='F')
+            if 'azimuthGS' in dresids:
+                dresids['azimuthGS'] += self.J1.dot(r_b2g_A)
+            if 'elevationGS' in dresids:
+                dresids['elevationGS'] += self.J2.dot(r_b2g_A)
+
+        else:
+            if 'azimuthGS' in dresids:
+                az_GS = dresids['azimuthGS']
+                dparams['r_b2g_A'] += (self.J1T.dot(az_GS)).reshape((3, self.n),
+                                                                    order='F')
+            if 'elevationGS' in dresids:
+                el_GS = dresids['elevationGS']
+                dparams['r_b2g_A'] += (self.J2T.dot(el_GS)).reshape((3, self.n),
+                                                                    order='F')

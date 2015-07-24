@@ -18,13 +18,11 @@ from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
      Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque
 from CADRE.battery import BatterySOC, BatteryPower, BatteryConstraints
 from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMtx, \
-     Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern
+     Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern, \
+     Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, Comm_VectorBody, \
+     Comm_VectorECI, Comm_VectorSpherical
+from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
 
-#from CADRE.comm import Comm_AntRotation, Comm_AntRotationMtx, Comm_BitRate, \
-    #Comm_DataDownloaded, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, \
-    #Comm_GainPattern, Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, \
-    #Comm_VectorBody, Comm_VectorECI, Comm_VectorSpherical
-#from CADRE.orbit import Orbit_Initial, Orbit_Dynamics
 #from CADRE.parameters import BsplineParameters
 #from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 #from CADRE.reactionwheel import ReactionWheel_Power, \
@@ -346,82 +344,108 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_GSposEarth(self):
+    def test_Comm_GSposEarth(self):
 
-        #compname = 'Comm_GSposEarth'
-        #inputs = ['lon', 'lat', 'alt']
-        #outputs = ['r_e2g_E']
-        #state0 = []
+        compname = 'Comm_GSposEarth'
+        inputs = ['lon', 'lat', 'alt']
+        outputs = ['r_e2g_E']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_GSposECI(self):
+    def test_Comm_GSposECI(self):
 
-        #compname = 'Comm_GSposECI'
-        #inputs = ['O_IE', 'r_e2g_E']
-        #outputs = ['r_e2g_I']
-        #state0 = []
+        compname = 'Comm_GSposECI'
+        inputs = ['O_IE', 'r_e2g_E']
+        outputs = ['r_e2g_I']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_LOS(self):
+    def test_Comm_LOS(self):
 
-        #compname = 'Comm_LOS'
-        #inputs = ['r_b2g_I', 'r_e2g_I']
-        #outputs = ['CommLOS']
-        #state0 = []
+        compname = 'Comm_LOS'
+        inputs = ['r_b2g_I', 'r_e2g_I']
+        outputs = ['CommLOS']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_VectorAnt(self):
+    def test_Comm_VectorAnt(self):
 
-        #compname = 'Comm_VectorAnt'
-        #inputs = ['r_b2g_B', 'O_AB']
-        #outputs = ['r_b2g_A']
-        #state0 = []
+        compname = 'Comm_VectorAnt'
+        inputs = ['r_b2g_B', 'O_AB']
+        outputs = ['r_b2g_A']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_VectorBody(self):
+    def test_Comm_VectorBody(self):
 
-        #compname = 'Comm_VectorBody'
-        #inputs = ['r_b2g_I', 'O_BI']
-        #outputs = ['r_b2g_B']
-        #state0 = []
+        compname = 'Comm_VectorBody'
+        inputs = ['r_b2g_I', 'O_BI']
+        outputs = ['r_b2g_B']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_VectorECI(self):
+    def test_Comm_VectorECI(self):
 
-        #compname = 'Comm_VectorECI'
-        #inputs = ['r_e2g_I', 'r_e2b_I']
-        #outputs = ['r_b2g_I']
-        #state0 = []
+        compname = 'Comm_VectorECI'
+        inputs = ['r_e2g_I', 'r_e2b_I']
+        outputs = ['r_b2g_I']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_VectorSpherical(self):
+    def test_Comm_VectorSpherical(self):
 
-        #compname = 'Comm_VectorSpherical'
-        #inputs = ['r_b2g_A']
-        #outputs = ['azimuthGS', 'elevationGS']
-        #state0 = []
+        compname = 'Comm_VectorSpherical'
+        inputs = ['r_b2g_A']
+        outputs = ['azimuthGS', 'elevationGS']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Orbit_Dynamics(self):
+
+        compname = 'Orbit_Dynamics'
+        inputs = ['r_e2b_I0']
+        outputs = ['r_e2b_I']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        shape = self.model.root.comp._params_dict['r_e2b_I0']['shape']
+        self.model['r_e2b_I0'][:3] = np.random.random((3)) * 1e6
+        self.model['r_e2b_I0'][3:] = np.random.random((3)) * 1e5
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Orbit_Initial(self):
+
+        compname = 'Orbit_Initial'
+        inputs = ['altPerigee', 'altApogee', 'RAAN', 'Inc', 'argPerigee',
+        'trueAnomaly']
+        outputs = ['r_e2b_I0']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
     #def test_ThermalTemperature(self):
 
@@ -582,32 +606,6 @@ class Testcase_CADRE(unittest.TestCase):
         #compname = 'ReactionWheel_Torque'
         #inputs = ['T_tot']
         #outputs = ['T_RW']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_AAOrbit_Dynamics(self):
-
-        #compname = 'Orbit_Dynamics'
-        #inputs = ['r_e2b_I0']
-        #outputs = ['r_e2b_I']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #shape = self.model.comp.r_e2b_I0.shape
-        #self.model.comp.r_e2b_I0[:3] = np.random.random((3)) * 1e6
-        #self.model.comp.r_e2b_I0[3:] = np.random.random((3)) * 1e5
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Orbit_Initial(self):
-
-        #compname = 'Orbit_Initial'
-        #inputs = ['altPerigee', 'altApogee', 'RAAN', 'Inc', 'argPerigee',
-                  #'trueAnomaly']
-        #outputs = ['r_e2b_I0']
         #state0 = []
 
         #self.setup(compname, inputs, state0)
