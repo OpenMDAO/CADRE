@@ -447,237 +447,200 @@ class Comm_EarthsSpin(Component):
                 dparams['t'] += self.dq_dt[:, k] * dresids['q_E'][k, :]
 
 
-#class Comm_EarthsSpinMtx(Component):
+class Comm_EarthsSpinMtx(Component):
+    ''' Quaternion to rotation matrix for the earth spin. '''
 
-    #''' Quaternion to rotation matrix for the earth spin. '''
+    def __init__(self, n):
+        super(Comm_EarthsSpinMtx, self).__init__()
 
-    #def __init__(self, n):
-        #super(Comm_EarthsSpinMtx, self).__init__()
+        self.n = n
 
-        #self.n = n
+        # Inputs
+        self.add_param('q_E', np.zeros((4, self.n)), units="unitless",
+                       desc="Quarternion matrix in Earth-fixed frame over time")
 
-        ## Inputs
-        #self.add(
-            #'q_E',
-            #Array(
-                #np.zeros((4, self.n)),
-                #iotype='in',
-                #shape=(4, self.n),
-                #units="unitless",
-                #desc="Quarternion matrix in Earth-fixed frame over time"
-            #)
-        #)
+        # Outputs
+        self.add_output('O_IE', np.zeros((3, 3, self.n)), units="unitless",
+                        desc="Rotation matrix from Earth-centered inertial frame to "
+                        "Earth-fixed frame over time")
 
-        ## Outputs
-        #self.add(
-            #'O_IE',
-            #Array(
-                #np.zeros((3, 3, self.n)),
-                #iotype='out',
-                #shape=(3, 3, self.n),
-                #units="unitless",
-                #desc="Rotation matrix from Earth-centered inertial frame to Earth-fixed frame over time"
-            #)
-        #)
+    def solve_nonlinear(self, params, unknowns, resids):
+        """ Calculate output. """
 
-    #def list_deriv_vars(self):
-        #input_keys = ('q_E',)
-        #output_keys = ('O_IE',)
-        #return input_keys, output_keys
+        q_E = params['q_E']
+        O_IE = unknowns['O_IE']
 
+        A = np.zeros((4, 3))
+        B = np.zeros((4, 3))
 
-    #def provideJ(self):
-        #""" Calculate and save derivatives. (i.e., Jacobian) """
+        for i in range(0, self.n):
+            A[0, :] = ( q_E[0, i], -q_E[3, i],  q_E[2, i])
+            A[1, :] = ( q_E[3, i],  q_E[0, i], -q_E[1, i])
+            A[2, :] = (-q_E[2, i],  q_E[1, i],  q_E[0, i])
+            A[3, :] = ( q_E[1, i],  q_E[2, i],  q_E[3, i])
 
-        #A = np.zeros((4, 3))
-        #B = np.zeros((4, 3))
+            B[0, :] = ( q_E[0, i],  q_E[3, i], -q_E[2, i])
+            B[1, :] = (-q_E[3, i],  q_E[0, i],  q_E[1, i])
+            B[2, :] = ( q_E[2, i], -q_E[1, i],  q_E[0, i])
+            B[3, :] = ( q_E[1, i],  q_E[2, i],  q_E[3, i])
 
-        #dA_dq = np.zeros((4, 3, 4))
-        #dB_dq = np.zeros((4, 3, 4))
+            O_IE[:, :, i] = np.dot(A.T, B)
 
-        #self.J = np.zeros((self.n, 3, 3, 4))
+    def jacobian(self, params, unknowns, resids):
+        """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        #dA_dq[0, :, 0] = (1, 0, 0)
-        #dA_dq[1, :, 0] = (0, 1, 0)
-        #dA_dq[2, :, 0] = (0, 0, 1)
-        #dA_dq[3, :, 0] = (0, 0, 0)
+        q_E = params['q_E']
 
-        #dA_dq[0, :, 1] = (0, 0, 0)
-        #dA_dq[1, :, 1] = (0, 0, -1)
-        #dA_dq[2, :, 1] = (0, 1, 0)
-        #dA_dq[3, :, 1] = (1, 0, 0)
+        A = np.zeros((4, 3))
+        B = np.zeros((4, 3))
 
-        #dA_dq[0, :, 2] = (0, 0, 1)
-        #dA_dq[1, :, 2] = (0, 0, 0)
-        #dA_dq[2, :, 2] = (-1, 0, 0)
-        #dA_dq[3, :, 2] = (0, 1, 0)
+        dA_dq = np.zeros((4, 3, 4))
+        dB_dq = np.zeros((4, 3, 4))
 
-        #dA_dq[0, :, 3] = (0, -1, 0)
-        #dA_dq[1, :, 3] = (1, 0, 0)
-        #dA_dq[2, :, 3] = (0, 0, 0)
-        #dA_dq[3, :, 3] = (0, 0, 1)
+        self.J = np.zeros((self.n, 3, 3, 4))
 
+        dA_dq[0, :, 0] = (1, 0, 0)
+        dA_dq[1, :, 0] = (0, 1, 0)
+        dA_dq[2, :, 0] = (0, 0, 1)
+        dA_dq[3, :, 0] = (0, 0, 0)
 
-        #dB_dq[0, :, 0] = (1, 0, 0)
-        #dB_dq[1, :, 0] = (0, 1, 0)
-        #dB_dq[2, :, 0] = (0, 0, 1)
-        #dB_dq[3, :, 0] = (0, 0, 0)
+        dA_dq[0, :, 1] = (0, 0, 0)
+        dA_dq[1, :, 1] = (0, 0, -1)
+        dA_dq[2, :, 1] = (0, 1, 0)
+        dA_dq[3, :, 1] = (1, 0, 0)
 
-        #dB_dq[0, :, 1] = (0, 0, 0)
-        #dB_dq[1, :, 1] = (0, 0, 1)
-        #dB_dq[2, :, 1] = (0, -1, 0)
-        #dB_dq[3, :, 1] = (1, 0, 0)
+        dA_dq[0, :, 2] = (0, 0, 1)
+        dA_dq[1, :, 2] = (0, 0, 0)
+        dA_dq[2, :, 2] = (-1, 0, 0)
+        dA_dq[3, :, 2] = (0, 1, 0)
 
-        #dB_dq[0, :, 2] = (0, 0, -1)
-        #dB_dq[1, :, 2] = (0, 0, 0)
-        #dB_dq[2, :, 2] = (1, 0, 0)
-        #dB_dq[3, :, 2] = (0, 1, 0)
-
-        #dB_dq[0, :, 3] = (0, 1, 0)
-        #dB_dq[1, :, 3] = (-1, 0, 0)
-        #dB_dq[2, :, 3] = (0, 0, 0)
-        #dB_dq[3, :, 3] = (0, 0, 1)
-
-        #for i in range(0, self.n):
-            #A[0, :] = ( self.q_E[0, i], -self.q_E[3, i],  self.q_E[2, i])
-            #A[1, :] = ( self.q_E[3, i],  self.q_E[0, i], -self.q_E[1, i])
-            #A[2, :] = (-self.q_E[2, i],  self.q_E[1, i],  self.q_E[0, i])
-            #A[3, :] = ( self.q_E[1, i],  self.q_E[2, i],  self.q_E[3, i])
-
-            #B[0, :] = ( self.q_E[0, i],  self.q_E[3, i], -self.q_E[2, i])
-            #B[1, :] = (-self.q_E[3, i],  self.q_E[0, i],  self.q_E[1, i])
-            #B[2, :] = ( self.q_E[2, i], -self.q_E[1, i],  self.q_E[0, i])
-            #B[3, :] = ( self.q_E[1, i],  self.q_E[2, i],  self.q_E[3, i])
-
-            #for k in range(0, 4):
-                #self.J[i, :,:, k] = np.dot(dA_dq[:,:, k].T, B) + \
-                    #np.dot(A.T, dB_dq[:, :, k])
-
-    #def execute(self):
-        #""" Calculate output. """
-
-        #A = np.zeros((4, 3))
-        #B = np.zeros((4, 3))
-
-        #for i in range(0, self.n):
-            #A[0, :] = ( self.q_E[0, i], -self.q_E[3, i],  self.q_E[2, i])
-            #A[1, :] = ( self.q_E[3, i],  self.q_E[0, i], -self.q_E[1, i])
-            #A[2, :] = (-self.q_E[2, i],  self.q_E[1, i],  self.q_E[0, i])
-            #A[3, :] = ( self.q_E[1, i],  self.q_E[2, i],  self.q_E[3, i])
-
-            #B[0, :] = ( self.q_E[0, i],  self.q_E[3, i], -self.q_E[2, i])
-            #B[1, :] = (-self.q_E[3, i],  self.q_E[0, i],  self.q_E[1, i])
-            #B[2, :] = ( self.q_E[2, i], -self.q_E[1, i],  self.q_E[0, i])
-            #B[3, :] = ( self.q_E[1, i],  self.q_E[2, i],  self.q_E[3, i])
-
-            #self.O_IE[:, :, i] = np.dot(A.T, B)
-
-    #def apply_deriv(self, arg, result):
-        #""" Matrix-vector product with the Jacobian. """
-
-        #if 'q_E' in arg and 'O_IE' in result:
-            #for u in range(3):
-                #for v in range(3):
-                    #for k in range(4):
-                        #result['O_IE'][u, v, :] += self.J[:, u, v, k] * \
-                            #arg['q_E'][k, :]
-
-    #def apply_derivT(self, arg, result):
-        #""" Matrix-vector product with the transpose of the Jacobian. """
-
-        #if 'O_IE' in arg and 'q_E' in result:
-            #for u in range(3):
-                #for v in range(3):
-                    #for k in range(4):
-                        #result['q_E'][k, :] += self.J[:, u, v, k] * \
-                            #arg['O_IE'][u, v, :]
+        dA_dq[0, :, 3] = (0, -1, 0)
+        dA_dq[1, :, 3] = (1, 0, 0)
+        dA_dq[2, :, 3] = (0, 0, 0)
+        dA_dq[3, :, 3] = (0, 0, 1)
 
 
-#class Comm_GainPattern(Component):
+        dB_dq[0, :, 0] = (1, 0, 0)
+        dB_dq[1, :, 0] = (0, 1, 0)
+        dB_dq[2, :, 0] = (0, 0, 1)
+        dB_dq[3, :, 0] = (0, 0, 0)
 
-    #''' Determines transmitter gain based on an external az-el map. '''
+        dB_dq[0, :, 1] = (0, 0, 0)
+        dB_dq[1, :, 1] = (0, 0, 1)
+        dB_dq[2, :, 1] = (0, -1, 0)
+        dB_dq[3, :, 1] = (1, 0, 0)
 
-    #def __init__(self, n, rawG=None):
-        #super(Comm_GainPattern, self).__init__()
-        #self.n = n
+        dB_dq[0, :, 2] = (0, 0, -1)
+        dB_dq[1, :, 2] = (0, 0, 0)
+        dB_dq[2, :, 2] = (1, 0, 0)
+        dB_dq[3, :, 2] = (0, 1, 0)
 
-        #if rawG is None:
-            #fpath = os.path.dirname(os.path.realpath(__file__))
-            #rawGdata = np.genfromtxt(fpath + '/data/Comm/Gain.txt')
-            #rawG = (10 ** (rawGdata / 10.0)).reshape((361, 361), order='F')
+        dB_dq[0, :, 3] = (0, 1, 0)
+        dB_dq[1, :, 3] = (-1, 0, 0)
+        dB_dq[2, :, 3] = (0, 0, 0)
+        dB_dq[3, :, 3] = (0, 0, 1)
 
-        ## Inputs
-        #self.add(
-            #'azimuthGS',
-            #Array(
-                #np.zeros(n),
-                #iotype='in',
-                #shape=(n,),
-                #units="rad",
-                #desc="Azimuth angle from satellite to ground station in Earth-fixed frame over time"
-            #)
-        #)
+        for i in range(0, self.n):
+            A[0, :] = ( q_E[0, i], -q_E[3, i],  q_E[2, i])
+            A[1, :] = ( q_E[3, i],  q_E[0, i], -q_E[1, i])
+            A[2, :] = (-q_E[2, i],  q_E[1, i],  q_E[0, i])
+            A[3, :] = ( q_E[1, i],  q_E[2, i],  q_E[3, i])
 
-        #self.add(
-            #'elevationGS',
-            #Array(
-                #np.zeros(n),
-                #iotype='in',
-                #shape=(self.n,),
-                #units="rad",
-                #desc="Elevation angle from satellite to ground station in Earth-fixed frame over time"
-            #)
-        #)
+            B[0, :] = ( q_E[0, i],  q_E[3, i], -q_E[2, i])
+            B[1, :] = (-q_E[3, i],  q_E[0, i],  q_E[1, i])
+            B[2, :] = ( q_E[2, i], -q_E[1, i],  q_E[0, i])
+            B[3, :] = ( q_E[1, i],  q_E[2, i],  q_E[3, i])
 
-        ## Outputs
-        #self.add('gain', Array(np.zeros(n),
-                               #iotype='out',
-                               #shape=(n,),
-                               #units="unitless",
-                               #desc="Transmitter gain over time"))
+            for k in range(0, 4):
+                self.J[i, :,:, k] = np.dot(dA_dq[:,:, k].T, B) + \
+                    np.dot(A.T, dB_dq[:, :, k])
 
-        #pi = np.pi
-        #az = np.linspace(0, 2 * pi, 361)
-        #el = np.linspace(0, 2 * pi, 361)
+    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+        """ Matrix-vector product with the Jacobian. """
 
-        #self.MBI = MBI.MBI(rawG, [az, el], [15, 15], [4, 4])
-        #self.x = np.zeros((self.n, 2), order='F')
+        dO_IE = dresids['O_IE']
 
-    #def list_deriv_vars(self):
-        #input_keys = ('azimuthGS', 'elevationGS',)
-        #output_keys = ('gain',)
-        #return input_keys, output_keys
+        if mode == 'fwd':
+            for u in range(3):
+                for v in range(3):
+                    for k in range(4):
+                        dO_IE[u, v, :] += self.J[:, u, v, k] * \
+                            dparams['q_E'][k, :]
 
 
-    #def provideJ(self):
-        #""" Calculate and save derivatives. (i.e., Jacobian) """
+        else:
+            for u in range(3):
+                for v in range(3):
+                    for k in range(4):
+                        dq_E = dparams['q_E']
+                        dq_E[k, :] += self.J[:, u, v, k] * \
+                            dO_IE[u, v, :]
+                        dparams['q_E'] = dq_E
 
-        #self.dg_daz = self.MBI.evaluate(self.x, 1)[:, 0]
-        #self.dg_del = self.MBI.evaluate(self.x, 2)[:, 0]
+class Comm_GainPattern(Component):
+    ''' Determines transmitter gain based on an external az-el map. '''
 
-    #def execute(self):
-        #""" Calculate output. """
+    def __init__(self, n, rawG=None):
+        super(Comm_GainPattern, self).__init__()
 
-        #result = fixangles(self.n, self.azimuthGS, self.elevationGS)
-        #self.x[:, 0] = result[0]
-        #self.x[:, 1] = result[1]
-        #self.gain = self.MBI.evaluate(self.x)[:, 0]
+        self.n = n
 
-    #def apply_deriv(self, arg, result):
-        #""" Matrix-vector product with the Jacobian. """
+        if rawG is None:
+            fpath = os.path.dirname(os.path.realpath(__file__))
+            rawGdata = np.genfromtxt(fpath + '/data/Comm/Gain.txt')
+            rawG = (10 ** (rawGdata / 10.0)).reshape((361, 361), order='F')
 
-        #if 'azimuthGS' in arg and 'gain' in result:
-            #result['gain'] += self.dg_daz * arg['azimuthGS']
-        #if 'elevationGS' in arg and 'gain' in result:
-            #result['gain'] += self.dg_del * arg['elevationGS']
+        # Inputs
+        self.add_param('azimuthGS', np.zeros(n), units="rad",
+                       desc="Azimuth angle from satellite to ground station in "
+                       "Earth-fixed frame over time")
 
-    #def apply_derivT(self, arg, result):
-        #""" Matrix-vector product with the transpose of the Jacobian. """
+        self.add_param('elevationGS', np.zeros(n), units="rad",
+                       desc="Elevation angle from satellite to ground station "
+                       "in Earth-fixed frame over time")
 
-        #if 'azimuthGS' in result and 'gain' in arg:
-            #result['azimuthGS'] += self.dg_daz * arg['gain']
-        #if 'elevationGS' in result and 'gain' in arg:
-            #result['elevationGS'] += self.dg_del * arg['gain']
+        # Outputs
+        self.add_output('gain', np.zeros(n), units="unitless",
+                        desc="Transmitter gain over time")
+
+
+        pi = np.pi
+        az = np.linspace(0, 2 * pi, 361)
+        el = np.linspace(0, 2 * pi, 361)
+
+        self.MBI = MBI.MBI(rawG, [az, el], [15, 15], [4, 4])
+        self.x = np.zeros((self.n, 2), order='F')
+
+    def solve_nonlinear(self, params, unknowns, resids):
+        """ Calculate output. """
+
+        result = fixangles(self.n, params['azimuthGS'], params['elevationGS'])
+        self.x[:, 0] = result[0]
+        self.x[:, 1] = result[1]
+        unknowns['gain'] = self.MBI.evaluate(self.x)[:, 0]
+
+    def jacobian(self, params, unknowns, resids):
+        """ Calculate and save derivatives. (i.e., Jacobian) """
+
+        self.dg_daz = self.MBI.evaluate(self.x, 1)[:, 0]
+        self.dg_del = self.MBI.evaluate(self.x, 2)[:, 0]
+
+    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+        """ Matrix-vector product with the Jacobian. """
+
+        dgain = dresids['gain']
+
+        if mode == 'fwd':
+            if 'azimuthGS' in dparams:
+                dgain += self.dg_daz * dparams['azimuthGS']
+            if 'elevationGS' in dparams:
+                dgain += self.dg_del * dparams['elevationGS']
+
+        else:
+            if 'azimuthGS' in dparams:
+                dparams['azimuthGS'] += self.dg_daz * dgain
+            if 'elevationGS' in dparams:
+                dparams['elevationGS'] += self.dg_del * dgain
 
 
 #class Comm_GSposEarth(Component):

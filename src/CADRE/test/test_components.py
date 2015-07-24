@@ -18,7 +18,7 @@ from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
      Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque
 from CADRE.battery import BatterySOC, BatteryPower, BatteryConstraints
 from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMtx, \
-     Comm_BitRate, Comm_Distance, Comm_EarthsSpin
+     Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern
 
 #from CADRE.comm import Comm_AntRotation, Comm_AntRotationMtx, Comm_BitRate, \
      #Comm_DataDownloaded, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, \
@@ -274,25 +274,25 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_results(inputs)
 
-    #def test_Comm_EarthsSpinMtx(self):
+    def test_Comm_EarthsSpinMtx(self):
 
-        #compname = 'Comm_EarthsSpinMtx'
-        #inputs = ['q_E']
-        #outputs = ['O_IE']
+        compname = 'Comm_EarthsSpinMtx'
+        inputs = ['q_E']
+        outputs = ['O_IE']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_GainPattern(self):
+    def test_Comm_GainPattern(self):
 
-        #compname = 'Comm_GainPattern'
-        #inputs = ['azimuthGS', 'elevationGS']
-        #outputs = ['gain']
+        compname = 'Comm_GainPattern'
+        inputs = ['azimuthGS', 'elevationGS']
+        outputs = ['gain']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
     #def test_Comm_GSposEarth(self):
 
