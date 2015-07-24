@@ -24,12 +24,11 @@ from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMt
 from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
 from CADRE.parameters import BsplineParameters
 from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
-
-#from CADRE.reactionwheel import ReactionWheel_Power, \
-     #ReactionWheel_Torque, ReactionWheel_Dynamics
-#from CADRE.solar import Solar_ExposedArea
-#from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, \
-     #Sun_PositionSpherical
+from CADRE.reactionwheel import ReactionWheel_Motor, ReactionWheel_Power, \
+     ReactionWheel_Torque, ReactionWheel_Dynamics
+from CADRE.solar import Solar_ExposedArea
+from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, \
+     Sun_PositionSpherical
 #from CADRE.thermal_temperature import ThermalTemperature
 
 # Ignore the numerical warnings from performing the rel error calc.
@@ -428,6 +427,96 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_results(outputs)
 
+    def test_ReactionWheel_Motor(self):
+
+        compname = 'ReactionWheel_Motor'
+        inputs = ['T_RW', 'w_B', 'w_RW']
+        outputs = ['T_m']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_ReactionWheel_Power(self):
+
+        compname = 'ReactionWheel_Power'
+        inputs = ['w_RW', 'T_RW']
+        outputs = ['P_RW']
+
+        self.setup(compname, inputs)
+
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_ReactionWheel_Torque(self):
+
+        compname = 'ReactionWheel_Torque'
+        inputs = ['T_tot']
+        outputs = ['T_RW']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_ReactionWheel_Dynamics(self):
+
+        compname = 'ReactionWheel_Dynamics'
+        inputs = ['w_B', 'T_RW']
+        outputs = ['w_RW']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Solar_ExposedArea(self):
+        compname = 'Solar_ExposedArea'
+        inputs = ['finAngle', 'azimuth', 'elevation']
+        outputs = ['exposedArea']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Sun_LOS(self):
+
+        compname = 'Sun_LOS'
+        inputs = ['r_e2b_I', 'r_e2s_I']
+        outputs = ['LOS']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Sun_PositionBody(self):
+
+        compname = 'Sun_PositionBody'
+        inputs = ['O_BI', 'r_e2s_I']
+        outputs = ['r_e2s_B']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Sun_PositionECI(self):
+
+        compname = 'Sun_PositionECI'
+        inputs = ['t', 'LD']
+        outputs = ['r_e2s_I']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Sun_PositionSpherical(self):
+
+        compname = 'Sun_PositionSpherical'
+        inputs = ['r_e2s_B']
+        outputs = ['azimuth', 'elevation']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
     #def test_ThermalTemperature(self):
 
         #compname = 'ThermalTemperature'
@@ -438,105 +527,6 @@ class Testcase_CADRE(unittest.TestCase):
         #self.run_model()
         #self.compare_results(outputs)
 
-    #def test_Sun_LOS(self):
-
-        #compname = 'Sun_LOS'
-        #inputs = ['r_e2b_I', 'r_e2s_I']
-        #outputs = ['LOS']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
-
-    #def test_Sun_PositionBody(self):
-
-        #compname = 'Sun_PositionBody'
-        #inputs = ['O_BI', 'r_e2s_I']
-        #outputs = ['r_e2s_B']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
-
-    #def test_Sun_PositionECI(self):
-
-        #compname = 'Sun_PositionECI'
-        #inputs = ['t', 'LD']
-        #outputs = ['r_e2s_I']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
-
-    #def test_Sun_PositionSpherical(self):
-
-        #compname = 'Sun_PositionSpherical'
-        #inputs = ['r_e2s_B']
-        #outputs = ['azimuth', 'elevation']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
-
-    #def test_Solar_ExposedArea(self):
-        #compname = 'Solar_ExposedArea'
-        #inputs = ['finAngle', 'azimuth', 'elevation']
-        #outputs = ['exposedArea']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
-
-    #def test_ReactionWheel_Motor(self):
-
-        #compname = 'ReactionWheel_Motor'
-        #inputs = ['T_RW', 'w_B', 'w_RW']
-        #outputs = ['T_m']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
-
-    #def test_ReactionWheel_Dynamics(self):
-
-        #compname = 'ReactionWheel_Dynamics'
-        #inputs = ['w_B', 'T_RW']
-        #outputs = ['w_RW']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
-
-    #def test_ReactionWheel_Power(self):
-
-        #compname = 'ReactionWheel_Power'
-        #inputs = ['w_RW', 'T_RW']
-        #outputs = ['P_RW']
-
-        #self.setup(compname, inputs)
-
-        #self.run_model()
-        #self.compare_results(outputs)
-
-    #def test_ReactionWheel_Torque(self):
-
-        #compname = 'ReactionWheel_Torque'
-        #inputs = ['T_tot']
-        #outputs = ['T_RW']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
-
-    #def test_BatterySOC(self):
-
-        #compname = 'BatterySOC'
-        #inputs = ['P_bat', 'temperature']
-        #outputs = ['SOC']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,7 @@
 ''' Attitude discipline for CADRE. '''
 
-import numpy as np
-
 from six.moves import range
+import numpy as np
 
 from openmdao.core.component import Component
 

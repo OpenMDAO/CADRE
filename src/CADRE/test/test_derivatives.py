@@ -24,12 +24,11 @@ from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMt
 from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
 from CADRE.parameters import BsplineParameters
 from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
-
-#from CADRE.reactionwheel import ReactionWheel_Power, \
-    #ReactionWheel_Torque, ReactionWheel_Dynamics
-#from CADRE.solar import Solar_ExposedArea
-#from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, \
-    #Sun_PositionSpherical
+from CADRE.reactionwheel import ReactionWheel_Motor, ReactionWheel_Power, \
+     ReactionWheel_Torque, ReactionWheel_Dynamics
+from CADRE.solar import Solar_ExposedArea
+from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, \
+    Sun_PositionSpherical
 #from CADRE.thermal_temperature import ThermalTemperature
 
 
@@ -513,120 +512,120 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 
+    def test_ReactionWheel_Motor(self):
+
+        compname = 'ReactionWheel_Motor'
+        inputs = ['T_RW', 'w_B', 'w_RW']
+        outputs = ['T_m']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_ReactionWheel_Power(self):
+
+        compname = 'ReactionWheel_Power'
+        inputs = ['w_RW', 'T_RW']
+        outputs = ['P_RW']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+
+        self.run_model()
+        self.compare_derivatives(inputs, outputs, rel_error=True)
+
+    def test_ReactionWheel_Torque(self):
+
+        compname = 'ReactionWheel_Torque'
+        inputs = ['T_tot']
+        outputs = ['T_RW']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_ReactionWheel_Dynamics(self):
+
+        compname = 'ReactionWheel_Dynamics'
+        inputs = ['w_B', 'T_RW']
+        outputs = ['w_RW']
+
+        # keep these at zeros
+        state0 = []  # ['w_RW0']
+
+        self.setup(compname, inputs, state0)
+
+        shape = self.model.root.comp._params_dict['w_B']['shape']
+        self.model['w_B'] = np.random.random(shape) * 1e-4
+        shape = self.model.root.comp._params_dict['T_RW']['shape']
+        self.model['T_RW'] = np.random.random(shape) * 1e-9
+
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Solar_ExposedArea(self):
+
+        compname = 'Solar_ExposedArea'
+        inputs = ['finAngle', 'azimuth', 'elevation']
+        outputs = ['exposedArea']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Sun_LOS(self):
+
+        compname = 'Sun_LOS'
+        inputs = ['r_e2b_I', 'r_e2s_I']
+        outputs = ['LOS']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Sun_PositionBody(self):
+
+        compname = 'Sun_PositionBody'
+        inputs = ['O_BI', 'r_e2s_I']
+        outputs = ['r_e2s_B']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Sun_PositionECI(self):
+
+        compname = 'Sun_PositionECI'
+        inputs = ['t', 'LD']
+        outputs = ['r_e2s_I']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Sun_PositionSpherical(self):
+
+        compname = 'Sun_PositionSpherical'
+        inputs = ['r_e2s_B']
+        outputs = ['azimuth', 'elevation']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
     #def test_ThermalTemperature(self):
 
         #compname = 'ThermalTemperature'
         #inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
         #outputs = ['temperature']
         #state0 = ['T0']
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Sun_LOS(self):
-
-        #compname = 'Sun_LOS'
-        #inputs = ['r_e2b_I', 'r_e2s_I']
-        #outputs = ['LOS']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Sun_PositionBody(self):
-
-        #compname = 'Sun_PositionBody'
-        #inputs = ['O_BI', 'r_e2s_I']
-        #outputs = ['r_e2s_B']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Sun_PositionECI(self):
-
-        #compname = 'Sun_PositionECI'
-        #inputs = ['t', 'LD']
-        #outputs = ['r_e2s_I']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Sun_PositionSpherical(self):
-
-        #compname = 'Sun_PositionSpherical'
-        #inputs = ['r_e2s_B']
-        #outputs = ['azimuth', 'elevation']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Solar_ExposedArea(self):
-
-        #compname = 'Solar_ExposedArea'
-        #inputs = ['finAngle', 'azimuth', 'elevation']
-        #outputs = ['exposedArea']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    # def test_ReactionWheel_Motor(self):
-
-    #     compname = 'ReactionWheel_Motor'
-    #     inputs = ['T_RW', 'w_B', 'w_RW']
-    #     outputs = ['T_m']
-    #     state0 = []
-
-    #     self.setup(compname, inputs, state0)
-    #     self.run_model()
-    #     self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_ReactionWheel_Dynamics(self):
-
-        #compname = 'ReactionWheel_Dynamics'
-        #inputs = ['w_B', 'T_RW']
-        #outputs = ['w_RW']
-
-        ## keep these at zeros
-        #state0 = []  # ['w_RW0']
-
-        #self.setup(compname, inputs, state0)
-
-        #shape = self.model.comp.w_B.shape
-        #self.model.comp.w_B = np.random.random(shape) * 1e-4
-        #shape = self.model.comp.T_RW.shape
-        #self.model.comp.T_RW = np.random.random(shape) * 1e-9
-
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_ReactionWheel_Power(self):
-
-        #compname = 'ReactionWheel_Power'
-        #inputs = ['w_RW', 'T_RW']
-        #outputs = ['P_RW']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-
-        #self.run_model()
-        #self.compare_derivatives(inputs, outputs, rel_error=True)
-
-    #def test_ReactionWheel_Torque(self):
-
-        #compname = 'ReactionWheel_Torque'
-        #inputs = ['T_tot']
-        #outputs = ['T_RW']
-        #state0 = []
 
         #self.setup(compname, inputs, state0)
         #self.run_model()

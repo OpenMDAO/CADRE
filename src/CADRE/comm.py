@@ -1,7 +1,6 @@
 ''' Communications Discpline for CADRE '''
 
 import os
-
 from six.moves import range
 
 import numpy as np
