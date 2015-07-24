@@ -13,12 +13,13 @@ from openmdao.core.group import Group
 from openmdao.core.problem import Problem
 from openmdao.test.testutil import assert_rel_error
 
-from CADRE.attitude import Attitude_Angular
+from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
+     Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
+     Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque
+from CADRE.battery import BatterySOC, BatteryPower, BatteryConstraints
+from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMtx, \
+     Comm_BitRate, Comm_Distance, Comm_EarthsSpin
 
-#from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
-    #Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
-    #Attitude_RotationMtxRates, Attitude_Torque
-#from CADRE.battery import BatteryConstraints, BatteryPower, BatterySOC
 #from CADRE.comm import Comm_AntRotation, Comm_AntRotationMtx, Comm_BitRate, \
     #Comm_DataDownloaded, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, \
     #Comm_GainPattern, Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, \
@@ -63,9 +64,13 @@ class Testcase_CADRE(unittest.TestCase):
             # At least one comp has no args.
             self.model.root.add('comp', eval('%s()' % compname), promotes=['*'])
 
-        for item in inputs:
+        for item in inputs + state0:
             pshape = self.model.root.comp._params_dict[item]['shape']
-            self.model.root.add('p_%s' % item, ParamComp(item, np.zeros((pshape))),
+            if pshape == 1:
+                initval = 0.0
+            else:
+                initval = np.zeros((pshape))
+            self.model.root.add('p_%s' % item, ParamComp(item, initval),
                                 promotes=['*'])
 
         # TODO: don't need this after auto-order
@@ -86,7 +91,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         # Some components have a time step as a non-differentiable input.
         if 'h' in self.model.root.comp._params_dict:
-            self.model['comp.h'] = 0.01
+            self.model['h'] = 0.01
         self.model.run()
 
     def compare_derivatives(self, var_in, var_out, rel_error=False):
@@ -94,11 +99,13 @@ class Testcase_CADRE(unittest.TestCase):
         model = self.model
 
         # Numeric
-        Jn = model.calc_gradient(var_in, var_out, mode="fd", return_format='array')
+        Jn = model.calc_gradient(var_in, var_out, mode="fd",
+                                 return_format='array')
         # print Jn
 
         # Analytic forward
-        Jf = model.calc_gradient(var_in, var_out, mode='fwd', return_format='array')
+        Jf = model.calc_gradient(var_in, var_out, mode='fwd',
+                                 return_format='array')
 
         # print Jf
 
@@ -110,7 +117,8 @@ class Testcase_CADRE(unittest.TestCase):
         assert_rel_error(self, diff.max(), 0.0, 1e-3)
 
         # Analytic adjoint
-        Ja = model.calc_gradient(var_in, var_out, mode='rev', return_format='array')
+        Ja = model.calc_gradient(var_in, var_out, mode='rev',
+                                 return_format='array')
 
         # print Ja
 
@@ -132,79 +140,189 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_DataDownloaded(self):
+    def test_Attitude_AngularRates(self):
 
-        #compname = 'Comm_DataDownloaded'
-        #inputs = ['Dr']
-        #outputs = ['Data']
-        #state0 = ['Data0']
+        compname = 'Attitude_AngularRates'
+        inputs = ['w_B']
+        outputs = ['wdot_B']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_AntRotation(self):
+    def test_Attitude_Attitude(self):
 
-        #compname = 'Comm_AntRotation'
-        #inputs = ['antAngle']
-        #outputs = ['q_A']
-        #state0 = []
+        compname = 'Attitude_Attitude'
+        inputs = ['r_e2b_I']
+        outputs = ['O_RI']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_AntRotationMtx(self):
+    def test_Attitude_Roll(self):
 
-        #compname = 'Comm_AntRotationMtx'
-        #inputs = ['q_A']
-        #outputs = ['O_AB']
-        #state0 = []
+        compname = 'Attitude_Roll'
+        inputs = ['Gamma']
+        outputs = ['O_BR']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_BitRate(self):
+    def test_Attitude_RotationMtx(self):
 
-        #compname = 'Comm_BitRate'
-        #inputs = ['P_comm', 'gain', 'GSdist', 'CommLOS']
-        #outputs = ['Dr']
-        #state0 = []
+        compname = 'Attitude_RotationMtx'
+        inputs = ['O_BR', 'O_RI']
+        outputs = ['O_BI']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-        ## These need to be a certain magnitude so it doesn't blow up
-        #shape = self.model.comp.P_comm.shape
-        #self.model.comp.P_comm = np.ones(shape)
-        #shape = self.model.comp.GSdist.shape
-        #self.model.comp.GSdist = np.random.random(shape) * 1e3
+    def test_Attitude_RotationMtxRates(self):
 
-        #self.run_model()
+        compname = 'Attitude_RotationMtxRates'
+        inputs = ['O_BI']
+        outputs = ['Odot_BI']
+        state0 = []
 
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_Distance(self):
+    def test_Attitude_Sideslip(self):
 
-        #compname = 'Comm_Distance'
-        #inputs = ['r_b2g_A']
-        #outputs = ['GSdist']
-        #state0 = []
+        compname = 'Attitude_Sideslip'
+        inputs = ['r_e2b_I', 'O_BI']
+        outputs = ['v_e2b_B']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_Comm_EarthsSpin(self):
+    def test_Attitude_Torque(self):
 
-        #compname = 'Comm_EarthsSpin'
-        #inputs = ['t']
-        #outputs = ['q_E']
-        #state0 = []
+        compname = 'Attitude_Torque'
+        inputs = ['w_B', 'wdot_B']
+        outputs = ['T_tot']
+        state0 = []
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_BatterySOC(self):
+
+        compname = 'BatterySOC'
+        inputs = ['P_bat', 'temperature']
+        outputs = ['SOC']
+        state0 = ['iSOC']
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_BatteryPower(self):
+
+        compname = 'BatteryPower'
+        inputs = ['SOC', 'temperature', 'P_bat']
+        outputs = ['I_bat']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_BatteryConstraints(self):
+
+        compname = 'BatteryConstraints'
+        inputs = ['I_bat', 'SOC']
+        outputs = ['ConCh', 'ConDs', 'ConS0', 'ConS1']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Comm_DataDownloaded(self):
+
+        compname = 'Comm_DataDownloaded'
+        inputs = ['Dr']
+        outputs = ['Data']
+        state0 = ['Data0']
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Comm_AntRotation(self):
+
+        compname = 'Comm_AntRotation'
+        inputs = ['antAngle']
+        outputs = ['q_A']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Comm_AntRotationMtx(self):
+
+        compname = 'Comm_AntRotationMtx'
+        inputs = ['q_A']
+        outputs = ['O_AB']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Comm_BitRate(self):
+
+        compname = 'Comm_BitRate'
+        inputs = ['P_comm', 'gain', 'GSdist', 'CommLOS']
+        outputs = ['Dr']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+
+        # These need to be a certain magnitude so it doesn't blow up
+        shape = self.model.root.comp._params_dict['P_comm']['shape']
+        self.model['P_comm'] = np.ones(shape)
+        shape = self.model.root.comp._params_dict['GSdist']['shape']
+        self.model['GSdist'] = np.random.random(shape) * 1e3
+
+        self.run_model()
+
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Comm_Distance(self):
+
+        compname = 'Comm_Distance'
+        inputs = ['r_b2g_A']
+        outputs = ['GSdist']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Comm_EarthsSpin(self):
+
+        compname = 'Comm_EarthsSpin'
+        inputs = ['t']
+        outputs = ['q_E']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
     #def test_Comm_EarthsSpinMtx(self):
 
@@ -311,83 +429,6 @@ class Testcase_CADRE(unittest.TestCase):
         #inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
         #outputs = ['temperature']
         #state0 = ['T0']
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_AngularRates(self):
-
-        #compname = 'Attitude_AngularRates'
-        #inputs = ['w_B']
-        #outputs = ['wdot_B']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_Attitude(self):
-
-        #compname = 'Attitude_Attitude'
-        #inputs = ['r_e2b_I']
-        #outputs = ['O_RI']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_Roll(self):
-
-        #compname = 'Attitude_Roll'
-        #inputs = ['Gamma']
-        #outputs = ['O_BR']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_RotationMtx(self):
-
-        #compname = 'Attitude_RotationMtx'
-        #inputs = ['O_BR', 'O_RI']
-        #outputs = ['O_BI']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_RotationMtxRates(self):
-
-        #compname = 'Attitude_RotationMtxRates'
-        #inputs = ['O_BI']
-        #outputs = ['Odot_BI']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    # def test_Attitude_Sideslip(self):
-
-    #     compname = 'Attitude_Sideslip'
-    #     inputs = ['r_e2b_I', 'O_BI']
-    #     outputs = ['v_e2b_B']
-    #     state0 = []
-
-    #     self.setup(compname, inputs, state0)
-    #     self.run_model()
-    #     self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Attitude_Torque(self):
-
-        #compname = 'Attitude_Torque'
-        #inputs = ['w_B', 'wdot_B']
-        #outputs = ['T_tot']
-        #state0 = []
 
         #self.setup(compname, inputs, state0)
         #self.run_model()
@@ -541,39 +582,6 @@ class Testcase_CADRE(unittest.TestCase):
         #compname = 'ReactionWheel_Torque'
         #inputs = ['T_tot']
         #outputs = ['T_RW']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_BatterySOC(self):
-
-        #compname = 'BatterySOC'
-        #inputs = ['P_bat', 'temperature']
-        #outputs = ['SOC']
-        #state0 = ['iSOC']
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_BatteryPower(self):
-
-        #compname = 'BatteryPower'
-        #inputs = ['SOC', 'temperature', 'P_bat']
-        #outputs = ['I_bat']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_BatteryConstraints(self):
-
-        #compname = 'BatteryConstraints'
-        #inputs = ['I_bat', 'SOC']
-        #outputs = ['ConCh', 'ConDs', 'ConS0', 'ConS1']
         #state0 = []
 
         #self.setup(compname, inputs, state0)

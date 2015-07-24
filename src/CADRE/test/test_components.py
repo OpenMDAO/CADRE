@@ -13,12 +13,13 @@ from openmdao.core.group import Group
 from openmdao.core.problem import Problem
 from openmdao.test.testutil import assert_rel_error
 
-from CADRE.attitude import Attitude_Angular
+from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
+     Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
+     Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque
+from CADRE.battery import BatterySOC, BatteryPower, BatteryConstraints
+from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMtx, \
+     Comm_BitRate, Comm_Distance, Comm_EarthsSpin
 
-#from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
-     #Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
-     #Attitude_RotationMtxRates, Attitude_Torque
-#from CADRE.battery import BatteryConstraints, BatteryPower, BatterySOC
 #from CADRE.comm import Comm_AntRotation, Comm_AntRotationMtx, Comm_BitRate, \
      #Comm_DataDownloaded, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, \
      #Comm_GainPattern, Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, \
@@ -113,55 +114,165 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_results(inputs)
 
-    #def test_Comm_DataDownloaded(self):
+    def test_Attitude_AngularRates(self):
 
-        #compname = 'Comm_DataDownloaded'
-        #inputs = ['Dr']
-        #outputs = ['Data']
+        compname = 'Attitude_AngularRates'
+        inputs = ['w_B']
+        outputs = ['wdot_B']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_AntRotation(self):
+    def test_Attitude_Attitude(self):
 
-        #compname = 'Comm_AntRotation'
-        #inputs = ['antAngle']
-        #outputs = ['q_A']
+        compname = 'Attitude_Attitude'
+        inputs = ['r_e2b_I']
+        outputs = ['O_RI']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_BitRate(self):
+    def test_Attitude_Roll(self):
 
-        #compname = 'Comm_BitRate'
-        #inputs = ['P_comm', 'gain', 'GSdist', 'CommLOS']
-        #outputs = ['Dr']
+        compname = 'Attitude_Roll'
+        inputs = ['Gamma']
+        outputs = ['O_BR']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_Distance(self):
+    def test_Attitude_RotationMtx(self):
 
-        #compname = 'Comm_Distance'
-        #inputs = ['r_b2g_A']
-        #outputs = ['GSdist']
+        compname = 'Attitude_RotationMtx'
+        inputs = ['O_BR', 'O_RI']
+        outputs = ['O_BI']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
-    #def test_Comm_EarthsSpin(self):
+    def test_Attitude_RotationMtxRates(self):
 
-        #compname = 'Comm_EarthsSpin'
-        #inputs = ['t']
-        #outputs = ['q_E']
+        compname = 'Attitude_RotationMtxRates'
+        inputs = ['O_BI']
+        outputs = ['Odot_BI']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Attitude_Sideslip(self):
+
+        compname = 'Attitude_Sideslip'
+        inputs = ['r_e2b_I', 'O_BI']
+        outputs = ['v_e2b_B']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Attitude_Torque(self):
+
+        compname = 'Attitude_Torque'
+        inputs = ['w_B', 'wdot_B']
+        outputs = ['T_tot']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_BatterySOC(self):
+
+        compname = 'BatterySOC'
+        inputs = ['P_bat', 'temperature']
+        outputs = ['SOC']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_BatteryPower(self):
+
+        compname = 'BatteryPower'
+        inputs = ['SOC', 'temperature', 'P_bat']
+        outputs = ['I_bat']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_BatteryConstraints(self):
+
+        compname = 'BatteryConstraints'
+        inputs = ['I_bat', 'SOC']
+        outputs = ['ConCh', 'ConDs', 'ConS0', 'ConS1']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Comm_DataDownloaded(self):
+
+        compname = 'Comm_DataDownloaded'
+        inputs = ['Dr']
+        outputs = ['Data']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Comm_AntRotation(self):
+
+        compname = 'Comm_AntRotation'
+        inputs = ['antAngle']
+        outputs = ['q_A']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Comm_AntRotationMtx(self):
+
+        compname = 'Comm_AntRotationMtx'
+        inputs = ['q_A']
+        outputs = ['O_AB']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Comm_BitRate(self):
+
+        compname = 'Comm_BitRate'
+        inputs = ['P_comm', 'gain', 'GSdist', 'CommLOS']
+        outputs = ['Dr']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Comm_Distance(self):
+
+        compname = 'Comm_Distance'
+        inputs = ['r_b2g_A']
+        outputs = ['GSdist']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_Comm_EarthsSpin(self):
+
+        compname = 'Comm_EarthsSpin'
+        inputs = ['t']
+        outputs = ['q_E']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
 
     #def test_Comm_EarthsSpinMtx(self):
 
@@ -258,76 +369,6 @@ class Testcase_CADRE(unittest.TestCase):
         #compname = 'ThermalTemperature'
         #inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
         #outputs = ['temperature']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_AngularRates(self):
-
-        #compname = 'Attitude_AngularRates'
-        #inputs = ['w_B']
-        #outputs = ['wdot_B']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_Attitude(self):
-
-        #compname = 'Attitude_Attitude'
-        #inputs = ['r_e2b_I']
-        #outputs = ['O_RI']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_Roll(self):
-
-        #compname = 'Attitude_Roll'
-        #inputs = ['Gamma']
-        #outputs = ['O_BR']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_RotationMtx(self):
-
-        #compname = 'Attitude_RotationMtx'
-        #inputs = ['O_BR', 'O_RI']
-        #outputs = ['O_BI']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_RotationMtxRates(self):
-
-        #compname = 'Attitude_RotationMtxRates'
-        #inputs = ['O_BI']
-        #outputs = ['Odot_BI']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_Sideslip(self):
-
-        #compname = 'Attitude_Sideslip'
-        #inputs = ['r_e2b_I', 'O_BI']
-        #outputs = ['v_e2b_B']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Attitude_Torque(self):
-
-        #compname = 'Attitude_Torque'
-        #inputs = ['w_B', 'wdot_B']
-        #outputs = ['T_tot']
 
         #self.setup(compname, inputs)
         #self.run_model()
@@ -457,26 +498,6 @@ class Testcase_CADRE(unittest.TestCase):
         #compname = 'BatterySOC'
         #inputs = ['P_bat', 'temperature']
         #outputs = ['SOC']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_BatteryPower(self):
-
-        #compname = 'BatteryPower'
-        #inputs = ['SOC', 'temperature', 'P_bat']
-        #outputs = ['I_bat']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_BatteryConstraints(self):
-
-        #compname = 'BatteryConstraints'
-        #inputs = ['I_bat', 'SOC']
-        #outputs = ['ConCh', 'ConDs', 'ConS0', 'ConS1']
 
         #self.setup(compname, inputs)
         #self.run_model()
