@@ -23,8 +23,8 @@ from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMt
      Comm_VectorECI, Comm_VectorSpherical
 from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
 from CADRE.parameters import BsplineParameters
+from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 
-#from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 #from CADRE.reactionwheel import ReactionWheel_Power, \
      #ReactionWheel_Torque, ReactionWheel_Dynamics
 #from CADRE.solar import Solar_ExposedArea
@@ -113,7 +113,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Attitude_AngularRates(self):
 
@@ -123,7 +123,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Attitude_Attitude(self):
 
@@ -133,7 +133,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Attitude_Roll(self):
 
@@ -143,7 +143,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Attitude_RotationMtx(self):
 
@@ -153,7 +153,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Attitude_RotationMtxRates(self):
 
@@ -163,7 +163,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Attitude_Sideslip(self):
 
@@ -173,7 +173,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Attitude_Torque(self):
 
@@ -183,17 +183,17 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_BatterySOC(self):
 
         compname = 'BatterySOC'
-        inputs = ['P_bat', 'temperature']
+        inputs = ['P_bat', 'temperature', 'iSOC']
         outputs = ['SOC']
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_BatteryPower(self):
 
@@ -203,7 +203,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_BatteryConstraints(self):
 
@@ -213,7 +213,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_DataDownloaded(self):
 
@@ -263,7 +263,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_EarthsSpin(self):
 
@@ -273,7 +273,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_EarthsSpinMtx(self):
 
@@ -283,7 +283,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_GainPattern(self):
 
@@ -293,7 +293,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_GSposEarth(self):
 
@@ -303,7 +303,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_GSposECI(self):
 
@@ -313,7 +313,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_LOS(self):
 
@@ -323,7 +323,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_VectorAnt(self):
 
@@ -333,7 +333,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_VectorBody(self):
 
@@ -343,7 +343,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_VectorECI(self):
 
@@ -353,7 +353,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Comm_VectorSpherical(self):
 
@@ -363,7 +363,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Orbit_Dynamics(self):
 
@@ -373,17 +373,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs)
         self.run_model()
-        self.compare_results(inputs)
-
-    def test_bspline_parameters(self):
-
-        compname = 'BsplineParameters'
-        inputs = ['CP_P_comm', 'CP_gamma', 'CP_Isetpt']
-        outputs = ['P_comm', 'Gamma', 'Isetpt']
-
-        self.setup(compname, inputs)
-        self.run_model()
-        self.compare_results(inputs)
+        self.compare_results(outputs)
 
     def test_Orbit_Initial(self):
 
@@ -397,7 +387,46 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
+
+    def test_bspline_parameters(self):
+
+        compname = 'BsplineParameters'
+        inputs = ['CP_P_comm', 'CP_gamma', 'CP_Isetpt']
+        outputs = ['P_comm', 'Gamma', 'Isetpt']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Power_CellVoltage(self):
+        compname = 'Power_CellVoltage'
+        inputs = ['LOS', 'temperature', 'exposedArea', 'Isetpt']
+        outputs = ['V_sol']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Power_SolarPower(self):
+
+        compname = 'Power_SolarPower'
+        inputs = ['V_sol', 'Isetpt']
+        outputs = ['P_sol']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
+
+    def test_Power_Total(self):
+
+        compname = 'Power_Total'
+        inputs = ['P_sol', 'P_comm', 'P_RW']
+        outputs = ['P_bat']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
 
     #def test_ThermalTemperature(self):
 
@@ -407,7 +436,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
     #def test_Sun_LOS(self):
 
@@ -417,7 +446,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
     #def test_Sun_PositionBody(self):
 
@@ -427,7 +456,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
     #def test_Sun_PositionECI(self):
 
@@ -437,7 +466,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
     #def test_Sun_PositionSpherical(self):
 
@@ -447,7 +476,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
     #def test_Solar_ExposedArea(self):
         #compname = 'Solar_ExposedArea'
@@ -456,36 +485,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Power_CellVoltage(self):
-        #compname = 'Power_CellVoltage'
-        #inputs = ['LOS', 'temperature', 'exposedArea', 'Isetpt']
-        #outputs = ['V_sol']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Power_SolarPower(self):
-
-        #compname = 'Power_SolarPower'
-        #inputs = ['V_sol', 'Isetpt']
-        #outputs = ['P_sol']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
-
-    #def test_Power_Total(self):
-
-        #compname = 'Power_Total'
-        #inputs = ['P_sol', 'P_comm', 'P_RW']
-        #outputs = ['P_bat']
-
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
     #def test_ReactionWheel_Motor(self):
 
@@ -495,7 +495,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
     #def test_ReactionWheel_Dynamics(self):
 
@@ -505,7 +505,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
     #def test_ReactionWheel_Power(self):
 
@@ -516,7 +516,7 @@ class Testcase_CADRE(unittest.TestCase):
         #self.setup(compname, inputs)
 
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
     #def test_ReactionWheel_Torque(self):
 
@@ -526,7 +526,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
     #def test_BatterySOC(self):
 
@@ -536,7 +536,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         #self.setup(compname, inputs)
         #self.run_model()
-        #self.compare_results(inputs)
+        #self.compare_results(outputs)
 
 
 if __name__ == "__main__":

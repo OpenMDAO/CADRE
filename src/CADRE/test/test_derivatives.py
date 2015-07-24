@@ -23,8 +23,8 @@ from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMt
      Comm_VectorECI, Comm_VectorSpherical
 from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
 from CADRE.parameters import BsplineParameters
+from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 
-#from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 #from CADRE.reactionwheel import ReactionWheel_Power, \
     #ReactionWheel_Torque, ReactionWheel_Dynamics
 #from CADRE.solar import Solar_ExposedArea
@@ -470,6 +470,49 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 
+    def test_Power_CellVoltage(self):
+        # fix
+        compname = 'Power_CellVoltage'
+        inputs = ['LOS', 'temperature', 'exposedArea', 'Isetpt']
+        outputs = ['V_sol']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+
+        shape = self.model.root.comp._params_dict['temperature']['shape']
+        self.model['temperature'] = np.random.random(shape) * 40 + 240
+
+        shape = self.model.root.comp._params_dict['exposedArea']['shape']
+        self.model['exposedArea'] = np.random.random(shape) * 1e-4
+
+        shape = self.model.root.comp._params_dict['Isetpt']['shape']
+        self.model['Isetpt'] = np.random.random(shape) * 1e-2
+
+        self.run_model()
+        self.compare_derivatives(inputs, outputs, rel_error=True)
+
+    def test_Power_SolarPower(self):
+
+        compname = 'Power_SolarPower'
+        inputs = ['V_sol', 'Isetpt']
+        outputs = ['P_sol']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
+    def test_Power_Total(self):
+
+        compname = 'Power_Total'
+        inputs = ['P_sol', 'P_comm', 'P_RW']
+        outputs = ['P_bat']
+        state0 = []
+
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
     #def test_ThermalTemperature(self):
 
         #compname = 'ThermalTemperature'
@@ -530,52 +573,6 @@ class Testcase_CADRE(unittest.TestCase):
         #compname = 'Solar_ExposedArea'
         #inputs = ['finAngle', 'azimuth', 'elevation']
         #outputs = ['exposedArea']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Power_CellVoltage(self):
-        ## fix
-        #compname = 'Power_CellVoltage'
-        #inputs = ['LOS', 'temperature', 'exposedArea', 'Isetpt']
-        #outputs = ['V_sol']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-
-        #shape = self.model.comp.temperature.shape
-        #self.model.comp.temperature = np.ones(shape)
-
-        #shape = self.model.comp.temperature.shape
-        #self.model.comp.temperature = np.random.random(shape) * 40 + 240
-
-        #shape = self.model.comp.exposedArea.shape
-        #self.model.comp.exposedArea = np.random.random(shape) * 1e-4
-
-        #shape = self.model.comp.Isetpt.shape
-        #self.model.comp.Isetpt = np.random.random(shape) * 1e-2
-
-        #self.run_model()
-        #self.compare_derivatives(inputs, outputs, rel_error=True)
-
-    #def test_Power_SolarPower(self):
-
-        #compname = 'Power_SolarPower'
-        #inputs = ['V_sol', 'Isetpt']
-        #outputs = ['P_sol']
-        #state0 = []
-
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_Power_Total(self):
-
-        #compname = 'Power_Total'
-        #inputs = ['P_sol', 'P_comm', 'P_RW']
-        #outputs = ['P_bat']
         #state0 = []
 
         #self.setup(compname, inputs, state0)
