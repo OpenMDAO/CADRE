@@ -22,8 +22,8 @@ from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMt
      Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, Comm_VectorBody, \
      Comm_VectorECI, Comm_VectorSpherical
 from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
+from CADRE.parameters import BsplineParameters
 
-#from CADRE.parameters import BsplineParameters
 #from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 #from CADRE.reactionwheel import ReactionWheel_Power, \
      #ReactionWheel_Torque, ReactionWheel_Dynamics
@@ -82,7 +82,10 @@ class Testcase_CADRE(unittest.TestCase):
             self.model.root.add('comp', eval('%s(n)' % compname))
         except TypeError:
             # At least one comp has no args.
-            self.model.root.add('comp', eval('%s()' % compname))
+            try:
+                self.model.root.add('comp', eval('%s()' % compname))
+            except TypeError:
+                self.model.root.add('comp', eval('%s(n, 300)' % compname))
 
         self.model.setup(check=False)
 
@@ -367,6 +370,16 @@ class Testcase_CADRE(unittest.TestCase):
         compname = 'Orbit_Dynamics'
         inputs = ['r_e2b_I0']
         outputs = ['r_e2b_I']
+
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(inputs)
+
+    def test_bspline_parameters(self):
+
+        compname = 'BsplineParameters'
+        inputs = ['CP_P_comm', 'CP_gamma', 'CP_Isetpt']
+        outputs = ['P_comm', 'Gamma', 'Isetpt']
 
         self.setup(compname, inputs)
         self.run_model()

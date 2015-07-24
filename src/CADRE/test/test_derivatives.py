@@ -22,8 +22,8 @@ from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMt
      Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, Comm_VectorBody, \
      Comm_VectorECI, Comm_VectorSpherical
 from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
+from CADRE.parameters import BsplineParameters
 
-#from CADRE.parameters import BsplineParameters
 #from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 #from CADRE.reactionwheel import ReactionWheel_Power, \
     #ReactionWheel_Torque, ReactionWheel_Dynamics
@@ -70,10 +70,6 @@ class Testcase_CADRE(unittest.TestCase):
                 initval = np.zeros((pshape))
             self.model.root.add('p_%s' % item, ParamComp(item, initval),
                                 promotes=['*'])
-
-        # TODO: don't need this after auto-order
-        old_order = self.model.root.list_order()
-        self.model.root.set_order(old_order[1:] + ['comp'])
 
         self.model.setup(check=False)
 
@@ -447,6 +443,33 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 
+    def test_bspline_parameters(self):
+
+        compname = 'BsplineParameters'
+        inputs = ['CP_P_comm', 'CP_gamma', 'CP_Isetpt']
+        outputs = ['P_comm', 'Gamma', 'Isetpt']
+        state0 = []
+
+        self.model.root.add('comp', BsplineParameters(NTIME, 5), promotes=['*'])
+
+        for item in inputs:
+            pshape = self.model.root.comp._params_dict[item]['shape']
+            if pshape == 1:
+                initval = 0.0
+            else:
+                initval = np.zeros((pshape))
+            self.model.root.add('p_%s' % item, ParamComp(item, initval),
+                                promotes=['*'])
+
+        self.model.setup(check=False)
+
+        for item in inputs:
+            shape = self.model.root.comp._params_dict[item]['shape']
+            self.model[item] = np.random.random(shape)
+
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
+
     #def test_ThermalTemperature(self):
 
         #compname = 'ThermalTemperature'
@@ -609,24 +632,6 @@ class Testcase_CADRE(unittest.TestCase):
         #state0 = []
 
         #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
-    #def test_bspline_parameters(self):
-
-        #compname = 'BsplineParameters'
-        #inputs = ['CP_P_comm', 'CP_gamma', 'CP_Isetpt']
-        #outputs = ['P_comm', 'Gamma', 'Isetpt']
-        #state0 = []
-
-        #self.model.add('comp', BsplineParameters(NTIME, 5))
-        #self.model.driver.workflow.add('comp')
-
-        #for item in inputs:
-            #val = self.model.comp.get(item)
-            #shape1 = val.shape
-            #self.model.comp.set(item, np.random.random(shape1))
-
         #self.run_model()
         #self.compare_derivatives(inputs+state0, outputs)
 
