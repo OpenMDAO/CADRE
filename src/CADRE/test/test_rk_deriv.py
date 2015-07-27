@@ -91,7 +91,7 @@ class Testcase_RK_deriv(unittest.TestCase):
         self.model.root.add('comp', eval('%s(NTIME)' % compname),
                             promotes=['*'])
 
-        for item in inputs:
+        for item in inputs + state0:
             pshape = self.model.root.comp._params_dict[item]['shape']
             self.model.root.add('p_%s' % item, ParamComp(item, np.zeros((pshape))),
                                 promotes=['*'])
@@ -125,6 +125,8 @@ class Testcase_RK_deriv(unittest.TestCase):
                                  return_format='array')
 
         diff = abs(Jf - Jn)
+        print Jf
+        print Jn
         assert_rel_error(self, diff.max(), 0.0, 1e-5)
 
         # Analytic adjoint
@@ -140,10 +142,10 @@ class Testcase_RK_deriv(unittest.TestCase):
         inputs = ['yi', 'yv']
         outputs = ['x']
         state0 = ['x0']
-
+        np.random.seed(1)
         self.setup(compname, inputs, state0)
         self.run_model()
-        self.compare_derivatives(inputs, outputs)
+        self.compare_derivatives(inputs+state0, outputs)
 
 
 if __name__ == "__main__":

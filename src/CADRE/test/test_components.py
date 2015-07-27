@@ -29,7 +29,7 @@ from CADRE.reactionwheel import ReactionWheel_Motor, ReactionWheel_Power, \
 from CADRE.solar import Solar_ExposedArea
 from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, \
      Sun_PositionSpherical
-#from CADRE.thermal_temperature import ThermalTemperature
+from CADRE.thermal_temperature import ThermalTemperature
 
 # Ignore the numerical warnings from performing the rel error calc.
 warnings.simplefilter("ignore")
@@ -517,17 +517,15 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_results(outputs)
 
-    #def test_ThermalTemperature(self):
+    def test_ThermalTemperature(self):
 
-        #compname = 'ThermalTemperature'
-        #inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
-        #outputs = ['temperature']
+        compname = 'ThermalTemperature'
+        inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
+        outputs = ['temperature']
 
-        #self.setup(compname, inputs)
-        #self.run_model()
-        #self.compare_results(outputs)
-
-
+        self.setup(compname, inputs)
+        self.run_model()
+        self.compare_results(outputs)
 
 if __name__ == "__main__":
 

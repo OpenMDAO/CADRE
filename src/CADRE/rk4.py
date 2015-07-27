@@ -53,6 +53,7 @@ class RK4(Component):
         self.y = unknowns[state_var]
         self.y0 = params[init_state_var]
 
+
         self.n_states, self.n = self.y.shape
         self.ny = self.n_states*self.n
         self.nJ = self.n_states*(self.n + self.n_states*(self.n-1))
@@ -73,7 +74,7 @@ class RK4(Component):
 
             flat_var = var.flatten()
             #create n copies of the var
-            ext.extend(np.tile(flat_var,(self.n, 1)).T)
+            ext.extend(np.tile(flat_var, (self.n, 1)).T)
 
         self.external = np.array(ext)
 
@@ -90,7 +91,7 @@ class RK4(Component):
             self.reverse_name_map[var] = i
 
         self.name_map = dict([(v, k) for k, v in
-                              self.reverse_name_map.iteritems()])
+                              self.reverse_name_map.items()])
 
         #TODO
         #  check that all ext arrays of of shape (self.n, )
@@ -154,7 +155,7 @@ class RK4(Component):
         h = params['h']
 
         # Copy initial state into state array for t=0
-        self.y = self.y.reshape((self.ny, ))
+        self.y = self.y.reshape((self.ny, ), order='f')
         self.y[0:n_state] = self.y0
 
         # Cache f_dot for use in linearize()
@@ -200,13 +201,14 @@ class RK4(Component):
         # Full Jacobian with respect to inputs
         self.Jx = np.zeros((self.n, self.n_external, self.n_states))
 
-        for k in xrange(0, n_time-1):
+        for k in range(0, n_time-1):
 
             k1 = k*n_state
             k2 = k1 + n_state
 
             ex = self.external[:, k] if self.external.shape[0] \
                                         else np.array([])
+
             y = self.y[k1:k2]
 
             a = self.a[:, k]
@@ -249,10 +251,7 @@ class RK4(Component):
             result_ext = self._applyJext(dparams, dresids)
 
             svar = self.options['state_var']
-            if svar in dresids:
-                dresids[svar] += result_ext
-            else:
-                dresids[svar] = result_ext
+            dresids[svar] += result_ext
 
         else:
             r2 = self._applyJextT_limited(dparams, dresids)

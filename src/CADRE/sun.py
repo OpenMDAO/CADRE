@@ -172,64 +172,64 @@ class Sun_PositionBody( Component ):
 
         self.n = n
 
-	# Inputs
+        # Inputs
         self.add_param('O_BI',np.zeros((3, 3, n), order='F'), units="unitless",
-	               desc="Rotation matrix from the Earth-centered inertial frame "
-	               "to the satellite frame.")
+                       desc="Rotation matrix from the Earth-centered inertial frame "
+                       "to the satellite frame.")
 
         self.add_param('r_e2s_I', np.zeros((3, n), order='F'), units="km",
-	               desc="Position vector from Earth to Sun in Earth-centered "
-	               "inertial frame over time.")
+                       desc="Position vector from Earth to Sun in Earth-centered "
+                       "inertial frame over time.")
 
-	# Outputs
+        # Outputs
         self.add_output('r_e2s_B', np.zeros((3, n, ), order='F'), units = "km",
-	                desc="Position vector from Earth to Sun in body-fixed "
-	                "frame over time." )
+                        desc="Position vector from Earth to Sun in body-fixed "
+                        "frame over time." )
 
     def solve_nonlinear(self, params, unknowns, resids):
-	""" Calculate output. """
+        """ Calculate output. """
 
-	unknowns['r_e2s_B'] = computepositionrotd(self.n, params['r_e2s_I'],
-	                                          params['O_BI'])
+        unknowns['r_e2s_B'] = computepositionrotd(self.n, params['r_e2s_I'],
+                                                  params['O_BI'])
 
     def jacobian(self, params, unknowns, resids):
-	""" Calculate and save derivatives. (i.e., Jacobian) """
+        """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.J1, self.J2 = computepositionrotdjacobian(self.n, params['r_e2s_I'],
-	                                          params['O_BI'])
+                                                  params['O_BI'])
 
     def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
-	""" Matrix-vector product with the Jacobian. """
+        """ Matrix-vector product with the Jacobian. """
 
-	dr_e2s_B = dresids['r_e2s_B']
+        dr_e2s_B = dresids['r_e2s_B']
 
-	if mode == 'fwd':
-	    if 'O_BI' in dparams:
-		for k in range(3):
-		    for u in range(3):
-			for v in range(3):
-			    dr_e2s_B[k, :] += self.J1[:, k, u, v] * dparams['O_BI'][u, v, :]
+        if mode == 'fwd':
+            if 'O_BI' in dparams:
+                for k in range(3):
+                    for u in range(3):
+                        for v in range(3):
+                            dr_e2s_B[k, :] += self.J1[:, k, u, v] * dparams['O_BI'][u, v, :]
 
-	    if 'r_e2s_I' in dparams:
-		for k in range(3):
-		    for j in range(3):
-			dr_e2s_B[k,:] += self.J2[:, k, j] * dparams['r_e2s_I'][j, :]
+            if 'r_e2s_I' in dparams:
+                for k in range(3):
+                    for j in range(3):
+                        dr_e2s_B[k,:] += self.J2[:, k, j] * dparams['r_e2s_I'][j, :]
 
-	else:
-	    for k in range(3):
+        else:
+            for k in range(3):
 
-		if 'O_BI' in dparams:
-		    for u in range(3):
-			for v in range(3):
-			    dO_BI = dparams['O_BI']
-			    dO_BI[u, v, :] += self.J1[:, k, u, v] * dr_e2s_B[k, :]
-			    dparams['O_BI'] = dO_BI
+                if 'O_BI' in dparams:
+                    for u in range(3):
+                        for v in range(3):
+                            dO_BI = dparams['O_BI']
+                            dO_BI[u, v, :] += self.J1[:, k, u, v] * dr_e2s_B[k, :]
+                            dparams['O_BI'] = dO_BI
 
-		if 'r_e2s_I' in dparams:
-		    for j in range(3):
-			dr_e2s_I = dparams['r_e2s_I']
-			dr_e2s_I[j, :] += self.J2[:,k, j] * dr_e2s_B[k, :]
-			dparams['r_e2s_I'] = dr_e2s_I
+                if 'r_e2s_I' in dparams:
+                    for j in range(3):
+                        dr_e2s_I = dparams['r_e2s_I']
+                        dr_e2s_I[j, :] += self.J2[:,k, j] * dr_e2s_B[k, :]
+                        dparams['r_e2s_I'] = dr_e2s_I
 
 
 class Sun_PositionECI( Component ):
@@ -245,106 +245,106 @@ class Sun_PositionECI( Component ):
 
         self.n = n
 
-	# Inputs
-	self.add_param('LD', 0.0, units="unitless")
+        # Inputs
+        self.add_param('LD', 0.0, units="unitless")
 
-	self.add_param('t', np.zeros((n, ), order='F'), units="s", desc="Time")
+        self.add_param('t', np.zeros((n, ), order='F'), units="s", desc="Time")
 
-	# Outputs
-	self.add_output('r_e2s_I', np.zeros((3, n, ), order='F'), units="km",
-	                desc="Position vector from Earth to Sun in Earth-centered "
-	                "inertial frame over time.")
+        # Outputs
+        self.add_output('r_e2s_I', np.zeros((3, n, ), order='F'), units="km",
+                        desc="Position vector from Earth to Sun in Earth-centered "
+                        "inertial frame over time.")
 
-	self.Ja = np.zeros(3*self.n)
-	self.Ji = np.zeros(3*self.n)
-	self.Jj = np.zeros(3*self.n)
+        self.Ja = np.zeros(3*self.n)
+        self.Ji = np.zeros(3*self.n)
+        self.Jj = np.zeros(3*self.n)
 
     def solve_nonlinear(self, params, unknowns, resids):
-	""" Calculate output. """
+        """ Calculate output. """
 
-	r_e2s_I = unknowns['r_e2s_I']
+        r_e2s_I = unknowns['r_e2s_I']
 
-	T = params['LD'] + params['t'][:]/3600./24.
-	for i in range(0,self.n):
-	    L = self.d2r*280.460 + self.d2r*0.9856474*T[i]
-	    g = self.d2r*357.528 + self.d2r*0.9856003*T[i]
-	    Lambda = L + self.d2r*1.914666*np.sin(g) + self.d2r*0.01999464*np.sin(2*g)
-	    eps = self.d2r*23.439 - self.d2r*3.56e-7*T[i]
-	    r_e2s_I[0, i] = np.cos(Lambda)
-	    r_e2s_I[1, i] = np.sin(Lambda)*np.cos(eps)
-	    r_e2s_I[2, i] = np.sin(Lambda)*np.sin(eps)
+        T = params['LD'] + params['t'][:]/3600./24.
+        for i in range(0,self.n):
+            L = self.d2r*280.460 + self.d2r*0.9856474*T[i]
+            g = self.d2r*357.528 + self.d2r*0.9856003*T[i]
+            Lambda = L + self.d2r*1.914666*np.sin(g) + self.d2r*0.01999464*np.sin(2*g)
+            eps = self.d2r*23.439 - self.d2r*3.56e-7*T[i]
+            r_e2s_I[0, i] = np.cos(Lambda)
+            r_e2s_I[1, i] = np.sin(Lambda)*np.cos(eps)
+            r_e2s_I[2, i] = np.sin(Lambda)*np.sin(eps)
 
     def jacobian(self, params, unknowns, resids):
-	""" Calculate and save derivatives. (i.e., Jacobian) """
+        """ Calculate and save derivatives. (i.e., Jacobian) """
 
-	T = params['LD']  + params['t'][:]/3600./24.
-	dr_dt = np.empty(3)
-	for i in range(0, self.n):
-	    L = self.d2r*280.460 + self.d2r*0.9856474*T[i]
-	    g = self.d2r*357.528 + self.d2r*0.9856003*T[i]
-	    Lambda = L + self.d2r*1.914666*np.sin(g) + self.d2r*0.01999464*np.sin(2*g)
-	    eps = self.d2r*23.439 - self.d2r*3.56e-7*T[i]
+        T = params['LD']  + params['t'][:]/3600./24.
+        dr_dt = np.empty(3)
+        for i in range(0, self.n):
+            L = self.d2r*280.460 + self.d2r*0.9856474*T[i]
+            g = self.d2r*357.528 + self.d2r*0.9856003*T[i]
+            Lambda = L + self.d2r*1.914666*np.sin(g) + self.d2r*0.01999464*np.sin(2*g)
+            eps = self.d2r*23.439 - self.d2r*3.56e-7*T[i]
 
-	    dL_dt = self.d2r*0.9856474
-	    dg_dt = self.d2r*0.9856003
-	    dlambda_dt = dL_dt + self.d2r*1.914666*np.cos(g)*dg_dt + self.d2r*0.01999464*np.cos(2*g)*2*dg_dt
-	    deps_dt = -self.d2r*3.56e-7
+            dL_dt = self.d2r*0.9856474
+            dg_dt = self.d2r*0.9856003
+            dlambda_dt = dL_dt + self.d2r*1.914666*np.cos(g)*dg_dt + self.d2r*0.01999464*np.cos(2*g)*2*dg_dt
+            deps_dt = -self.d2r*3.56e-7
 
-	    dr_dt[0] = -np.sin(Lambda)*dlambda_dt
-	    dr_dt[1] = np.cos(Lambda)*np.cos(eps)*dlambda_dt - np.sin(Lambda)*np.sin(eps)*deps_dt
-	    dr_dt[2] = np.cos(Lambda)*np.sin(eps)*dlambda_dt + np.sin(Lambda)*np.cos(eps)*deps_dt
+            dr_dt[0] = -np.sin(Lambda)*dlambda_dt
+            dr_dt[1] = np.cos(Lambda)*np.cos(eps)*dlambda_dt - np.sin(Lambda)*np.sin(eps)*deps_dt
+            dr_dt[2] = np.cos(Lambda)*np.sin(eps)*dlambda_dt + np.sin(Lambda)*np.cos(eps)*deps_dt
 
-	    for k in range(0, 3):
-		iJ = i*3 + k
-		self.Ja[iJ] = dr_dt[k]
-		self.Ji[iJ] = iJ
-		self.Jj[iJ] = i
+            for k in range(0, 3):
+                iJ = i*3 + k
+                self.Ja[iJ] = dr_dt[k]
+                self.Ji[iJ] = iJ
+                self.Jj[iJ] = i
 
-	self.J = scipy.sparse.csc_matrix((self.Ja, (self.Ji, self.Jj)),
-	                                 shape=(3*self.n, self.n))
-	self.JT = self.J.transpose()
+        self.J = scipy.sparse.csc_matrix((self.Ja, (self.Ji, self.Jj)),
+                                         shape=(3*self.n, self.n))
+        self.JT = self.J.transpose()
 
     def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
-	""" Matrix-vector product with the Jacobian. """
+        """ Matrix-vector product with the Jacobian. """
 
-	dr_e2s_I = dresids['r_e2s_I']
+        dr_e2s_I = dresids['r_e2s_I']
 
-	if mode == 'fwd':
-	    # TODO - Should split this up so we can hook one up but not the other.
-	    dr_e2s_I[:] += self.J.dot( dparams['LD'] + dparams['t']/3600./24. ).reshape((3, self.n), order='F')
+        if mode == 'fwd':
+            # TODO - Should split this up so we can hook one up but not the other.
+            dr_e2s_I[:] += self.J.dot( dparams['LD'] + dparams['t']/3600./24. ).reshape((3, self.n), order='F')
 
         else:
-	    r_e2s_I = dr_e2s_I[:].reshape((3*self.n),order='F')
-	    if 'LD' in dparams:
-		dparams['LD'] += sum(self.JT.dot(r_e2s_I))
-	    if 't' in dparams:
-		dparams['t'] += self.JT.dot(r_e2s_I)/3600.0/24.0
+            r_e2s_I = dr_e2s_I[:].reshape((3*self.n),order='F')
+            if 'LD' in dparams:
+                dparams['LD'] += sum(self.JT.dot(r_e2s_I))
+            if 't' in dparams:
+                dparams['t'] += self.JT.dot(r_e2s_I)/3600.0/24.0
 
 
 class Sun_PositionSpherical(Component):
     """ Compute the elevation angle of the Sun in the body-fixed frame."""
 
     def __init__(self, n=2):
-	super(Sun_PositionSpherical, self).__init__()
+        super(Sun_PositionSpherical, self).__init__()
 
-	self.n = n
+        self.n = n
 
-	# Inputs
-	self.add_param('r_e2s_B', np.zeros((3, n)), units = "km",
-	               desc="Position vector from Earth to Sun in body-fixed "
-	               "frame over time.")
+        # Inputs
+        self.add_param('r_e2s_B', np.zeros((3, n)), units = "km",
+                       desc="Position vector from Earth to Sun in body-fixed "
+                       "frame over time.")
 
-	# Outputs
-	self.add_output('azimuth', np.zeros((n,)), units='rad',
-	                desc='Ezimuth angle of the Sun in the body-fixed frame '
-	                'over time.')
+        # Outputs
+        self.add_output('azimuth', np.zeros((n,)), units='rad',
+                        desc='Ezimuth angle of the Sun in the body-fixed frame '
+                        'over time.')
 
-	self.add_output('elevation', np.zeros((n, )), units='rad',
-	                desc="Elevation angle of the Sun in the body-fixed frame "
-	                "over time.")
+        self.add_output('elevation', np.zeros((n, )), units='rad',
+                        desc="Elevation angle of the Sun in the body-fixed frame "
+                        "over time.")
 
     def solve_nonlinear(self, params, unknowns, resids):
-	""" Calculate output. """
+        """ Calculate output. """
 
         azimuth, elevation = computepositionspherical(self.n, params['r_e2s_B'])
 
@@ -352,7 +352,7 @@ class Sun_PositionSpherical(Component):
         unknowns['elevation'] = elevation
 
     def jacobian(self, params, unknowns, resids):
-	""" Calculate and save derivatives. (i.e., Jacobian) """
+        """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.Ja1, self.Ji1, self.Jj1, self.Ja2, self.Ji2, self.Jj2 = \
                   computepositionsphericaljacobian(self.n, 3*self.n, params['r_e2s_B'])
@@ -364,23 +364,23 @@ class Sun_PositionSpherical(Component):
         self.J2T = self.J2.transpose()
 
     def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
-	""" Matrix-vector product with the Jacobian. """
+        """ Matrix-vector product with the Jacobian. """
 
         if mode == 'fwd':
             r_e2s_B = dparams['r_e2s_B'].reshape((3*self.n), order='F')
-	    if 'azimuth' in dresids:
-		dresids['azimuth'] += self.J1.dot(r_e2s_B)
-	    if 'elevation' in dresids:
-		dresids['elevation'] += self.J2.dot(r_e2s_B)
+            if 'azimuth' in dresids:
+                dresids['azimuth'] += self.J1.dot(r_e2s_B)
+            if 'elevation' in dresids:
+                dresids['elevation'] += self.J2.dot(r_e2s_B)
 
-	else:
-	    if 'azimuth' in dresids:
-		azimuth = dresids['azimuth'][:]
-		dparams['r_e2s_B'] += self.J1T.dot(azimuth).reshape((3, self.n),
-		                                                    order='F')
+        else:
+            if 'azimuth' in dresids:
+                azimuth = dresids['azimuth'][:]
+                dparams['r_e2s_B'] += self.J1T.dot(azimuth).reshape((3, self.n),
+                                                                    order='F')
 
-	    if 'elevation' in dresids:
-		elevation = dresids['elevation'][:]
-		dparams['r_e2s_B'] += self.J2T.dot(elevation).reshape((3, self.n),
-		                                                      order='F')
+            if 'elevation' in dresids:
+                elevation = dresids['elevation'][:]
+                dparams['r_e2s_B'] += self.J2T.dot(elevation).reshape((3, self.n),
+                                                                      order='F')
 

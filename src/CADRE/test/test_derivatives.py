@@ -29,7 +29,7 @@ from CADRE.reactionwheel import ReactionWheel_Motor, ReactionWheel_Power, \
 from CADRE.solar import Solar_ExposedArea
 from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, \
     Sun_PositionSpherical
-#from CADRE.thermal_temperature import ThermalTemperature
+from CADRE.thermal_temperature import ThermalTemperature
 
 
 import os
@@ -94,13 +94,13 @@ class Testcase_CADRE(unittest.TestCase):
         # Numeric
         Jn = model.calc_gradient(var_in, var_out, mode="fd",
                                  return_format='array')
-        # print Jn
+        #print 'finite diff', Jn
 
         # Analytic forward
         Jf = model.calc_gradient(var_in, var_out, mode='fwd',
                                  return_format='array')
 
-        # print Jf
+        #print 'forward', Jf
 
         if rel_error:
             diff = np.nan_to_num(abs(Jf - Jn) / Jn)
@@ -532,6 +532,9 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs, state0)
 
+        #shape = self.model.root.comp._params_dict['T_RW']['shape']
+        #self.model['T_RW'] = np.random.random(shape) * 1e-4
+
         self.run_model()
         self.compare_derivatives(inputs, outputs, rel_error=True)
 
@@ -620,17 +623,16 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 
-    #def test_ThermalTemperature(self):
+    def test_AAThermalTemperature(self):
 
-        #compname = 'ThermalTemperature'
-        #inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
-        #outputs = ['temperature']
-        #state0 = ['T0']
+        compname = 'ThermalTemperature'
+        inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
+        outputs = ['temperature']
+        state0 = ['T0']
 
-        #self.setup(compname, inputs, state0)
-        #self.run_model()
-        #self.compare_derivatives(inputs+state0, outputs)
-
+        self.setup(compname, inputs, state0)
+        self.run_model()
+        self.compare_derivatives(inputs+state0, outputs)
 
 if __name__ == "__main__":
 

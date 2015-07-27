@@ -189,12 +189,12 @@ class ReactionWheel_Power(Component):
             for k in range(3):
                 if 'w_RW' in dparams:
                     dw_RW = dparams['w_RW']
-                    dw_RW[k, :] += self.dP_dw[:,k] * dP_RW[k, :]
+                    dw_RW[k, :] += self.dP_dw[:, k] * dP_RW[k, :]
                     dparams['w_RW'] = dw_RW
 
                 if 'T_RW' in dparams:
                     dT_RW = dparams['T_RW']
-                    dT_RW[k, :] += self.dP_dT[:,k] * dP_RW[k, :]
+                    dT_RW[k, :] += self.dP_dT[:, k] * dP_RW[k, :]
                     dparams['T_RW'] = dT_RW
 
 
