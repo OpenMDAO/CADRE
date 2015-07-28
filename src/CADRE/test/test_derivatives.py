@@ -59,7 +59,10 @@ class Testcase_CADRE(unittest.TestCase):
             self.model.root.add('comp', eval('%s(NTIME)' % compname), promotes=['*'])
         except TypeError:
             # At least one comp has no args.
-            self.model.root.add('comp', eval('%s()' % compname), promotes=['*'])
+            try:
+                self.model.root.add('comp', eval('%s()' % compname), promotes=['*'])
+            except TypeError:
+                self.model.root.add('comp', eval('%s(NTIME, 300)' % compname), promotes=['*'])
 
         for item in inputs + state0:
             pshape = self.model.root.comp._params_dict[item]['shape']
@@ -141,6 +144,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
+        self.model.root.comp.h = 0.01
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 
@@ -185,6 +189,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
+        self.model.root.comp.h = 0.01
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 
@@ -218,6 +223,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = ['iSOC']
 
         self.setup(compname, inputs, state0)
+        self.model.root.comp.h = 0.01
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 
@@ -424,6 +430,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
+        self.model.root.comp.h = 0.01
         shape = self.model.root.comp._params_dict['r_e2b_I0']['shape']
         self.model['r_e2b_I0'][:3] = np.random.random((3)) * 1e6
         self.model['r_e2b_I0'][3:] = np.random.random((3)) * 1e5
@@ -559,6 +566,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []  # ['w_RW0']
 
         self.setup(compname, inputs, state0)
+        self.model.root.comp.h = 0.01
 
         shape = self.model.root.comp._params_dict['w_B']['shape']
         self.model['w_B'] = np.random.random(shape) * 1e-4
@@ -623,7 +631,7 @@ class Testcase_CADRE(unittest.TestCase):
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 
-    def test_AAThermalTemperature(self):
+    def test_ThermalTemperature(self):
 
         compname = 'ThermalTemperature'
         inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
@@ -631,6 +639,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = ['T0']
 
         self.setup(compname, inputs, state0)
+        self.model.root.comp.h = 0.01
         self.run_model()
         self.compare_derivatives(inputs+state0, outputs)
 

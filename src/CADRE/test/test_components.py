@@ -92,10 +92,6 @@ class Testcase_CADRE(unittest.TestCase):
             self.model['comp.%s' % var] = setd[var]
 
     def run_model(self):
-
-        # Some components have a time step as a non-differentiable input.
-        if 'h' in self.model.root.comp._params_dict:
-            self.model['comp.h'] = h
         self.model.run()
 
     def compare_results(self, outputs):
@@ -121,6 +117,7 @@ class Testcase_CADRE(unittest.TestCase):
         outputs = ['wdot_B']
 
         self.setup(compname, inputs)
+        self.model.root.comp.h = h
         self.run_model()
         self.compare_results(outputs)
 
@@ -161,6 +158,7 @@ class Testcase_CADRE(unittest.TestCase):
         outputs = ['Odot_BI']
 
         self.setup(compname, inputs)
+        self.model.root.comp.h = h
         self.run_model()
         self.compare_results(outputs)
 
@@ -191,6 +189,7 @@ class Testcase_CADRE(unittest.TestCase):
         outputs = ['SOC']
 
         self.setup(compname, inputs)
+        self.model.root.comp.h = h
         self.run_model()
         self.compare_results(outputs)
 
@@ -221,6 +220,7 @@ class Testcase_CADRE(unittest.TestCase):
         outputs = ['Data']
 
         self.setup(compname, inputs)
+        self.model.root.comp.h = h
         self.run_model()
         self.compare_results(outputs)
 
@@ -371,6 +371,7 @@ class Testcase_CADRE(unittest.TestCase):
         outputs = ['r_e2b_I']
 
         self.setup(compname, inputs)
+        self.model.root.comp.h = h
         self.run_model()
         self.compare_results(outputs)
 
@@ -465,6 +466,7 @@ class Testcase_CADRE(unittest.TestCase):
         outputs = ['w_RW']
 
         self.setup(compname, inputs)
+        self.model.root.comp.h = h
         self.run_model()
         self.compare_results(outputs)
 
@@ -524,6 +526,7 @@ class Testcase_CADRE(unittest.TestCase):
         outputs = ['temperature']
 
         self.setup(compname, inputs)
+        self.model.root.comp.h = h
         self.run_model()
         self.compare_results(outputs)
 

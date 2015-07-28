@@ -23,8 +23,8 @@ class Comm_DataDownloaded(rk4.RK4):
     """ Integrate the incoming data rate to compute the time history of data
     downloaded from the satelite."""
 
-    def __init__(self, n_times):
-        super(Comm_DataDownloaded, self).__init__()
+    def __init__(self, n_times, h):
+        super(Comm_DataDownloaded, self).__init__(n_times, h)
 
         # Inputs
         self.add_param('Dr', np.zeros(n_times), units="Gibyte/s",

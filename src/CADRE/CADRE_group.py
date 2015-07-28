@@ -38,12 +38,11 @@ class CADRE(Group):
         # Analysis parameters
         self.n = n
         self.m = m
+        h = 43200.0 / (self.n - 1)
 
         # Some initial setup.
         self.add('p_t1', ParamComp('t1', 0.0), promotes=['*'])
         self.add('p_t2', ParamComp('t2', 43200.0), promotes=['*'])
-        h = 43200.0 / (self.n - 1)
-        self.add('p_h', ParamComp('h', h), promotes=['*'])
         self.add('p_t', ParamComp('t', np.array(range(0, n))*h), promotes=['*'])
 
         # Design parameters
@@ -76,11 +75,11 @@ class CADRE(Group):
         # Add Component Models
         self.add("BsplineParameters", BsplineParameters(n, m), promotes=['*'])
         self.add("Attitude_Angular", Attitude_Angular(n), promotes=['*'])
-        self.add("Attitude_AngularRates", Attitude_AngularRates(n), promotes=['*'])
+        self.add("Attitude_AngularRates", Attitude_AngularRates(n, h), promotes=['*'])
         self.add("Attitude_Attitude", Attitude_Attitude(n), promotes=['*'])
         self.add("Attitude_Roll", Attitude_Roll(n), promotes=['*'])
         self.add("Attitude_RotationMtx", Attitude_RotationMtx(n), promotes=['*'])
-        self.add("Attitude_RotationMtxRates", Attitude_RotationMtxRates(n),
+        self.add("Attitude_RotationMtxRates", Attitude_RotationMtxRates(n, h),
                  promotes=['*'])
 
         # Not needed?
@@ -89,11 +88,11 @@ class CADRE(Group):
         self.add("Attitude_Torque", Attitude_Torque(n), promotes=['*'])
         self.add("BatteryConstraints", BatteryConstraints(n), promotes=['*'])
         self.add("BatteryPower", BatteryPower(n), promotes=['*'])
-        self.add("BatterySOC", BatterySOC(n), promotes=['*'])
+        self.add("BatterySOC", BatterySOC(n, h), promotes=['*'])
         self.add("Comm_AntRotation", Comm_AntRotation(n), promotes=['*'])
         self.add("Comm_AntRotationMtx", Comm_AntRotationMtx(n), promotes=['*'])
         self.add("Comm_BitRate", Comm_BitRate(n), promotes=['*'])
-        self.add("Comm_DataDownloaded", Comm_DataDownloaded(n), promotes=['*'])
+        self.add("Comm_DataDownloaded", Comm_DataDownloaded(n, h), promotes=['*'])
         self.add("Comm_Distance", Comm_Distance(n), promotes=['*'])
         self.add("Comm_EarthsSpin", Comm_EarthsSpin(n), promotes=['*'])
         self.add("Comm_EarthsSpinMtx", Comm_EarthsSpinMtx(n), promotes=['*'])
@@ -109,7 +108,7 @@ class CADRE(Group):
         # Not needed?
         #self.add("Orbit_Initial", Orbit_Initial())
 
-        self.add("Orbit_Dynamics", Orbit_Dynamics(n), promotes=['*'])
+        self.add("Orbit_Dynamics", Orbit_Dynamics(n, h), promotes=['*'])
         self.add("Power_CellVoltage", Power_CellVoltage(n, power_raw),
                  promotes=['*'])
         self.add("Power_SolarPower", Power_SolarPower(n), promotes=['*'])
@@ -120,14 +119,14 @@ class CADRE(Group):
 
         self.add("ReactionWheel_Power", ReactionWheel_Power(n), promotes=['*'])
         self.add("ReactionWheel_Torque", ReactionWheel_Torque(n), promotes=['*'])
-        self.add("ReactionWheel_Dynamics", ReactionWheel_Dynamics(n), promotes=['*'])
+        self.add("ReactionWheel_Dynamics", ReactionWheel_Dynamics(n, h), promotes=['*'])
         self.add("Solar_ExposedArea", Solar_ExposedArea(n, solar_raw1,
                                                         solar_raw2), promotes=['*'])
         self.add("Sun_LOS", Sun_LOS(n), promotes=['*'])
         self.add("Sun_PositionBody", Sun_PositionBody(n), promotes=['*'])
         self.add("Sun_PositionECI", Sun_PositionECI(n), promotes=['*'])
         self.add("Sun_PositionSpherical", Sun_PositionSpherical(n), promotes=['*'])
-        self.add("ThermalTemperature", ThermalTemperature(n), promotes=['*'])
+        self.add("ThermalTemperature", ThermalTemperature(n, h), promotes=['*'])
 
 
 

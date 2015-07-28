@@ -29,9 +29,8 @@ class BatterySOC(rk4.RK4):
         size of each timestep
     """
 
-    def __init__(self, n_times):
-
-        super(BatterySOC, self).__init__()
+    def __init__(self, n_times, h):
+        super(BatterySOC, self).__init__(n_times, h)
 
         # Inputs
         self.add_param('iSOC', np.zeros((1, )), units="unitless",

@@ -231,8 +231,8 @@ class ReactionWheel_Torque(Component):
 class ReactionWheel_Dynamics(rk4.RK4):
     """Compute the angular velocity vector of reaction wheel."""
 
-    def __init__(self, n_times):
-        super(ReactionWheel_Dynamics, self).__init__()
+    def __init__(self, n_times, h):
+        super(ReactionWheel_Dynamics, self).__init__(n_times, h)
 
         # Inputs
         self.add_param('w_B', np.zeros((3, n_times)), units="1/s",

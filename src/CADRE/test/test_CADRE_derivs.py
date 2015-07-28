@@ -49,34 +49,14 @@ class Testcase_CADRE_deriv(unittest.TestCase):
 
         top.run()
 
-        top.check_partial_derivatives()
-        exit()
+        #top.check_partial_derivatives()
+        #exit()
 
         inputs = ['CP_gamma']
         outputs = ['Data']
 
         J1 = top.calc_gradient(inputs, outputs, mode='fwd')
-
-        #nn = len(top.pt.driver.workflow.res)
-        #J = np.zeros([nn, nn])
-        #arg = np.zeros((nn, ))
-        #for j in range(nn):
-            #arg[j] = 1.0
-            #J[:, j] = top.pt.driver.workflow.matvecFWD(arg)
-            #arg[j] = 0.0
-
         J2 = top.calc_gradient(inputs, outputs, mode='rev')
-
-        #Jt = np.zeros([nn, nn])
-        #for j in range(nn):
-            #arg[j] = 1.0
-            #Jt[:, j] = top.pt.driver.workflow.matvecREV(arg)
-            #arg[j] = 0.0
-
-        #print J
-        #print Jt.T
-        #print J-Jt.T
-
         Jfd = top.calc_gradient(inputs, outputs, mode='fd')
 
         np.set_printoptions(threshold='nan')

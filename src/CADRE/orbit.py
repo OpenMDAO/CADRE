@@ -28,11 +28,11 @@ C4 = 1.875*mu*J4*Re**4
 class Orbit_Dynamics(rk4.RK4):
     """Computes the Earth to body position vector in Earth-centered intertial frame."""
 
-    def __init__(self, n_times):
-        super(Orbit_Dynamics, self).__init__()
+    def __init__(self, n_times, h):
+        super(Orbit_Dynamics, self).__init__(n_times, h)
 
         # Inputs
-        self.add_param('r_e2b_I0', np.zeros((6,)), fd_step=1e-2, units="unitless",
+        self.add_param('r_e2b_I0', np.zeros((6, )), fd_step=1e-2, units="unitless",
                        desc="Initial position and velocity vectors from earth to "
                        "satellite in Earth-centered inertial frame")
 

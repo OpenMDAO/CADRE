@@ -19,12 +19,13 @@ class RK4(Component):
     """
 
 
-    def __init__(self, n=2):
+    def __init__(self, n=2, h=.01):
         super(RK4, self).__init__()
 
+        self.h = h
+
         # Inputs
-        self.add_param('h', .01, units="s",
-                       desc="Time step used for RK4 integration")
+        # All inputs are defined in subclasses.
 
         # Options
         self.options = opt = OptionsDictionary()
@@ -152,7 +153,7 @@ class RK4(Component):
 
         n_state = self.n_states
         n_time = self.n
-        h = params['h']
+        h = self.h
 
         # Copy initial state into state array for t=0
         self.y = self.y.reshape((self.ny, ), order='f')
@@ -192,7 +193,7 @@ class RK4(Component):
 
         n_state = self.n_states
         n_time = self.n
-        h = params['h']
+        h = self.h
         I = np.eye(n_state)
 
         # Full Jacobian with respect to states

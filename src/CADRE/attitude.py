@@ -102,7 +102,7 @@ class Attitude_AngularRates(Component):
     """ Calculates time derivative of angular velocity vector.
     """
 
-    def __init__(self, n=2):
+    def __init__(self, n=2, h=28.8):
         super(Attitude_AngularRates, self).__init__()
 
         self.n = n
@@ -111,18 +111,17 @@ class Attitude_AngularRates(Component):
         self.add_param('w_B', np.zeros((3, n)), units="1/s",
                        desc="Angular velocity vector in body-fixed frame over time")
 
-        self.add_param('h', 28.8, units="s",
-                       desc="Time step for RK4 integration")
-
         # Outputs
         self.add_output('wdot_B', np.zeros((3, n)), units="1/s**2",
                         desc="Time derivative of w_B over time")
+
+        self.h = h
 
     def solve_nonlinear(self, params, unknowns, resids):
         """ Calculate output. """
 
         w_B = params['w_B']
-        h = params['h']
+        h = self.h
         wdot_B = unknowns['wdot_B']
 
         wdot_B[:, 0] = w_B[:, 1] - w_B[:, 0]
@@ -133,7 +132,7 @@ class Attitude_AngularRates(Component):
     def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
-        h = params['h']
+        h = self.h
         dwdot_B = dresids['wdot_B']
 
         if mode == 'fwd':
@@ -447,15 +446,13 @@ class Attitude_RotationMtxRates(Component):
     """ Calculates time derivative of body frame orientation matrix.
     """
 
-    def __init__(self, n=2):
+    def __init__(self, n=2, h=28.2):
         super(Attitude_RotationMtxRates, self).__init__()
 
         self.n = n
+        self.h = h
 
         # Inputs
-        self.add_param('h', 28.8, units="s",
-                       desc="Time step for RK4 integration")
-
         self.add_param('O_BI', np.zeros((3, 3, n)), units="unitless",
                        desc="Rotation matrix from body-fixed frame to Earth-centered "
                        "inertial frame over time")
@@ -469,7 +466,7 @@ class Attitude_RotationMtxRates(Component):
         """ Calculate output. """
 
         O_BI = params['O_BI']
-        h = params['h']
+        h = self.h
         Odot_BI = unknowns['Odot_BI']
 
         Odot_BI[:, :, 0] = O_BI[:, :, 1]
@@ -484,7 +481,7 @@ class Attitude_RotationMtxRates(Component):
         """ Matrix-vector product with the Jacobian. """
 
         dOdot_BI = dresids['Odot_BI']
-        h = params['h']
+        h = self.h
 
         if mode == 'fwd':
             dO_BI = dparams['O_BI']

@@ -27,8 +27,8 @@ K = 5.67051e-8
 class ThermalTemperature(RK4):
     """ Calculates the temperature distribution on the solar panels."""
 
-    def __init__(self, n_times):
-        super(ThermalTemperature, self).__init__()
+    def __init__(self, n_times, h):
+        super(ThermalTemperature, self).__init__(n_times, h)
 
         # Inputs
         self.add_param("T0", 273.*np.ones((5, )), units="degK",
