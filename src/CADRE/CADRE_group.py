@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from openmdao.components.paramcomp import ParamComp
+from openmdao.components.param_comp import ParamComp
 from openmdao.core.group import Group
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, Attitude_Attitude, \
@@ -35,6 +35,8 @@ class CADRE(Group):
 
         super(CADRE, self).__init__()
 
+        self.ln_solver.options['mode'] = 'auto'
+
         # Analysis parameters
         self.n = n
         self.m = m
@@ -56,10 +58,12 @@ class CADRE(Group):
                                           0.1 * np.ones((self.m, ))),
                  promotes=['*'])
         self.add('p_iSOC', ParamComp('iSOC', np.array([0.5])), promotes=['*'])
-        self.add('p_cellInstd', ParamComp('cellInstd', np.ones((7, 12))),
-                 promotes=['*'])
-        self.add('p_finAngle', ParamComp('finAngle', np.pi / 4.), promotes=['*'])
-        self.add('p_antAngle', ParamComp('antAngle', 0.0), promotes=['*'])
+
+        # These are broadcast params in the MDP.
+        #self.add('p_cellInstd', ParamComp('cellInstd', np.ones((7, 12))),
+        #         promotes=['*'])
+        #self.add('p_finAngle', ParamComp('finAngle', np.pi / 4.), promotes=['*'])
+        #self.add('p_antAngle', ParamComp('antAngle', 0.0), promotes=['*'])
 
         # Fixed Station Parameters for the CADRE problem.
         self.add('param_LD', ParamComp('LD', 5000.0), promotes=['*'])
