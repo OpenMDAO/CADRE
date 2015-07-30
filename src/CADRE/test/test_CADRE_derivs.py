@@ -41,7 +41,11 @@ class Testcase_CADRE_deriv(unittest.TestCase):
 
         top = Problem(root=Group())
         top.root.add('pt', CADRE(n, m), promotes=['*'])
-        top.setup()
+        #from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
+        #top.root.ln_solver = LinearGaussSeidel()
+        #top.root.pt.ln_solver = LinearGaussSeidel()
+
+        top.setup(check=False)
 
         i = 0
         top["LD"] =  LDs[i]
@@ -49,15 +53,19 @@ class Testcase_CADRE_deriv(unittest.TestCase):
 
         top.run()
 
-        #top.check_partial_derivatives()
-        #exit()
-
         inputs = ['CP_gamma']
         outputs = ['Data']
 
+        from time import time
+        t0 = time()
         J1 = top.calc_gradient(inputs, outputs, mode='fwd')
+        print('Forward', time()-t0)
+        t0 = time()
         J2 = top.calc_gradient(inputs, outputs, mode='rev')
+        print('Reverse', time()-t0)
+        t0 = time()
         Jfd = top.calc_gradient(inputs, outputs, mode='fd')
+        print('Fd', time()-t0)
 
         np.set_printoptions(threshold='nan')
         #print np.nonzero(J1)
@@ -70,9 +78,9 @@ class Testcase_CADRE_deriv(unittest.TestCase):
         print np.max(abs(J2-Jfd))
         print np.max(abs(J1-J2))
 
-        self.assertTrue( np.max(J1-J2) < 1.0e-6 )
-        self.assertTrue( np.max(J1-Jfd) < 1.0e-4 )
-        self.assertTrue( np.max(J2-Jfd) < 1.0e-4 )
+        self.assertTrue( np.max(abs(J1-J2)) < 1.0e-6 )
+        self.assertTrue( np.max(abs(J1-Jfd)) < 1.0e-4 )
+        self.assertTrue( np.max(abs(J2-Jfd)) < 1.0e-4 )
 
 if __name__ == "__main__":
 
