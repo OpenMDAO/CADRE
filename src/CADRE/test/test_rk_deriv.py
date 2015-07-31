@@ -17,7 +17,7 @@ class RKTest(RK4):
     input'''
 
     def __init__(self, n_times):
-        super(RKTest, self).__init__()
+        super(RKTest, self).__init__(0.01)
 
         self.add_param("yi", np.zeros((2, 3)))
         self.add_param("yv", np.zeros((2, n_times)))
@@ -108,7 +108,6 @@ class Testcase_RK_deriv(unittest.TestCase):
 
     def run_model(self):
 
-        self.model['h'] = 0.01
         self.model.run()
 
     def compare_derivatives(self, inputs, outputs):

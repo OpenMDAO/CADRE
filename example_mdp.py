@@ -8,15 +8,16 @@ from openmdao.core.problem import Problem
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
-
+# These numbers are for the CADRE problem in the paper.
 n = 1500
 m = 300
 npts = 6
 restart = False
 
+# These numbers are for quick testing
 #n = 150
 #m = 6
-npts = 1
+#npts = 1
 
 
 # Instantiate
@@ -24,11 +25,11 @@ model = Problem()
 root = model.root = CADRE_MDP_Group(n=n, m=m, npts=npts)
 
 # add SNOPT driver
-#model.driver = pyOptSparseDriver()
-#model.driver.options['optimizer'] = "SNOPT"
-#model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
-#                             'Iterations limit': 500000000,
-#                             "New basis file": 10}
+model.driver = pyOptSparseDriver()
+model.driver.options['optimizer'] = "SNOPT"
+model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
+                             'Iterations limit': 500000000,
+                             "New basis file": 10}
 
 # Restart File
 if restart is True and os.path.exists("fort.10"):
@@ -61,14 +62,10 @@ model.driver.add_objective('obj.val')
 model.setup()
 model.run()
 
-
-params = model.driver.get_params().keys()
-unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
-
-unks = [unks[0]]
-
-Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
-print(Ja)
-
-Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
-print(Jf)
+#print('Data', model['pt0.Data'])
+#params = model.driver.get_params().keys()
+#unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
+#Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
+#print(Ja)
+#Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
+#print(Jf)

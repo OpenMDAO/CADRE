@@ -5,10 +5,9 @@ from six.moves import range
 import os.path
 import numpy as np
 
-from openmdao.components.constraint import ConstraintComp
-from openmdao.components.exec_comp import ExecComp
-from openmdao.components.param_comp import ParamComp
-from openmdao.core.parallelgroup import ParallelGroup
+from openmdao.components import ConstraintComp, ExecComp, ParamComp
+from openmdao.core import Group, ParallelGroup
+
 
 from CADRE.CADRE_group import CADRE
 
@@ -16,12 +15,23 @@ from CADRE.CADRE_group import CADRE
 # pylint: disable=C0103
 
 
-class CADRE_MDP_Group(ParallelGroup):
+class CADRE_MDP_Group(Group):
+    """ CADRE MDP Problem. Can be run in Parallel.
+
+    Args
+    ----
+    n : int
+        Number of time integration points.
+
+    m : int
+        Number of panels in fin discretization.
+
+    npts : int
+        Number of instances of CADRE in the problem.
+    """
 
     def __init__(self, n=1500, m=300, npts=6):
         super(CADRE_MDP_Group, self).__init__()
-
-        self.ln_solver.options['mode'] = 'auto'
 
         # Raw data to load
         fpath = os.path.dirname(os.path.realpath(__file__))
@@ -29,8 +39,7 @@ class CADRE_MDP_Group(ParallelGroup):
         solar_raw1 = np.genfromtxt(fpath + '/Solar/Area10.txt')
         solar_raw2 = np.loadtxt(fpath + '/Solar/Area_all.txt')
         comm_rawGdata = np.genfromtxt(fpath + '/Comm/Gain.txt')
-        comm_raw = (10 ** (comm_rawGdata / 10.0)
-                    ).reshape((361, 361), order='F')
+        comm_raw = (10 ** (comm_rawGdata / 10.0)).reshape((361, 361), order='F')
         power_raw = np.genfromtxt(fpath + '/Power/curve.dat')
 
         # Load launch data
@@ -47,17 +56,21 @@ class CADRE_MDP_Group(ParallelGroup):
         self.add('bp2', ParamComp('finAngle', 0.0))
         self.add('bp3', ParamComp('antAngle', 0.0))
 
+        # CADRE instances go into a Parallel Group
+        para = self.add('parallel', ParallelGroup(), promotes=['*'])
+
         # build design points
         names = ['pt%s' % i for i in range(npts)]
         for i, name in enumerate(names):
-            comp = self.add(name, CADRE(n, m, solar_raw1, solar_raw2,
-                                        comm_raw, power_raw))
 
-            # Kind of a cheat, but set these directly into the params dict.
-            comp.Sun_PositionECI._params_dict['LD']['val'] = float(LDs[i])
+            # Some initial values
+            inits = {}
+            inits['LD'] = float(LDs[i])
+            inits['r_e2b_I0'] = r_e2b_I0s[i]
 
-            # Initial_Orbit comp is currently commented out.
-            #comp.Orbit_Initial._params_dict['r_e2b_I0']['val'] = r_e2b_I0s[i]
+            comp = para.add(name, CADRE(n, m, solar_raw1, solar_raw2,
+                                        comm_raw, power_raw,
+                                        initial_params=inits))
 
             # Hook up broadcast params
             self.connect('bp1.cellInstd', "%s.cellInstd" % name)
@@ -166,3 +179,8 @@ class CADRE_MDP_Group(ParallelGroup):
         self.add('obj', ExecComp('val='+obj))
         for name in names:
             self.connect("%s.DataTot" % name, "obj.%s_DataTot" % name)
+
+        # Set our groups to auto
+        self.ln_solver.options['mode'] = 'auto'
+        para.ln_solver.options['mode'] = 'auto'
+
