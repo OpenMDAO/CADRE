@@ -24,16 +24,16 @@ restart = False
 model = Problem()
 root = model.root = CADRE_MDP_Group(n=n, m=m, npts=npts)
 
-# add SNOPT driver
-model.driver = pyOptSparseDriver()
-model.driver.options['optimizer'] = "SNOPT"
-model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
-                             'Iterations limit': 500000000,
-                             "New basis file": 10}
+## add SNOPT driver
+#model.driver = pyOptSparseDriver()
+#model.driver.options['optimizer'] = "SNOPT"
+#model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
+                             #'Iterations limit': 500000000,
+                             #"New basis file": 10}
 
-# Restart File
-if restart is True and os.path.exists("fort.10"):
-    model.driver.opt_settings["Old basis file"] = 10
+## Restart File
+#if restart is True and os.path.exists("fort.10"):
+    #model.driver.opt_settings["Old basis file"] = 10
 
 # Add parameters and constraints to each CADRE instance.
 names = ['pt%s' % i for i in range(npts)]
@@ -62,10 +62,27 @@ model.driver.add_objective('obj.val')
 model.setup()
 model.run()
 
-#print('Data', model['pt0.Data'])
-#params = model.driver.get_params().keys()
-#unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
-#Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
-#print(Ja)
-#Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
-#print(Jf)
+profile = True
+params = model.driver.get_params().keys()
+unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
+if profile is True:
+    import cProfile
+    import pstats
+    def zzz():
+        for j in range(1):
+            model.run()
+    #cProfile.run("model.calc_gradient(params, unks, mode='rev', return_format='dict')", 'profout')
+    cProfile.run("zzz()", 'profout')
+    p = pstats.Stats('profout')
+    p.strip_dirs()
+    p.sort_stats('cumulative', 'time')
+    p.print_stats()
+    print('\n\n---------------------\n\n')
+    p.print_callers()
+    print('\n\n---------------------\n\n')
+    p.print_callees()
+else:
+    Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
+    print(Ja)
+    Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
+    print(Jf)

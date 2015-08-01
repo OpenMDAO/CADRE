@@ -82,12 +82,15 @@ class ThermalTemperature(RK4):
         P_comm = external[85]
         cellInstd = external[86:].reshape(7, 12)
 
-        f = np.zeros((5, ))
+        fact1 = q_sol*LOS
+        fact2 = K*A_T*state**4
 
         alpha = alpha_c*cellInstd + alpha_r - alpha_r*cellInstd
-        eps = eps_c*cellInstd + eps_r - eps_r*cellInstd
+        s_eps = np.sum(eps_c*cellInstd + eps_r - eps_r*cellInstd, 0)
+        s_al_ea = np.sum(alpha*exposedArea, 0)*fact1
 
         # Panels
+        f = np.zeros((5, ))
         for p in range(0, 12):
 
             # Body
@@ -103,10 +106,7 @@ class ThermalTemperature(RK4):
                 cp = cp_f
 
             # Cells
-            fact1 = q_sol*LOS/(m*cp)
-            fact2 = K*A_T*state[f_i]**4/(m*cp)
-            f[f_i] += np.sum(alpha[:, p] * exposedArea[:, p]) * fact1
-            f[f_i] -= np.sum(eps[:, p]) * fact2
+            f[f_i] += (s_al_ea[p] - s_eps[p]*fact2[f_i])/(m*cp)
 
         f[4] += 4.0 * P_comm / m_b / cp_b
 
@@ -117,7 +117,7 @@ class ThermalTemperature(RK4):
 
         # revised implementation from ThermalTemperature.f90
         cellInstd = external[86:].reshape(7, 12)
-        eps = eps_c*cellInstd + eps_r - eps_r*cellInstd
+        sum_eps = 4.0*K*A_T*np.sum(eps_c*cellInstd + eps_r - eps_r*cellInstd)
 
         dfdy = np.zeros((5, 5))
 
@@ -137,8 +137,8 @@ class ThermalTemperature(RK4):
                 cp = cp_f
 
             # Cells
-            fact = 4.0*K*A_T*state[f_i]**3/(m*cp)
-            dfdy[f_i, f_i] -= np.sum(eps) * fact
+            fact = state[f_i]**3/(m*cp)
+            dfdy[f_i, f_i] -= sum_eps * fact
 
         return dfdy
 
@@ -153,6 +153,8 @@ class ThermalTemperature(RK4):
         alpha = alpha_c*cellInstd + alpha_r - alpha_r*cellInstd
         dalpha_dw = alpha_c - alpha_r
         deps_dw = eps_c - eps_r
+
+        alpha_A_sum = np.sum(alpha*exposedArea, 0)
 
         # Panels
         for p in range(0, 12):
@@ -177,7 +179,7 @@ class ThermalTemperature(RK4):
             dfdx[f_i, p:p+84:12] += alpha[:, p] * fact1
             dfdx[f_i, p+86:p+170:12] += dalpha_dw * exposedArea[:, p] * fact1 - \
                 deps_dw * fact2
-            dfdx[f_i, 84] += np.sum(alpha[:, p] * exposedArea[:, p]) * fact3
+            dfdx[f_i, 84] += alpha_A_sum[p] * fact3
 
         dfdx[4, 85] += 4.0 / m_b / cp_b
 

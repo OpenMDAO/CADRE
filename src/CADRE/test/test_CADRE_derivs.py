@@ -40,17 +40,18 @@ class Testcase_CADRE_deriv(unittest.TestCase):
                           1.19745345, -0.96035904])]
 
         top = Problem(root=Group())
-        top.root.add('pt', CADRE(n, m), promotes=['*'])
+
+        i = 0
+        init = {}
+        init["LD"] =  LDs[i]
+        init["r_e2b_I0"] =  r_e2b_I0s[i]
+
+        top.root.add('pt', CADRE(n, m, initial_params=init), promotes=['*'])
         #from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
         #top.root.ln_solver = LinearGaussSeidel()
         #top.root.pt.ln_solver = LinearGaussSeidel()
 
         top.setup(check=False)
-
-        i = 0
-        top["LD"] =  LDs[i]
-        top["r_e2b_I0"] =  r_e2b_I0s[i]
-
         top.run()
 
         inputs = ['CP_gamma']

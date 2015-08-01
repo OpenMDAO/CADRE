@@ -1,5 +1,7 @@
 """ RK4 time integration component """
 
+from six.moves import range
+
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
@@ -166,7 +168,7 @@ class RK4(Component):
         self.c = np.zeros(size)
         self.d = np.zeros(size)
 
-        for k in xrange(0, n_time-1):
+        for k in range(0, n_time-1):
             k1 = (k)*n_state
             k2 = (k+1)*n_state
 
@@ -285,7 +287,7 @@ class RK4(Component):
 
             i_ext = self.ext_index_map[name]
             ext_length = np.prod(dvar[:, 0].shape)
-            for j in xrange(n_time-1):
+            for j in range(n_time-1):
                 Jsub = self.Jx[j+1, i_ext:i_ext+ext_length, :]
                 J_arg = Jsub.T.dot(dvar[:, j])
                 result[:, j+1:n_time] += np.tile(J_arg, (n_time-j-1, 1)).T
@@ -305,7 +307,7 @@ class RK4(Component):
                 dvar = dvar.flatten()
             i_ext = self.ext_index_map[name]
             ext_length = np.prod(dvar.shape)
-            for j in xrange(n_time-1):
+            for j in range(n_time-1):
                 Jsub = self.Jx[j+1, i_ext:i_ext+ext_length, :]
                 J_arg = Jsub.T.dot(dvar)
                 result[:, j+1:n_time] += np.tile(J_arg, (n_time-j-1, 1)).T
@@ -319,7 +321,7 @@ class RK4(Component):
             if len(np.nonzero(dvar)[0]) > 0:
                 fact = np.eye(self.n_states)
                 result[:, 0] = dvar
-                for j in xrange(1, n_time):
+                for j in range(1, n_time):
                     fact = fact.dot(-self.Jy[j-1, :, :])
                     result[:, j] += fact.dot(dvar)
 
@@ -336,8 +338,8 @@ class RK4(Component):
         argsum = np.zeros(argsv.shape)
 
         # Calculate these once, and use for every output
-        for k in xrange(n_time - 1):
-            argsum[k, :] = np.sum(argsv[k + 1:, :], 0)
+        for k in range(n_time - 2, -1, -1):
+            argsum[k, :] = argsum[k+1, :] + argsv[k+1, :]
 
         # argsum is often sparse, so save indices.
         nonzero_k = np.unique(argsum.nonzero()[0])
@@ -379,7 +381,7 @@ class RK4(Component):
         if name in dparams:
             fact = -self.Jy[0, :, :].T
             result[name] = argsv[0, :] + fact.dot(argsv[1, :])
-            for k in xrange(1, n_time-1):
+            for k in range(1, n_time-1):
                 fact = fact.dot(-self.Jy[k, :, :].T)
                 result[name] += fact.dot(argsv[k+1, :])
 

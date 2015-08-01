@@ -98,9 +98,7 @@ class Orbit_Dynamics(rk4.RK4):
         r7 = r6*r
         r8 = r7*r
 
-        drdx = x/r
-        drdy = y/r
-        drdz = z/r
+        dr = np.array([x, y, z])/r
 
         T2 = 1 - 5*z2/r2
         T3 = 3*z - 7*z3/r2
@@ -108,46 +106,37 @@ class Orbit_Dynamics(rk4.RK4):
         T3z = 3*z - 0.6*r2/z
         T4z = 4 - 28.0/3.0*z2/r2
 
-        dT2_dx = (10*z2)/(r3)*drdx
-        dT2_dy = (10*z2)/(r3)*drdy
-        dT2_dz = (10*z2)/(r3)*drdz - 10.*z/r2
+        dT2 = (10*z2)/(r3)*dr
+        dT2[2] -= 10.*z/r2
 
-        dT3_dx = 14*z3/r3*drdx
-        dT3_dy = 14*z3/r3*drdy
-        dT3_dz = 14*z3/r3*drdz - 21.*z2/r2 + 3
+        dT3 = 14*z3/r3*dr
+        dT3[2] -= 21.*z2/r2 - 3
 
-        dT4_dx = 28*z2/r3*drdx - 84.*z4/r5*drdx
-        dT4_dy = 28*z2/r3*drdy - 84.*z4/r5*drdy
-        dT4_dz = 28*z2/r3*drdz - 84.*z4/r5*drdz - 28*z/r2 + 84*z3/r4
+        dT4 = (28*z2/r3 - 84.*z4/r5)*dr
+        dT4[2] -= 28*z/r2 - 84*z3/r4
 
-        dT3z_dx = -1.2*r/z*drdx
-        dT3z_dy = -1.2*r/z*drdy
-        dT3z_dz = -1.2*r/z*drdz + 0.6*r2/z2 + 3
+        dT3z = -1.2*r/z*dr
+        dT3z[2] += 0.6*r2/z2 + 3
 
-        dT4z_dx = 56.0/3.0*z2/r3*drdx
-        dT4z_dy = 56.0/3.0*z2/r3*drdy
-        dT4z_dz = 56.0/3.0*z2/r3*drdz - 56.0/3.0*z/r2
+        dT4z = 56.0/3.0*z2/r3*dr
+        dT4z[2] -= 56.0/3.0*z/r2
 
         eye = np.identity(3)
 
         dfdy = np.zeros((6, 6))
         dfdy[0:3, 3:] += eye
 
-        dfdy[3:, :3] = dfdy[3:, :3] + eye*(C1/r3 + C2/r5*T2 + C3/r7*T3 + C4/r7*T4)
-        dfdy[3:, 0] = dfdy[3:, 0] + drdx*state[:3]*(-3*C1/r4 - 5*C2/r6*T2 - 7*C3/r8*T3 - 7*C4/r8*T4)
-        dfdy[3:, 1] = dfdy[3:, 1] + drdy*state[:3]*(-3*C1/r4 - 5*C2/r6*T2 - 7*C3/r8*T3 - 7*C4/r8*T4)
-        dfdy[3:, 2] = dfdy[3:, 2] + drdz*state[:3]*(-3*C1/r4 - 5*C2/r6*T2 - 7*C3/r8*T3 - 7*C4/r8*T4)
-        dfdy[3:, 0] = dfdy[3:, 0] + state[:3]*(C2/r5*dT2_dx + C3/r7*dT3_dx + C4/r7*dT4_dx)
-        dfdy[3:, 1] = dfdy[3:, 1] + state[:3]*(C2/r5*dT2_dy + C3/r7*dT3_dy + C4/r7*dT4_dy)
-        dfdy[3:, 2] = dfdy[3:, 2] + state[:3]*(C2/r5*dT2_dz + C3/r7*dT3_dz + C4/r7*dT4_dz)
-        dfdy[5, 0] = dfdy[5, 0] + drdx*z*(-5*C2/r6*2 - 7*C3/r8*T3z - 7*C4/r8*T4z)
-        dfdy[5, 1] = dfdy[5, 1] + drdy*z*(-5*C2/r6*2 - 7*C3/r8*T3z - 7*C4/r8*T4z)
-        dfdy[5, 2] = dfdy[5, 2] + drdz*z*(-5*C2/r6*2 - 7*C3/r8*T3z - 7*C4/r8*T4z)
-        dfdy[5, 0] = dfdy[5, 0] + z*(C3/r7*dT3z_dx + C4/r7*dT4z_dx)
-        dfdy[5, 1] = dfdy[5, 1] + z*(C3/r7*dT3z_dy + C4/r7*dT4z_dy)
-        dfdy[5, 2] = dfdy[5, 2] + z*(C3/r7*dT3z_dz + C4/r7*dT4z_dz)
-        dfdy[5, 2] = dfdy[5, 2] + (C2/r5*2 + C3/r7*T3z + C4/r7*T4z)
-        #dfdy[5, 2] = dfdy[5, 2] + (2.0*C2 + (C3*T3z + C4*T4z)/r2)/r5
+        dfdy[3:, :3] += eye*(C1/r3 + C2/r5*T2 + C3/r7*T3 + C4/r7*T4)
+        fact = (-3*C1/r4 - 5*C2/r6*T2 - 7*C3/r8*T3 - 7*C4/r8*T4)
+        dfdy[3:, 0] += dr[0]*state[:3]*fact
+        dfdy[3:, 1] += dr[1]*state[:3]*fact
+        dfdy[3:, 2] += dr[2]*state[:3]*fact
+        dfdy[3:, 0] += state[:3]*(C2/r5*dT2[0] + C3/r7*dT3[0] + C4/r7*dT4[0])
+        dfdy[3:, 1] += state[:3]*(C2/r5*dT2[1] + C3/r7*dT3[1] + C4/r7*dT4[1])
+        dfdy[3:, 2] += state[:3]*(C2/r5*dT2[2] + C3/r7*dT3[2] + C4/r7*dT4[2])
+        dfdy[5, :3] += dr*z*(-5*C2/r6*2 - 7*C3/r8*T3z - 7*C4/r8*T4z)
+        dfdy[5, :3] += z*(C3/r7*dT3z + C4/r7*dT4z)
+        dfdy[5, 2] += (C2/r5*2 + C3/r7*T3z + C4/r7*T4z)
 
         #print dfdy
         return dfdy

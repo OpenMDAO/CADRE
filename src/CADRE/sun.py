@@ -46,8 +46,8 @@ class Sun_LOS(Component):
         LOS = unknowns['LOS']
 
         for i in range( self.n ):
-            r_b = r_e2b_I[:3,i]
-            r_s = r_e2s_I[:3,i]
+            r_b = r_e2b_I[:3, i]
+            r_s = r_e2s_I[:3, i]
             dot = np.dot( r_b, r_s )
             cross = np.cross( r_b, r_s )
             dist = np.sqrt( cross.dot(cross) )
@@ -60,7 +60,7 @@ class Sun_LOS(Component):
                 LOS[i] = 1.0
             else :
                 x = ( dist - self.r1 ) / ( self.r2 - self.r1 )
-                LOS[i] = 3 *x ** 2 - 2 * x**3
+                LOS[i] = 3*x**2 - 2*x**3
 
     def jacobian(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
