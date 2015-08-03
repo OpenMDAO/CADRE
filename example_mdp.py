@@ -71,8 +71,8 @@ if profile is True:
     def zzz():
         for j in range(1):
             model.run()
-    #cProfile.run("model.calc_gradient(params, unks, mode='rev', return_format='dict')", 'profout')
-    cProfile.run("zzz()", 'profout')
+    cProfile.run("model.calc_gradient(params, unks, mode='rev', return_format='dict')", 'profout')
+    #cProfile.run("zzz()", 'profout')
     p = pstats.Stats('profout')
     p.strip_dirs()
     p.sort_stats('cumulative', 'time')
