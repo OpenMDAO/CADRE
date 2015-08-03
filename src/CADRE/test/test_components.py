@@ -11,7 +11,7 @@ import numpy as np
 
 from openmdao.core.group import Group
 from openmdao.core.problem import Problem
-from openmdao.test.test_util import assert_rel_error
+from openmdao.test.util import assert_rel_error
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
      Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
