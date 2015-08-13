@@ -4,8 +4,15 @@ from __future__ import print_function
 
 import numpy as np
 
+from openmdao.core.mpi_wrap import MPI
 from openmdao.core.problem import Problem
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
+
+if MPI:
+    from openmdao.core.petsc_impl import PetscImpl as impl
+else:
+    from openmdao.core import BasicImpl as impl
+
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 # These numbers are for the CADRE problem in the paper.
@@ -17,11 +24,11 @@ restart = False
 # These numbers are for quick testing
 #n = 150
 #m = 6
-#npts = 1
+#npts = 2
 
 
 # Instantiate
-model = Problem()
+model = Problem(impl=impl)
 root = model.root = CADRE_MDP_Group(n=n, m=m, npts=npts)
 
 # add SNOPT driver
@@ -68,7 +75,10 @@ rec.options['includes'] = ['obj.val', '*_con*.val']
 model.setup()
 model.run()
 
-#profile = True
+#----------------------------------------------------------------
+# Below this line, code I was using for verifying and profiling.
+#----------------------------------------------------------------
+#profile = False
 #params = model.driver.get_params().keys()
 #unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
 #if profile is True:
@@ -88,7 +98,14 @@ model.run()
     #print('\n\n---------------------\n\n')
     #p.print_callees()
 #else:
+    ##model.check_total_derivatives()
     #Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
-    #print(Ja)
-    #Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
-    #print(Jf)
+    #for key1, value in sorted(Ja.items()):
+        #for key2 in sorted(value.keys()):
+            #print(key1, key2)
+            #print(value[key2])
+    ##print(Ja)
+    ##Jf = model.calc_gradient(params, unks, mode='fwd', return_format='dict')
+    ##print(Jf)
+    ##Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
+    ##print(Jf)
