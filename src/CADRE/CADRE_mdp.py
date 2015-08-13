@@ -53,7 +53,7 @@ class CADRE_MDP_Group(Group):
 
         # Create ParmComps for broadcast parameters.
         self.add('bp1', ParamComp('cellInstd', np.ones((7, 12))))
-        self.add('bp2', ParamComp('finAngle', 0.0))
+        self.add('bp2', ParamComp('finAngle', np.pi/4.0))
         self.add('bp3', ParamComp('antAngle', 0.0))
 
         # CADRE instances go into a Parallel Group

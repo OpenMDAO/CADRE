@@ -24,7 +24,7 @@ restart = False
 # These numbers are for quick testing
 #n = 150
 #m = 6
-#npts = 1
+#npts = 2
 
 
 # Instantiate
@@ -78,7 +78,7 @@ model.run()
 #----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
-#profile = True
+#profile = False
 #params = model.driver.get_params().keys()
 #unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
 #if profile is True:
@@ -98,7 +98,14 @@ model.run()
     #print('\n\n---------------------\n\n')
     #p.print_callees()
 #else:
+    ##model.check_total_derivatives()
     #Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
-    #print(Ja)
-    #Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
-    #print(Jf)
+    #for key1, value in sorted(Ja.items()):
+        #for key2 in sorted(value.keys()):
+            #print(key1, key2)
+            #print(value[key2])
+    ##print(Ja)
+    ##Jf = model.calc_gradient(params, unks, mode='fwd', return_format='dict')
+    ##print(Jf)
+    ##Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
+    ##print(Jf)
