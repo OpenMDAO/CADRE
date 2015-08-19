@@ -90,95 +90,14 @@ class CADRE_MDP_Group(Group):
             self.connect("%s.ConS0" % name, '%s_con3.ConS0'% name)
             self.connect("%s.ConS1" % name, '%s_con4.ConS1'% name)
 
-            #-----------------------------------------------------
-            # Because of a bug, manually make SOC constraint comp
-            #-----------------------------------------------------
-            from openmdao.core.component import Component
-
-            class SOCConstraint(Component):
-
-                def __init__(self, n):
-                    super(SOCConstraint, self).__init__()
-
-                    # Inputs
-                    self.add_param('SOC', np.zeros((1, n)), units="unitless",
-                                   desc="Battery state of charge over time")
-
-                    # Outputs
-                    self.add_output('SOCi', 0.0, units="unitless",
-                                    desc="Iniitial SOC")
-
-                    self.add_output('SOCf', 0.0, units="unitless",
-                                    desc="Final SOC")
-
-
-                def solve_nonlinear(self, params, unknowns, resids):
-                    """ Calculate output. """
-
-                    unknowns['SOCi'] = params['SOC'][0][0]
-                    unknowns['SOCf'] = params['SOC'][0][-1]
-
-                def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
-                    """ Matrix-vector product with the Jacobian. """
-
-                    if mode == 'fwd':
-                        dresids['SOCi'] += dparams['SOC'][0][0]
-                        dresids['SOCf'] += dparams['SOC'][0][-1]
-
-                    else:
-                        dSOC = dparams['SOC']
-                        dSOC[0][0] += dresids['SOCi']
-                        dSOC[0][-1] += dresids['SOCf']
-                        dparams['SOC'] = dSOC
-
-
-            comp.add('SOC_Constraint', SOCConstraint(n), promotes=['*'])
             self.add('%s_con5'% name, ConstraintComp("SOCi = SOCf", out='val'))
-            self.connect("%s.SOCi" % name, '%s_con5.SOCi'% name)
-            self.connect("%s.SOCf" % name, '%s_con5.SOCf'% name)
-
-            #-----------------------------------------------------
-            # Same thing for the objective
-            #-----------------------------------------------------
-
-            class TotalData(Component):
-
-                def __init__(self, n):
-                    super(TotalData, self).__init__()
-
-                    # Inputs
-                    self.add_param('Data', np.zeros((1, n)), units="Gibyte",
-                                    desc="Downloaded data state over time")
-
-                    # Outputs
-                    self.add_output('DataTot', 0.0, units="unitless",
-                                    desc="Total Data")
-
-
-                def solve_nonlinear(self, params, unknowns, resids):
-                    """ Calculate output. """
-
-                    unknowns['DataTot'] = params['Data'][0][-1]
-
-                def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
-                    """ Matrix-vector product with the Jacobian. """
-
-                    if mode == 'fwd':
-                        dresids['DataTot'] += dparams['Data'][0][-1]
-
-                    else:
-                        dSOC = dparams['Data']
-                        dSOC[0][-1] += dresids['DataTot']
-                        dparams['Data'] = dSOC
-
-
-
-            comp.add('TotalData', TotalData(n), promotes=['*'])
+            self.connect("%s.SOC" % name, '%s_con5.SOCi'% name, src_indices=[0])
+            self.connect("%s.SOC" % name, '%s_con5.SOCf'% name, src_indices=[n-1])
 
         obj = ''.join([" - %s_DataTot" % name for name in names])
         self.add('obj', ExecComp('val='+obj))
         for name in names:
-            self.connect("%s.DataTot" % name, "obj.%s_DataTot" % name)
+            self.connect("%s.Data" % name, "obj.%s_DataTot" % name, src_indices=[n-1])
 
         # Set our groups to auto
         self.ln_solver.options['mode'] = 'auto'
