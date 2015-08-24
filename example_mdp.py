@@ -8,11 +8,9 @@ from openmdao.core.mpi_wrap import MPI
 from openmdao.core.problem import Problem
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
-if MPI:
-    from openmdao.core.petsc_impl import PetscImpl as impl
-else:
-    from openmdao.core import BasicImpl as impl
+from openmdao.core.petsc_impl import PetscImpl as impl
 
+from openmdao.solvers.petsc_ksp import PetscKSP
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 # These numbers are for the CADRE problem in the paper.
@@ -22,9 +20,9 @@ npts = 6
 restart = False
 
 # These numbers are for quick testing
-#n = 150
-#m = 6
-#npts = 2
+n = 150
+m = 6
+npts = 2
 
 
 # Instantiate
@@ -47,10 +45,10 @@ names = ['pt%s' % i for i in range(npts)]
 for i, name in enumerate(names):
 
     # add parameters to driver
-    model.driver.add_param("%s.CP_Isetpt" % name, low=0., high=0.4)
-    model.driver.add_param("%s.CP_gamma" % name, low=0, high=np.pi/2.)
-    model.driver.add_param("%s.CP_P_comm" % name, low=0., high=25.)
-    model.driver.add_param("%s.iSOC" % name, indices=[0], low=0.2, high=1.)
+    model.driver.add_param("%s_CP_Isetpt.CP_Isetpt" % name, low=0., high=0.4)
+    model.driver.add_param("%s_CP_gamma.CP_gamma" % name, low=0, high=np.pi/2.)
+    model.driver.add_param("%s_CP_P_comm.CP_P_comm" % name, low=0., high=25.)
+    model.driver.add_param("%s_iSOC.iSOC" % name, indices=[0], low=0.2, high=1.)
 
     model.driver.add_constraint('%s_con1.val'% name)
     model.driver.add_constraint('%s_con2.val'% name)
@@ -66,6 +64,9 @@ model.driver.add_param("bp3.antAngle", low=-np.pi/4, high=np.pi/4)
 # Add objective
 model.driver.add_objective('obj.val')
 
+# For Parallel exeuction, we must use KSP
+model.root.ln_solver = PetscKSP()
+
 # Recording
 from openmdao.recorders import DumpRecorder
 rec = DumpRecorder(out='data.dmp')
@@ -78,7 +79,7 @@ model.run()
 #----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
-profile = True
+profile = False
 params = model.driver.get_params().keys()
 unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
 if profile is True:
