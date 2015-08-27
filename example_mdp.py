@@ -10,7 +10,9 @@ from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
 from openmdao.core.petsc_impl import PetscImpl as impl
 
+from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
 from openmdao.solvers.petsc_ksp import PetscKSP
+
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 # These numbers are for the CADRE problem in the paper.
@@ -20,9 +22,9 @@ npts = 6
 restart = False
 
 # These numbers are for quick testing
-n = 150
-m = 6
-npts = 2
+#n = 150
+#m = 6
+#npts = 2
 
 
 # Instantiate
@@ -65,7 +67,8 @@ model.driver.add_param("bp3.antAngle", low=-np.pi/4, high=np.pi/4)
 model.driver.add_objective('obj.val')
 
 # For Parallel exeuction, we must use KSP
-model.root.ln_solver = PetscKSP()
+#model.root.ln_solver = PetscKSP()
+#model.root.ln_solver = LinearGaussSeidel()
 
 # Recording
 from openmdao.recorders import DumpRecorder
@@ -79,7 +82,7 @@ model.run()
 #----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
-profile = False
+profile = True
 params = model.driver.get_params().keys()
 unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
 if profile is True:
