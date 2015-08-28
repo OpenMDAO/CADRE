@@ -71,7 +71,7 @@ model.driver.add_objective('obj.val')
 
 # For Parallel exeuction, we must use KSP
 #model.root.ln_solver = PetscKSP()
-model.root.ln_solver = LinearGaussSeidel()
+#model.root.ln_solver = LinearGaussSeidel()
 
 # Recording
 from openmdao.recorders import DumpRecorder
@@ -106,7 +106,7 @@ if profile is True:
     p.print_callees()
 else:
     #model.check_total_derivatives()
-    Ja = model.calc_gradient(params, unks, mode='fwd', return_format='dict')
+    Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
     for key1, value in sorted(Ja.items()):
         for key2 in sorted(value.keys()):
             print(key1, key2)
