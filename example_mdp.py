@@ -8,7 +8,10 @@ from openmdao.core.mpi_wrap import MPI
 from openmdao.core.problem import Problem
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
-from openmdao.core.petsc_impl import PetscImpl as impl
+if MPI:
+    from openmdao.core.petsc_impl import PetscImpl as impl
+else:
+    impl = None
 
 from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
 from openmdao.solvers.petsc_ksp import PetscKSP
@@ -22,9 +25,9 @@ npts = 6
 restart = False
 
 # These numbers are for quick testing
-#n = 150
-#m = 6
-#npts = 2
+n = 150
+m = 6
+npts = 2
 
 
 # Instantiate
@@ -68,7 +71,7 @@ model.driver.add_objective('obj.val')
 
 # For Parallel exeuction, we must use KSP
 #model.root.ln_solver = PetscKSP()
-#model.root.ln_solver = LinearGaussSeidel()
+model.root.ln_solver = LinearGaussSeidel()
 
 # Recording
 from openmdao.recorders import DumpRecorder
@@ -82,7 +85,7 @@ model.run()
 #----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
-profile = True
+profile = False
 params = model.driver.get_params().keys()
 unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
 if profile is True:
@@ -103,7 +106,7 @@ if profile is True:
     p.print_callees()
 else:
     #model.check_total_derivatives()
-    Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
+    Ja = model.calc_gradient(params, unks, mode='fwd', return_format='dict')
     for key1, value in sorted(Ja.items()):
         for key2 in sorted(value.keys()):
             print(key1, key2)
