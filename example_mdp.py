@@ -11,7 +11,10 @@ from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 if MPI:
     from openmdao.core.petsc_impl import PetscImpl as impl
 else:
-    from openmdao.core import BasicImpl as impl
+    impl = None
+
+from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
+from openmdao.solvers.petsc_ksp import PetscKSP
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
@@ -22,9 +25,9 @@ npts = 6
 restart = False
 
 # These numbers are for quick testing
-#n = 150
-#m = 6
-#npts = 2
+n = 150
+m = 6
+npts = 2
 
 
 # Instantiate
@@ -32,11 +35,11 @@ model = Problem(impl=impl)
 root = model.root = CADRE_MDP_Group(n=n, m=m, npts=npts)
 
 # add SNOPT driver
-model.driver = pyOptSparseDriver()
-model.driver.options['optimizer'] = "SNOPT"
-model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
-                             'Iterations limit': 500000000,
-                             "New basis file": 10}
+#model.driver = pyOptSparseDriver()
+#model.driver.options['optimizer'] = "SNOPT"
+#model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
+                             #'Iterations limit': 500000000,
+                             #"New basis file": 10}
 
 # Restart File
 if restart is True and os.path.exists("fort.10"):
@@ -47,10 +50,10 @@ names = ['pt%s' % i for i in range(npts)]
 for i, name in enumerate(names):
 
     # add parameters to driver
-    model.driver.add_param("%s.CP_Isetpt" % name, low=0., high=0.4)
-    model.driver.add_param("%s.CP_gamma" % name, low=0, high=np.pi/2.)
-    model.driver.add_param("%s.CP_P_comm" % name, low=0., high=25.)
-    model.driver.add_param("%s.iSOC" % name, indices=[0], low=0.2, high=1.)
+    model.driver.add_param("%s_CP_Isetpt.CP_Isetpt" % name, low=0., high=0.4)
+    model.driver.add_param("%s_CP_gamma.CP_gamma" % name, low=0, high=np.pi/2.)
+    model.driver.add_param("%s_CP_P_comm.CP_P_comm" % name, low=0., high=25.)
+    model.driver.add_param("%s_iSOC.iSOC" % name, indices=[0], low=0.2, high=1.)
 
     model.driver.add_constraint('%s_con1.val'% name)
     model.driver.add_constraint('%s_con2.val'% name)
@@ -66,6 +69,10 @@ model.driver.add_param("bp3.antAngle", low=-np.pi/4, high=np.pi/4)
 # Add objective
 model.driver.add_objective('obj.val')
 
+# For Parallel exeuction, we must use KSP
+#model.root.ln_solver = PetscKSP()
+model.root.ln_solver = LinearGaussSeidel()
+
 # Recording
 from openmdao.recorders import DumpRecorder
 rec = DumpRecorder(out='data.dmp')
@@ -78,34 +85,34 @@ model.run()
 #----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
-#profile = False
-#params = model.driver.get_params().keys()
-#unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
-#if profile is True:
-    #import cProfile
-    #import pstats
-    #def zzz():
-        #for j in range(1):
-            #model.run()
-    #cProfile.run("model.calc_gradient(params, unks, mode='rev', return_format='dict')", 'profout')
-    ##cProfile.run("zzz()", 'profout')
-    #p = pstats.Stats('profout')
-    #p.strip_dirs()
-    #p.sort_stats('cumulative', 'time')
-    #p.print_stats()
-    #print('\n\n---------------------\n\n')
-    #p.print_callers()
-    #print('\n\n---------------------\n\n')
-    #p.print_callees()
-#else:
-    ##model.check_total_derivatives()
-    #Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
-    #for key1, value in sorted(Ja.items()):
-        #for key2 in sorted(value.keys()):
-            #print(key1, key2)
-            #print(value[key2])
-    ##print(Ja)
-    ##Jf = model.calc_gradient(params, unks, mode='fwd', return_format='dict')
-    ##print(Jf)
-    ##Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
-    ##print(Jf)
+profile = False
+params = model.driver.get_params().keys()
+unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
+if profile is True:
+    import cProfile
+    import pstats
+    def zzz():
+        for j in range(1):
+            model.run()
+    cProfile.run("model.calc_gradient(params, unks, mode='rev', return_format='dict')", 'profout')
+    #cProfile.run("zzz()", 'profout')
+    p = pstats.Stats('profout')
+    p.strip_dirs()
+    p.sort_stats('cumulative', 'time')
+    p.print_stats()
+    print('\n\n---------------------\n\n')
+    p.print_callers()
+    print('\n\n---------------------\n\n')
+    p.print_callees()
+else:
+    #model.check_total_derivatives()
+    Ja = model.calc_gradient(params, unks, mode='fwd', return_format='dict')
+    for key1, value in sorted(Ja.items()):
+        for key2 in sorted(value.keys()):
+            print(key1, key2)
+            print(value[key2])
+    #print(Ja)
+    #Jf = model.calc_gradient(params, unks, mode='fwd', return_format='dict')
+    #print(Jf)
+    #Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
+    #print(Jf)

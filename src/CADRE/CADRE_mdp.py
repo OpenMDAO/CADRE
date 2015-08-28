@@ -33,6 +33,8 @@ class CADRE_MDP_Group(Group):
     def __init__(self, n=1500, m=300, npts=6):
         super(CADRE_MDP_Group, self).__init__()
 
+        h = 43200.0 / (n - 1)
+
         # Raw data to load
         fpath = os.path.dirname(os.path.realpath(__file__))
         fpath = os.path.join(fpath, 'data')
@@ -64,13 +66,95 @@ class CADRE_MDP_Group(Group):
         for i, name in enumerate(names):
 
             # Some initial values
-            inits = {}
-            inits['LD'] = float(LDs[i])
-            inits['r_e2b_I0'] = r_e2b_I0s[i]
+            initial_params = {}
+            initial_params['LD'] = float(LDs[i])
+            initial_params['r_e2b_I0'] = r_e2b_I0s[i]
+
+            # User-defined initial parameters
+            if initial_params is None:
+                initial_params = {}
+            if 't1' not in initial_params:
+                initial_params['t1'] = 0.0
+            if 't2' not in initial_params:
+                initial_params['t2'] = 43200.0
+            if 't' not in initial_params:
+                initial_params['t'] = np.array(range(0, n))*h
+            if 'CP_Isetpt' not in initial_params:
+                initial_params['CP_Isetpt'] = 0.2 * np.ones((12, m))
+            if 'CP_gamma' not in initial_params:
+                initial_params['CP_gamma'] = np.pi/4 * np.ones((m, ))
+            if 'CP_P_comm' not in initial_params:
+                initial_params['CP_P_comm'] = 0.1 * np.ones((m, ))
+
+            if 'iSOC' not in initial_params:
+                initial_params['iSOC'] = np.array([0.5])
+
+            # Fixed Station Parameters for the CADRE problem.
+            # McMurdo station: -77.85, 166.666667
+            # Ann Arbor: 42.2708, -83.7264
+            if 'LD' not in initial_params:
+                initial_params['LD'] = 5000.0
+            if 'lat' not in initial_params:
+                initial_params['lat'] = 42.2708
+            if 'lon' not in initial_params:
+                initial_params['lon'] = -83.7264
+            if 'alt' not in initial_params:
+                initial_params['alt'] = 0.256
+
+            # Initial Orbital Elements
+            if 'r_e2b_I0' not in initial_params:
+                initial_params['r_e2b_I0'] = np.zeros((6, ))
 
             comp = para.add(name, CADRE(n, m, solar_raw1, solar_raw2,
-                                        comm_raw, power_raw,
-                                        initial_params=inits))
+                                        comm_raw, power_raw))
+
+            # Some initial setup.
+            self.add('%s_t1' % name, ParamComp('t1', initial_params['t1']))
+            self.connect("%s_t1.t1" % name, '%s.t1'% name)
+            self.add('%s_t2' % name, ParamComp('t2', initial_params['t2']))
+            self.connect("%s_t2.t2" % name, '%s.t2'% name)
+            self.add('%s_t' % name, ParamComp('t', initial_params['t']))
+            self.connect("%s_t.t" % name, '%s.t'% name)
+
+            # Design parameters
+            self.add('%s_CP_Isetpt' % name, ParamComp('CP_Isetpt',
+                                                        initial_params['CP_Isetpt']))
+            self.connect("%s_CP_Isetpt.CP_Isetpt" % name,
+                         '%s.CP_Isetpt'% name)
+            self.add('%s_CP_gamma' % name, ParamComp('CP_gamma',
+                                             initial_params['CP_gamma']))
+            self.connect("%s_CP_gamma.CP_gamma" % name,
+                         '%s.CP_gamma'% name)
+            self.add('%s_CP_P_comm' % name, ParamComp('CP_P_comm',
+                                              initial_params['CP_P_comm']))
+            self.connect("%s_CP_P_comm.CP_P_comm" % name,
+                         '%s.CP_P_comm'% name)
+            self.add('%s_iSOC' % name, ParamComp('iSOC', initial_params['iSOC']))
+            self.connect("%s_iSOC.iSOC" % name,
+                         '%s.iSOC'% name)
+
+            # These are broadcast params in the MDP.
+            #self.add('p_cellInstd', ParamComp('cellInstd', np.ones((7, 12))),
+            #         promotes=['*'])
+            #self.add('p_finAngle', ParamComp('finAngle', np.pi / 4.), promotes=['*'])
+            #self.add('p_antAngle', ParamComp('antAngle', 0.0), promotes=['*'])
+
+            self.add('%s_param_LD' % name, ParamComp('LD', initial_params['LD']))
+            self.connect("%s_param_LD.LD" % name,
+                         '%s.LD'% name)
+            self.add('%s_param_lat' % name, ParamComp('lat', initial_params['lat']))
+            self.connect("%s_param_lat.lat" % name,
+                         '%s.lat'% name)
+            self.add('%s_param_lon' % name, ParamComp('lon', initial_params['lon']))
+            self.connect("%s_param_lon.lon" % name,
+                         '%s.lon'% name)
+            self.add('%s_param_alt' % name, ParamComp('alt', initial_params['alt']))
+            self.connect("%s_param_alt.alt" % name,
+                         '%s.alt'% name)
+            self.add('%s_param_r_e2b_I0' % name, ParamComp('r_e2b_I0',
+                                                 initial_params['r_e2b_I0']))
+            self.connect("%s_param_r_e2b_I0.r_e2b_I0" % name,
+                         '%s.r_e2b_I0'% name)
 
             # Hook up broadcast params
             self.connect('bp1.cellInstd', "%s.cellInstd" % name)
@@ -90,95 +174,14 @@ class CADRE_MDP_Group(Group):
             self.connect("%s.ConS0" % name, '%s_con3.ConS0'% name)
             self.connect("%s.ConS1" % name, '%s_con4.ConS1'% name)
 
-            #-----------------------------------------------------
-            # Because of a bug, manually make SOC constraint comp
-            #-----------------------------------------------------
-            from openmdao.core.component import Component
-
-            class SOCConstraint(Component):
-
-                def __init__(self, n):
-                    super(SOCConstraint, self).__init__()
-
-                    # Inputs
-                    self.add_param('SOC', np.zeros((1, n)), units="unitless",
-                                   desc="Battery state of charge over time")
-
-                    # Outputs
-                    self.add_output('SOCi', 0.0, units="unitless",
-                                    desc="Iniitial SOC")
-
-                    self.add_output('SOCf', 0.0, units="unitless",
-                                    desc="Final SOC")
-
-
-                def solve_nonlinear(self, params, unknowns, resids):
-                    """ Calculate output. """
-
-                    unknowns['SOCi'] = params['SOC'][0][0]
-                    unknowns['SOCf'] = params['SOC'][0][-1]
-
-                def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
-                    """ Matrix-vector product with the Jacobian. """
-
-                    if mode == 'fwd':
-                        dresids['SOCi'] += dparams['SOC'][0][0]
-                        dresids['SOCf'] += dparams['SOC'][0][-1]
-
-                    else:
-                        dSOC = dparams['SOC']
-                        dSOC[0][0] += dresids['SOCi']
-                        dSOC[0][-1] += dresids['SOCf']
-                        dparams['SOC'] = dSOC
-
-
-            comp.add('SOC_Constraint', SOCConstraint(n), promotes=['*'])
             self.add('%s_con5'% name, ConstraintComp("SOCi = SOCf", out='val'))
-            self.connect("%s.SOCi" % name, '%s_con5.SOCi'% name)
-            self.connect("%s.SOCf" % name, '%s_con5.SOCf'% name)
-
-            #-----------------------------------------------------
-            # Same thing for the objective
-            #-----------------------------------------------------
-
-            class TotalData(Component):
-
-                def __init__(self, n):
-                    super(TotalData, self).__init__()
-
-                    # Inputs
-                    self.add_param('Data', np.zeros((1, n)), units="Gibyte",
-                                    desc="Downloaded data state over time")
-
-                    # Outputs
-                    self.add_output('DataTot', 0.0, units="unitless",
-                                    desc="Total Data")
-
-
-                def solve_nonlinear(self, params, unknowns, resids):
-                    """ Calculate output. """
-
-                    unknowns['DataTot'] = params['Data'][0][-1]
-
-                def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
-                    """ Matrix-vector product with the Jacobian. """
-
-                    if mode == 'fwd':
-                        dresids['DataTot'] += dparams['Data'][0][-1]
-
-                    else:
-                        dSOC = dparams['Data']
-                        dSOC[0][-1] += dresids['DataTot']
-                        dparams['Data'] = dSOC
-
-
-
-            comp.add('TotalData', TotalData(n), promotes=['*'])
+            self.connect("%s.SOC" % name, '%s_con5.SOCi'% name, src_indices=[0])
+            self.connect("%s.SOC" % name, '%s_con5.SOCf'% name, src_indices=[n-1])
 
         obj = ''.join([" - %s_DataTot" % name for name in names])
         self.add('obj', ExecComp('val='+obj))
         for name in names:
-            self.connect("%s.DataTot" % name, "obj.%s_DataTot" % name)
+            self.connect("%s.Data" % name, "obj.%s_DataTot" % name, src_indices=[n-1])
 
         # Set our groups to auto
         self.ln_solver.options['mode'] = 'auto'
