@@ -8,9 +8,9 @@ from openmdao.core.mpi_wrap import MPI
 from openmdao.core.problem import Problem
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
-if MPI:
+try:
     from openmdao.core.petsc_impl import PetscImpl as impl
-else:
+except ImportError:
     impl = None
 
 from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
