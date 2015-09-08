@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from openmdao.components import ParamComp
 from openmdao.core.group import Group
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, Attitude_Attitude, \
@@ -55,7 +56,7 @@ class CADRE(Group):
     """
 
     def __init__(self, n, m, solar_raw1=None, solar_raw2=None, comm_raw=None,
-                 power_raw=None, initial_params=None)):
+                 power_raw=None, initial_params=None):
 
         super(CADRE, self).__init__()
 
