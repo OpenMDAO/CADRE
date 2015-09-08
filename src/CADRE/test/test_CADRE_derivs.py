@@ -47,6 +47,7 @@ class Testcase_CADRE_deriv(unittest.TestCase):
         init["r_e2b_I0"] =  r_e2b_I0s[i]
 
         top.root.add('pt', CADRE(n, m, initial_params=init), promotes=['*'])
+
         #from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
         #top.root.ln_solver = LinearGaussSeidel()
         #top.root.pt.ln_solver = LinearGaussSeidel()

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from openmdao.components.param_comp import ParamComp
+from openmdao.components import ParamComp
 from openmdao.core.group import Group
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, Attitude_Attitude, \
