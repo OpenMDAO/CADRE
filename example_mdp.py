@@ -9,9 +9,9 @@ from openmdao.core.mpi_wrap import MPI
 from openmdao.core.problem import Problem
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
-if MPI:
+try:
     from openmdao.core.petsc_impl import PetscImpl as impl
-else:
+except ImportError:
     impl = None
 
 from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
@@ -86,7 +86,7 @@ model.run()
 #----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
-#profile = False
+#profile = True
 #params = model.driver.get_params().keys()
 #unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
 #if profile is True:
