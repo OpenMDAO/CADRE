@@ -6,7 +6,12 @@ from six.moves import range
 import numpy as np
 from matplotlib import pylab
 
-filename = 'data.dmp'
+from openmdao.core.mpi_wrap import MPI
+
+if MPI:
+    filename = 'data_0.dmp'
+else:
+    filename = 'data.dmp'
 
 
 def extract_all_vars(name):
