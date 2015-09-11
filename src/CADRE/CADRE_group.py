@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from openmdao.components import ParamComp
 from openmdao.core.group import Group
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, Attitude_Attitude, \
@@ -48,10 +49,14 @@ class CADRE(Group):
     power_raw : string
         Name of file containing a map of solar cell output voltage versus current,
         area, and temperature.
+
+    initial_params : dict, optional
+        Dictionary of initial values for all parameters. Set the keys you want to
+        change.
     """
 
     def __init__(self, n, m, solar_raw1=None, solar_raw2=None, comm_raw=None,
-                 power_raw=None):
+                 power_raw=None, initial_params=None):
 
         super(CADRE, self).__init__()
 
@@ -61,6 +66,77 @@ class CADRE(Group):
         self.n = n
         self.m = m
         h = 43200.0 / (self.n - 1)
+
+        # User-defined initial parameters
+        if initial_params is None:
+            initial_params = {}
+        if 't1' not in initial_params:
+            initial_params['t1'] = 0.0
+        if 't2' not in initial_params:
+            initial_params['t2'] = 43200.0
+        if 't' not in initial_params:
+            initial_params['t'] = np.array(range(0, n))*h
+        if 'CP_Isetpt' not in initial_params:
+            initial_params['CP_Isetpt'] = 0.2 * np.ones((12, self.m))
+        if 'CP_gamma' not in initial_params:
+            initial_params['CP_gamma'] = np.pi/4 * np.ones((self.m, ))
+        if 'CP_P_comm' not in initial_params:
+            initial_params['CP_P_comm'] = 0.1 * np.ones((self.m, ))
+
+        if 'iSOC' not in initial_params:
+            initial_params['iSOC'] = np.array([0.5])
+
+        # Fixed Station Parameters for the CADRE problem.
+        # McMurdo station: -77.85, 166.666667
+        # Ann Arbor: 42.2708, -83.7264
+        if 'LD' not in initial_params:
+            initial_params['LD'] = 5000.0
+        if 'lat' not in initial_params:
+            initial_params['lat'] = 42.2708
+        if 'lon' not in initial_params:
+            initial_params['lon'] = -83.7264
+        if 'alt' not in initial_params:
+            initial_params['alt'] = 0.256
+
+        # Initial Orbital Elements
+        if 'r_e2b_I0' not in initial_params:
+            initial_params['r_e2b_I0'] = np.zeros((6, ))
+
+        # Some initial setup.
+        self.add('p_t1', ParamComp('t1', initial_params['t1']), promotes=['*'])
+        self.add('p_t2', ParamComp('t2', initial_params['t2']), promotes=['*'])
+        self.add('p_t', ParamComp('t', initial_params['t']), promotes=['*'])
+
+        # Design parameters
+        self.add('p_CP_Isetpt', ParamComp('CP_Isetpt',
+                                          initial_params['CP_Isetpt']),
+                 promotes=['*'])
+        self.add('p_CP_gamma', ParamComp('CP_gamma',
+                                         initial_params['CP_gamma']),
+                 promotes=['*'])
+        self.add('p_CP_P_comm', ParamComp('CP_P_comm',
+                                          initial_params['CP_P_comm']),
+                 promotes=['*'])
+        self.add('p_iSOC', ParamComp('iSOC', initial_params['iSOC']),
+                 promotes=['*'])
+
+        # These are broadcast params in the MDP.
+        #self.add('p_cellInstd', ParamComp('cellInstd', np.ones((7, 12))),
+        #         promotes=['*'])
+        #self.add('p_finAngle', ParamComp('finAngle', np.pi / 4.), promotes=['*'])
+        #self.add('p_antAngle', ParamComp('antAngle', 0.0), promotes=['*'])
+
+        self.add('param_LD', ParamComp('LD', initial_params['LD']),
+                 promotes=['*'])
+        self.add('param_lat', ParamComp('lat', initial_params['lat']),
+                 promotes=['*'])
+        self.add('param_lon', ParamComp('lon', initial_params['lon']),
+                 promotes=['*'])
+        self.add('param_alt', ParamComp('alt', initial_params['alt']),
+                 promotes=['*'])
+        self.add('param_r_e2b_I0', ParamComp('r_e2b_I0',
+                                             initial_params['r_e2b_I0']),
+                 promotes=['*'])
 
         # Add Component Models
         self.add("BsplineParameters", BsplineParameters(n, m), promotes=['*'])
