@@ -183,12 +183,12 @@ class BatteryPower(Component):
                 dparams['P_bat'] += self.dI_dP * dI_bat
 
             if 'temperature' in dparams:
-                dtemperature = dparams['temperature']
+                dtemperature = np.zeros(dparams['temperature'].shape)
                 dtemperature[4, :] += self.dI_dT * dI_bat
                 dparams['temperature'] = dtemperature
 
             if 'SOC' in dparams:
-                dSOC = dparams['SOC']
+                dSOC = np.zeros(dparams['SOC'].shape)
                 dSOC[0, :] += self.dI_dSOC * dI_bat
                 dparams['SOC'] = dSOC
 

@@ -94,6 +94,6 @@ class BsplineParameters(Component):
 
             if 'Isetpt' in dresids and 'CP_Isetpt' in dparams:
                 for k in range(12):
-                    dCP_Isetpt = dparams['CP_Isetpt']
+                    dCP_Isetpt = np.zeros(dparams['CP_Isetpt'].shape)
                     dCP_Isetpt[k, :] += self.BT.dot(dresids['Isetpt'][k, :])
                     dparams['CP_Isetpt'] = dCP_Isetpt

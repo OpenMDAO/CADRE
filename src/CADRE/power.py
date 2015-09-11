@@ -138,18 +138,18 @@ class Power_CellVoltage(Component):
                     dparams['LOS'] += self.dV_dL[:, p] * dV_sol[p,:]
 
                 if 'temperature' in dparams:
-                    dtemp = dparams['temperature']
+                    dtemp = np.zeros(dparams['temperature'].shape)
                     dtemp[i,:] += self.dV_dT[:, p, i] * dV_sol[p,:]
                     dparams['temperature'] = dtemp
 
                 if 'Isetpt' in dparams:
-                    dIsetpt = dparams['Isetpt']
+                    dIsetpt = np.zeros(dparams['Isetpt'].shape)
                     dIsetpt[p,:] += self.dV_dI[:, p] * dV_sol[p,:]
                     dparams['Isetpt'] = dIsetpt
 
                 if 'exposedArea' in dparams:
                     for c in range(7):
-                        dexposedArea = dparams['exposedArea']
+                        dexposedArea = np.zeros(dparams['exposedArea'].shape)
                         dexposedArea[c, p, :] += self.dV_dA[:, c, p] * dV_sol[p,:]
                         dparams['exposedArea'] = dexposedArea
 
@@ -200,12 +200,12 @@ class Power_SolarPower(Component):
         else:
             for p in range(12):
                 if 'V_sol' in dparams:
-                    dV_sol = dparams['V_sol']
+                    dV_sol = np.zeros(dparams['V_sol'].shape)
                     dV_sol[p,:] += dP_sol* params['Isetpt'][p, :]
                     dparams['V_sol'] = dV_sol
 
                 if 'Isetpt' in dparams:
-                    dIsetpt = dparams['Isetpt']
+                    dIsetpt = np.zeros(dparams['Isetpt'].shape)
                     dIsetpt[p,:] += params['V_sol'][p, :] * dP_sol
                     dparams['Isetpt'] = dIsetpt
 
@@ -267,6 +267,6 @@ class Power_Total(Component):
 
             if 'P_RW' in dparams:
                 for k in range(3):
-                    dP_RW = dparams['P_RW']
+                    dP_RW = np.zeros(dparams['P_RW'].shape)
                     dP_RW[k, :] -= dP_bat
                     dparams['P_RW'] = dP_RW
