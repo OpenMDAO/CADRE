@@ -536,6 +536,7 @@ class Testcase_CADRE(unittest.TestCase):
         inputs = ['w_RW', 'T_RW']
         outputs = ['P_RW']
         state0 = []
+        np.random.seed(1001)
 
         self.setup(compname, inputs, state0)
 
