@@ -226,7 +226,7 @@ class Comm_AntRotationMtx(Component):
             for u in range(3):
                 for v in range(3):
                     for k in range(4):
-                        dq_A = dparams['q_A']
+                        dq_A = np.zeros(dparams['q_A'].shape)
                         dq_A[k, :] += self.J[:, u, v, k] * \
                             dresids['O_AB'][u, v, :]
                         dparams['q_A'] = dq_A
@@ -388,7 +388,7 @@ class Comm_Distance(Component):
 
         else:
             for k in range(3):
-                dr_b2g_A = dparams['r_b2g_A']
+                dr_b2g_A = np.zeros(dparams['r_b2g_A'].shape)
                 dr_b2g_A[k, :] += self.J[:, k] * dresids['GSdist']
                 dparams['r_b2g_A'] = dr_b2g_A
 
@@ -571,7 +571,7 @@ class Comm_EarthsSpinMtx(Component):
             for u in range(3):
                 for v in range(3):
                     for k in range(4):
-                        dq_E = dparams['q_E']
+                        dq_E = np.zeros(dparams['q_E'].shape)
                         dq_E[k, :] += self.J[:, u, v, k] * \
                             dO_IE[u, v, :]
                         dparams['q_E'] = dq_E
@@ -808,13 +808,13 @@ class Comm_GSposECI(Component):
                 if 'O_IE' in dparams:
                     for u in range(3):
                         for v in range(3):
-                            dO_IE = dparams['O_IE']
+                            dO_IE = np.zeros(dparams['O_IE'].shape)
                             dO_IE[u, v, :] += self.J1[:, k, u, v] * \
                                 dr_e2g_I[k, :]
                             dparams['O_IE'] = dO_IE
                 if 'r_e2g_E' in dparams:
                     for j in range(3):
-                        dr_e2g_E = dparams['r_e2g_E']
+                        dr_e2g_E = np.zeros(dparams['r_e2g_E'].shape)
                         dr_e2g_E[j, :] += self.J2[:, k, j] * \
                             dr_e2g_I[k, :]
                         dparams['r_e2g_E'] = dr_e2g_E
@@ -909,11 +909,11 @@ class Comm_LOS(Component):
         else:
             for k in range(3):
                 if 'r_b2g_I' in dparams:
-                    dr_b2g_I = dparams['r_b2g_I']
+                    dr_b2g_I = np.zeros(dparams['r_b2g_I'].shape)
                     dr_b2g_I[k, :] += self.dLOS_drb[:, k] * dCommLOS
                     dparams['r_b2g_I'] = dr_b2g_I
                 if 'r_e2g_I' in dparams:
-                    dr_e2g_I = dparams['r_e2g_I']
+                    dr_e2g_I = np.zeros(dparams['r_e2g_I'].shape)
                     dr_e2g_I[k, :] += self.dLOS_dre[:, k] * dCommLOS
                     dparams['r_e2g_I'] = dr_e2g_I
 
@@ -975,13 +975,13 @@ class Comm_VectorAnt(Component):
                 if 'O_AB' in dparams:
                     for u in range(3):
                         for v in range(3):
-                            dO_AB = dparams['O_AB']
+                            dO_AB = np.zeros(dparams['O_AB'].shape)
                             dO_AB[u, v, :] += self.J1[:, k, u, v] * \
                                 dr_b2g_A[k, :]
                             dparams['O_AB'] = dO_AB
                 if 'r_b2g_B' in dparams:
                     for j in range(3):
-                        dr_b2g_B = dparams['r_b2g_B']
+                        dr_b2g_B = np.zeros(dparams['r_b2g_B'].shape)
                         dr_b2g_B[j, :] += self.J2[:, k, j] * \
                             dr_b2g_A[k, :]
                         dparams['r_b2g_B'] = dr_b2g_B
@@ -1055,13 +1055,13 @@ class Comm_VectorBody(Component):
                 if 'O_BI' in dparams:
                     for u in range(3):
                         for v in range(3):
-                            dO_BI = dparams['O_BI']
+                            dO_BI = np.zeros(dparams['O_BI'].shape)
                             dO_BI[u, v, :] += self.J1[:, k, u, v] * \
                                 dr_b2g_B[k, :]
                             dparams['O_BI'] = dO_BI
                 if 'r_b2g_I' in dparams:
                     for j in range(3):
-                        dr_b2g_I = dparams['r_b2g_I']
+                        dr_b2g_I = np.zeros(dparams['r_b2g_I'].shape)
                         dr_b2g_I[j, :] += self.J2[:, k, j] * \
                             dr_b2g_B[k, :]
                         dparams['r_b2g_I'] = dr_b2g_I
@@ -1109,7 +1109,7 @@ class Comm_VectorECI(Component):
             if 'r_e2g_I' in dparams:
                 dparams['r_e2g_I'] += dr_b2g_I
             if 'r_e2b_I' in dparams:
-                dr_e2b_I = dparams['r_e2b_I']
+                dr_e2b_I = np.zeros(dparams['r_e2b_I'].shape)
                 dr_e2b_I[:3, :] += -dr_b2g_I
                 dparams['r_e2b_I'] = dr_e2b_I
 
