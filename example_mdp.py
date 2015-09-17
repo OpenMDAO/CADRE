@@ -71,8 +71,7 @@ model.driver.add_param("bp3.antAngle", low=-np.pi/4, high=np.pi/4)
 model.driver.add_objective('obj.val')
 
 # For Parallel exeuction, we must use KSP
-if MPI:
-    model.root.ln_solver = PetscKSP()
+model.root.ln_solver = PetscKSP()
 #model.root.ln_solver = LinearGaussSeidel()
 
 # Recording
