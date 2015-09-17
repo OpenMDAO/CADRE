@@ -28,7 +28,7 @@ restart = False
 # These numbers are for quick testing
 #n = 150
 #m = 6
-npts = 2
+#npts = 2
 
 
 # Instantiate
@@ -72,7 +72,6 @@ model.driver.add_objective('obj.val')
 
 # For Parallel exeuction, we must use KSP
 model.root.ln_solver = PetscKSP()
-#model.root.ln_solver = LinearGaussSeidel()
 
 # Recording
 from openmdao.recorders import DumpRecorder
@@ -87,40 +86,40 @@ model.run()
 #----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
-profile = False
-params = model.driver.get_params().keys()
-unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
-if profile is True:
-    import cProfile
-    import pstats
-    def zzz():
-        for j in range(1):
-            model.run()
-    cProfile.run("model.calc_gradient(params, unks, mode='rev', return_format='dict')", 'profout')
-    #cProfile.run("zzz()", 'profout')
-    p = pstats.Stats('profout')
-    p.strip_dirs()
-    p.sort_stats('cumulative', 'time')
-    p.print_stats()
-    print('\n\n---------------------\n\n')
-    p.print_callers()
-    print('\n\n---------------------\n\n')
-    p.print_callees()
-else:
-    #model.check_total_derivatives()
-    Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
-    for key1, value in sorted(Ja.items()):
-        for key2 in sorted(value.keys()):
-            print(key1, key2)
-            print(value[key2])
-    #print(Ja)
-    #Jf = model.calc_gradient(params, unks, mode='fwd', return_format='dict')
-    #print(Jf)
-    #Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
-    #print(Jf)
-    import pickle
-    pickle.dump(Ja, open( "mdp_derivs.p", "wb" ))
-
+#profile = False
+#params = model.driver.get_params().keys()
+#unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
+#if profile is True:
+#    import cProfile
+#    import pstats
+#    def zzz():
+#        for j in range(1):
+#            model.run()
+#    cProfile.run("model.calc_gradient(params, unks, mode='rev', return_format='dict')", 'profout')
+#    #cProfile.run("zzz()", 'profout')
+#    p = pstats.Stats('profout')
+#    p.strip_dirs()
+#    p.sort_stats('cumulative', 'time')
+#    p.print_stats()
+#    print('\n\n---------------------\n\n')
+#    p.print_callers()
+#    print('\n\n---------------------\n\n')
+#    p.print_callees()
+#else:
+#    #model.check_total_derivatives()
+#    Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
+#    for key1, value in sorted(Ja.items()):
+#        for key2 in sorted(value.keys()):
+#            print(key1, key2)
+#            print(value[key2])
+#    #print(Ja)
+#    #Jf = model.calc_gradient(params, unks, mode='fwd', return_format='dict')
+#    #print(Jf)
+#    #Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
+#    #print(Jf)
+#    import pickle
+#    pickle.dump(Ja, open( "mdp_derivs.p", "wb" ))
+#
 #import pickle
 #data = {}
 #varlist = []
