@@ -8,10 +8,7 @@ from openmdao.core.mpi_wrap import MPI
 from openmdao.core.problem import Problem
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
-if MPI:
-    from openmdao.core.petsc_impl import PetscImpl as impl
-else:
-    impl = None
+from openmdao.core.petsc_impl import PetscImpl as impl
 
 from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
 from openmdao.solvers.petsc_ksp import PetscKSP
@@ -54,7 +51,7 @@ model.driver.add_param("bp3.antAngle", low=-np.pi/4, high=np.pi/4)
 model.driver.add_objective('obj.val')
 
 # For Parallel exeuction, we must use KSP
-#model.root.ln_solver = PetscKSP()
+model.root.ln_solver = PetscKSP()
 #model.root.ln_solver = LinearGaussSeidel()
 
 model.setup()

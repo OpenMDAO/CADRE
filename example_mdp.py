@@ -36,11 +36,11 @@ model = Problem(impl=impl)
 root = model.root = CADRE_MDP_Group(n=n, m=m, npts=npts)
 
 # add SNOPT driver
-#model.driver = pyOptSparseDriver()
-#model.driver.options['optimizer'] = "SNOPT"
-#model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
-                             #'Iterations limit': 500000000,
-                             #"New basis file": 10}
+model.driver = pyOptSparseDriver()
+model.driver.options['optimizer'] = "SNOPT"
+model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
+                             'Iterations limit': 500000000,
+                             "New basis file": 10}
 
 # Restart File
 if restart is True and os.path.exists("fort.10"):
