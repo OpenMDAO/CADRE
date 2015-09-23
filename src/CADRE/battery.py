@@ -183,14 +183,10 @@ class BatteryPower(Component):
                 dparams['P_bat'] += self.dI_dP * dI_bat
 
             if 'temperature' in dparams:
-                dtemperature = np.zeros(dparams['temperature'].shape)
-                dtemperature[4, :] += self.dI_dT * dI_bat
-                dparams['temperature'] = dtemperature
+                dparams['temperature'][4, :] += self.dI_dT * dI_bat
 
             if 'SOC' in dparams:
-                dSOC = np.zeros(dparams['SOC'].shape)
-                dSOC[0, :] += self.dI_dSOC * dI_bat
-                dparams['SOC'] = dSOC
+                dparams['SOC'][0, :] += self.dI_dSOC * dI_bat
 
 
 class BatteryConstraints(Component):
