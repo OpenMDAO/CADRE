@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from openmdao.components import ParamComp
+from openmdao.components import IndepVarComp
 from openmdao.core.group import Group
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, Attitude_Attitude, \
@@ -103,38 +103,38 @@ class CADRE(Group):
             initial_params['r_e2b_I0'] = np.zeros((6, ))
 
         # Some initial setup.
-        self.add('p_t1', ParamComp('t1', initial_params['t1']), promotes=['*'])
-        self.add('p_t2', ParamComp('t2', initial_params['t2']), promotes=['*'])
-        self.add('p_t', ParamComp('t', initial_params['t']), promotes=['*'])
+        self.add('p_t1', IndepVarComp('t1', initial_params['t1']), promotes=['*'])
+        self.add('p_t2', IndepVarComp('t2', initial_params['t2']), promotes=['*'])
+        self.add('p_t', IndepVarComp('t', initial_params['t']), promotes=['*'])
 
         # Design parameters
-        self.add('p_CP_Isetpt', ParamComp('CP_Isetpt',
+        self.add('p_CP_Isetpt', IndepVarComp('CP_Isetpt',
                                           initial_params['CP_Isetpt']),
                  promotes=['*'])
-        self.add('p_CP_gamma', ParamComp('CP_gamma',
+        self.add('p_CP_gamma', IndepVarComp('CP_gamma',
                                          initial_params['CP_gamma']),
                  promotes=['*'])
-        self.add('p_CP_P_comm', ParamComp('CP_P_comm',
+        self.add('p_CP_P_comm', IndepVarComp('CP_P_comm',
                                           initial_params['CP_P_comm']),
                  promotes=['*'])
-        self.add('p_iSOC', ParamComp('iSOC', initial_params['iSOC']),
+        self.add('p_iSOC', IndepVarComp('iSOC', initial_params['iSOC']),
                  promotes=['*'])
 
         # These are broadcast params in the MDP.
-        #self.add('p_cellInstd', ParamComp('cellInstd', np.ones((7, 12))),
+        #self.add('p_cellInstd', IndepVarComp('cellInstd', np.ones((7, 12))),
         #         promotes=['*'])
-        #self.add('p_finAngle', ParamComp('finAngle', np.pi / 4.), promotes=['*'])
-        #self.add('p_antAngle', ParamComp('antAngle', 0.0), promotes=['*'])
+        #self.add('p_finAngle', IndepVarComp('finAngle', np.pi / 4.), promotes=['*'])
+        #self.add('p_antAngle', IndepVarComp('antAngle', 0.0), promotes=['*'])
 
-        self.add('param_LD', ParamComp('LD', initial_params['LD']),
+        self.add('param_LD', IndepVarComp('LD', initial_params['LD']),
                  promotes=['*'])
-        self.add('param_lat', ParamComp('lat', initial_params['lat']),
+        self.add('param_lat', IndepVarComp('lat', initial_params['lat']),
                  promotes=['*'])
-        self.add('param_lon', ParamComp('lon', initial_params['lon']),
+        self.add('param_lon', IndepVarComp('lon', initial_params['lon']),
                  promotes=['*'])
-        self.add('param_alt', ParamComp('alt', initial_params['alt']),
+        self.add('param_alt', IndepVarComp('alt', initial_params['alt']),
                  promotes=['*'])
-        self.add('param_r_e2b_I0', ParamComp('r_e2b_I0',
+        self.add('param_r_e2b_I0', IndepVarComp('r_e2b_I0',
                                              initial_params['r_e2b_I0']),
                  promotes=['*'])
 

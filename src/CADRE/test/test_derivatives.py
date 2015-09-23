@@ -8,7 +8,7 @@ import warnings
 
 import numpy as np
 
-from openmdao.components.param_comp import ParamComp
+from openmdao.components.param_comp import IndepVarComp
 from openmdao.core.group import Group
 from openmdao.core.problem import Problem
 from openmdao.test.util import assert_rel_error
@@ -70,7 +70,7 @@ class Testcase_CADRE(unittest.TestCase):
                 initval = 0.0
             else:
                 initval = np.zeros((pshape))
-            self.model.root.add('p_%s' % item, ParamComp(item, initval),
+            self.model.root.add('p_%s' % item, IndepVarComp(item, initval),
                                 promotes=['*'])
 
         self.model.setup(check=False)
@@ -464,7 +464,7 @@ class Testcase_CADRE(unittest.TestCase):
                 initval = 0.0
             else:
                 initval = np.zeros((pshape))
-            self.model.root.add('p_%s' % item, ParamComp(item, initval),
+            self.model.root.add('p_%s' % item, IndepVarComp(item, initval),
                                 promotes=['*'])
 
         self.model.setup(check=False)

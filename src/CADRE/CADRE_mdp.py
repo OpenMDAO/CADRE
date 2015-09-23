@@ -5,7 +5,7 @@ from six.moves import range
 import os.path
 import numpy as np
 
-from openmdao.components import ConstraintComp, ExecComp, ParamComp
+from openmdao.components import ExecComp, IndepVarComp
 from openmdao.core import Group, ParallelGroup
 
 
@@ -52,9 +52,9 @@ class CADRE_MDP_Group(Group):
         LDs = launch_data[1::2, 0] - 2451545
 
         # Create ParmComps for broadcast parameters.
-        self.add('bp1', ParamComp('cellInstd', np.ones((7, 12))))
-        self.add('bp2', ParamComp('finAngle', np.pi/4.0))
-        self.add('bp3', ParamComp('antAngle', 0.0))
+        self.add('bp1', IndepVarComp('cellInstd', np.ones((7, 12))))
+        self.add('bp2', IndepVarComp('finAngle', np.pi/4.0))
+        self.add('bp3', IndepVarComp('antAngle', 0.0))
 
         # CADRE instances go into a Parallel Group
         para = self.add('parallel', ParallelGroup(), promotes=['*'])
@@ -77,20 +77,7 @@ class CADRE_MDP_Group(Group):
             self.connect('bp2.finAngle', "%s.finAngle" % name)
             self.connect('bp3.antAngle', "%s.antAngle" % name)
 
-            # Add single-point constraints
-            self.add('%s_con1'% name, ConstraintComp("ConCh <= 0", out='val'))
-            self.add('%s_con2'% name, ConstraintComp("ConDs <= 0", out='val'))
-            self.add('%s_con3'% name, ConstraintComp("ConS0 <= 0", out='val'))
-            self.add('%s_con4'% name, ConstraintComp("ConS1 <= 0", out='val'))
-            #self.add('%s_con5'% name, ConstraintComp("%s.SOC[0][0] = %s.SOC[0][-1]" % (name, name),
-            #                                         out='val'))
-
-            self.connect("%s.ConCh" % name, '%s_con1.ConCh'% name)
-            self.connect("%s.ConDs" % name, '%s_con2.ConDs'% name)
-            self.connect("%s.ConS0" % name, '%s_con3.ConS0'% name)
-            self.connect("%s.ConS1" % name, '%s_con4.ConS1'% name)
-
-            self.add('%s_con5'% name, ConstraintComp("SOCi = SOCf", out='val'))
+            self.add('%s_con5'% name, ExecComp("val = SOCi - SOCf"))
             self.connect("%s.SOC" % name, '%s_con5.SOCi'% name, src_indices=[0])
             self.connect("%s.SOC" % name, '%s_con5.SOCf'% name, src_indices=[n-1])
 

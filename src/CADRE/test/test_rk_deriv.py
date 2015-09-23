@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from openmdao.components.param_comp import ParamComp
+from openmdao.components import IndepVarComp
 from openmdao.core.group import Group
 from openmdao.core.problem import Problem
 from openmdao.test.util import assert_rel_error
@@ -93,7 +93,7 @@ class Testcase_RK_deriv(unittest.TestCase):
 
         for item in inputs + state0:
             pshape = self.model.root.comp._params_dict[item]['shape']
-            self.model.root.add('p_%s' % item, ParamComp(item, np.zeros((pshape))),
+            self.model.root.add('p_%s' % item, IndepVarComp(item, np.zeros((pshape))),
                                 promotes=['*'])
 
         self.model.setup(check=False)
