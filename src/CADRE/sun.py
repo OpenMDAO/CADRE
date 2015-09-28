@@ -219,17 +219,15 @@ class Sun_PositionBody( Component ):
             for k in range(3):
 
                 if 'O_BI' in dparams:
+                    dO_BI = dparams['O_BI']
                     for u in range(3):
                         for v in range(3):
-                            dO_BI = np.zeros(dparams['O_BI'].shape)
                             dO_BI[u, v, :] += self.J1[:, k, u, v] * dr_e2s_B[k, :]
-                            dparams['O_BI'] = dO_BI
 
                 if 'r_e2s_I' in dparams:
+                    dr_e2s_I = dparams['r_e2s_I']
                     for j in range(3):
-                        dr_e2s_I = np.zeros(dparams['r_e2s_I'].shape)
                         dr_e2s_I[j, :] += self.J2[:,k, j] * dr_e2s_B[k, :]
-                        dparams['r_e2s_I'] = dr_e2s_I
 
 
 class Sun_PositionECI( Component ):

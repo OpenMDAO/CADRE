@@ -108,19 +108,13 @@ class ReactionWheel_Motor(Component):
             for k in range(3):
                 for j in range(3):
                     if 'T_RW' in dparams:
-                        dT_RW = np.zeros(dparams['T_RW'].shape)
-                        dT_RW[j, :] += self.dT_dTm[:, k, j] * dT_m[k, :]
-                        dparams['T_RW'] = dT_RW
+                        dparams['T_RW'][j, :] += self.dT_dTm[:, k, j] * dT_m[k, :]
 
                     if 'w_B' in dparams:
-                        dw_B = np.zeros(dparams['w_B'].shape)
-                        dw_B[j, :] += self.dT_dwb[:, k, j] * dT_m[k, :]
-                        dparams['w_B'] = dw_B
+                        dparams['w_B'][j, :] += self.dT_dwb[:, k, j] * dT_m[k, :]
 
                     if 'w_RW' in dparams:
-                        dw_RW = np.zeros(dparams['w_RW'].shape)
-                        dw_RW[j, :] += self.dT_dh[:, k, j] * dT_m[k, :] * self.J_RW
-                        dparams['w_RW'] = dw_RW
+                        dparams['w_RW'][j, :] += self.dT_dh[:, k, j] * dT_m[k, :] * self.J_RW
 
 
 class ReactionWheel_Power(Component):
@@ -188,14 +182,10 @@ class ReactionWheel_Power(Component):
         else:
             for k in range(3):
                 if 'w_RW' in dparams:
-                    dw_RW = np.zeros(dparams['w_RW'].shape)
-                    dw_RW[k, :] += self.dP_dw[:, k] * dP_RW[k, :]
-                    dparams['w_RW'] = dw_RW
+                    dparams['w_RW'][k, :] += self.dP_dw[:, k] * dP_RW[k, :]
 
                 if 'T_RW' in dparams:
-                    dT_RW = np.zeros(dparams['T_RW'].shape)
-                    dT_RW[k, :] += self.dP_dT[:, k] * dP_RW[k, :]
-                    dparams['T_RW'] = dT_RW
+                    dparams['T_RW'][k, :] += self.dP_dT[:, k] * dP_RW[k, :]
 
 
 class ReactionWheel_Torque(Component):

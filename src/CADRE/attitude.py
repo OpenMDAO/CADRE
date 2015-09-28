@@ -87,16 +87,12 @@ class Attitude_Angular(Component):
                     for j in range(3):
 
                         if 'O_BI' in dparams:
-                            O_BI = np.zeros(dparams['O_BI'].shape)
-                            O_BI[i, j, :] = self.dw_dO[:, k, i, j] * \
+                            dparams['O_BI'][i, j, :] += self.dw_dO[:, k, i, j] * \
                                 dw_B[k, :]
-                            dparams['O_BI'] = O_BI
 
                         if 'Odot_BI' in dparams:
-                            Odot_BI = np.zeros(dparams['Odot_BI'].shape)
-                            Odot_BI[i, j, :] = self.dw_dOdot[:, k, i, j] * \
+                            dparams['Odot_BI'][i, j, :] += self.dw_dOdot[:, k, i, j] * \
                                 dw_B[k, :]
-                            dparams['Odot_BI'] = Odot_BI
 
 
 class Attitude_AngularRates(Component):
@@ -154,7 +150,7 @@ class Attitude_AngularRates(Component):
                 w_B[:, :-2] -= dwdot_B[:, 1:-1] / 2.0 / h
                 w_B[:, -1] += dwdot_B[:, -1] / h
                 w_B[:, -2] -= dwdot_B[:, -1] / h
-                dparams['w_B'] = w_B
+                dparams['w_B'] += w_B
 
 
 class Attitude_Attitude(Component):
@@ -306,10 +302,8 @@ class Attitude_Attitude(Component):
             for k in range(3):
                 for j in range(3):
                     for i in range(6):
-                        r_e2b_I = np.zeros(dparams['r_e2b_I'].shape)
-                        r_e2b_I[i, :] += self.dO_dr[:, k, j, i] * \
+                        dparams['r_e2b_I'][i, :] += self.dO_dr[:, k, j, i] * \
                             dO_RI[k, j, :]
-                        dparams['r_e2b_I'] = r_e2b_I
 
 
 class Attitude_Roll(Component):
@@ -432,15 +426,11 @@ class Attitude_RotationMtx(Component):
                 for v in range(3):
                     for k in range(3):
                         if 'O_RI' in dparams:
-                            dO_RI = np.zeros(dparams['O_RI'].shape)
-                            dO_RI[k, v, :] += O_BR[u, k, :] * \
+                            dparams['O_RI'][k, v, :] += O_BR[u, k, :] * \
                                 dO_BI[u, v, :]
-                            dparams['O_RI'] = dO_RI
                         if 'O_BR' in dparams:
-                            dO_BR = np.zeros(dparams['O_BR'].shape)
-                            dO_BR[u, k, :] += dO_BI[u, v, :] * \
+                            dparams['O_BR'][u, k, :] += dO_BI[u, v, :] * \
                                 O_RI[k, v, :]
-                            dparams['O_BR'] = dO_BR
 
 
 class Attitude_RotationMtxRates(Component):
@@ -501,7 +491,7 @@ class Attitude_RotationMtxRates(Component):
             dO_BI[:, :, :-2] -= dOdot_BI[:, :, 1:-1] / (2.0*h)
             dO_BI[:, :, -1] += dOdot_BI[:, :, -1] / h
             dO_BI[:, :, -2] -= dOdot_BI[:, :, -1] / h
-            dparams['O_BI'] = dO_BI
+            dparams['O_BI'] += dO_BI
 
 
 class Attitude_Sideslip(Component):
@@ -568,16 +558,12 @@ class Attitude_Sideslip(Component):
                 if 'O_BI' in params:
                     for u in range(3):
                         for v in range(3):
-                            dO_BI = np.zeros(dparams['O_BI'].shape)
-                            dO_BI[u, v, :] += self.J1[:, k, u, v] * \
+                            dparams['O_BI'][u, v, :] += self.J1[:, k, u, v] * \
                                 dv_e2b_B[k, :]
-                            dparams['O_BI'] = dO_BI
                 if 'r_e2b_I' in params:
                     for j in range(3):
-                        dr_e2b_I = np.zeros(dparams['r_e2b_I'].shape)
-                        dr_e2b_I[3+j, :] += self.J2[:, k, j] * \
+                        dparams['r_e2b_I'][3+j, :] += self.J2[:, k, j] * \
                             dv_e2b_B[k, :]
-                        dparams['r_e2b_I'] = dr_e2b_I
 
 
 class Attitude_Torque(Component):
@@ -673,12 +659,8 @@ class Attitude_Torque(Component):
             for k in range(3):
                 for j in range(3):
                     if 'w_B' in dparams:
-                        dw_B = np.zeros(dparams['w_B'].shape)
-                        dw_B[j, :] += self.dT_dw[:, k, j] * \
+                        dparams['w_B'][j, :] += self.dT_dw[:, k, j] * \
                             dT_tot[k, :]
-                        dparams['w_B'] = dw_B
                     if 'wdot_B' in dparams:
-                        dwdot_B = np.zeros(dparams['wdot_B'].shape)
-                        dwdot_B[j, :] += self.dT_dwdot[:, k, j] * \
+                        dparams['wdot_B'][j, :] += self.dT_dwdot[:, k, j] * \
                             dT_tot[k, :]
-                        dparams['wdot_B'] = dwdot_B
