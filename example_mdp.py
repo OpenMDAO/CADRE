@@ -76,7 +76,7 @@ model.root.ln_solver = PetscKSP()
 from openmdao.recorders import DumpRecorder
 rec = DumpRecorder(out='data.dmp')
 model.driver.add_recorder(rec)
-rec.options['includes'] = ['obj.val', '*_con*.val']
+rec.options['includes'] = ['obj.val', '*.ConCh', '*.ConDs', '*.ConS0', '*.ConS1', '*_con*.val']
 
 model.setup()
 model.run()
