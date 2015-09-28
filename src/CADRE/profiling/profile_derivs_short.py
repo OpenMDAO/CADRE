@@ -53,6 +53,9 @@ model.driver.add_objective('obj.val')
 # For Parallel exeuction, we must use KSP
 model.root.ln_solver = PetscKSP()
 #model.root.ln_solver = LinearGaussSeidel()
+#model.root.parallel.ln_solver = LinearGaussSeidel()
+#model.root.parallel.pt0.ln_solver = LinearGaussSeidel()
+#model.root.parallel.pt1.ln_solver = LinearGaussSeidel()
 
 model.setup()
 model.run()
