@@ -25,8 +25,8 @@ npts = 6
 restart = False
 
 # These numbers are for quick testing
-# n = 150
-# m = 6
+#n = 150
+#m = 6
 #npts = 2
 
 
