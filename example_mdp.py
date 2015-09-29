@@ -25,8 +25,8 @@ npts = 6
 restart = False
 
 # These numbers are for quick testing
-n = 150
-m = 6
+# n = 150
+# m = 6
 #npts = 2
 
 
@@ -72,11 +72,6 @@ model.driver.add_objective('obj.val')
 # For Parallel exeuction, we must use KSP
 model.root.ln_solver = PetscKSP()
 
-
-# print( model.driver.get_objectives() + top.driver.get_constraints())
-
-
-
 # Recording
 # Some constraints only exit on one process so cannot record everything
 if MPI:
@@ -95,9 +90,6 @@ model.driver.add_recorder(rec)
 rec.options['includes'] = recording_includes_options
 
 model.setup()
-
-
-
 model.run()
 
 

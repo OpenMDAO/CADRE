@@ -89,7 +89,6 @@ X = data['obj.val']
 X = [-val for val in X]
 ncase = len(X)
 
-
 Y = []
 Z = []
 for ic in range(ncase):
