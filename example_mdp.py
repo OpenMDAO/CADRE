@@ -25,8 +25,8 @@ npts = 6
 restart = False
 
 # These numbers are for quick testing
-#n = 150
-#m = 6
+n = 150
+m = 6
 #npts = 2
 
 
@@ -72,13 +72,32 @@ model.driver.add_objective('obj.val')
 # For Parallel exeuction, we must use KSP
 model.root.ln_solver = PetscKSP()
 
+
+# print( model.driver.get_objectives() + top.driver.get_constraints())
+
+
+
 # Recording
-from openmdao.recorders import DumpRecorder
-rec = DumpRecorder(out='data.dmp')
+# Some constraints only exit on one process so cannot record everything
+if MPI:
+  recording_includes_options = ['obj.val',  '*_con*.val']
+else:
+  recording_includes_options = ['obj.val', '*.ConCh', '*.ConDs', '*.ConS0', '*.ConS1', '*_con*.val']
+
+# from openmdao.recorders import DumpRecorder
+# rec = DumpRecorder(out='data.dmp')
+# model.driver.add_recorder(rec)
+# rec.options['includes'] = recording_includes_options
+
+from openmdao.recorders import SqliteRecorder
+rec = SqliteRecorder(out='data.sql')
 model.driver.add_recorder(rec)
-rec.options['includes'] = ['obj.val', '*.ConCh', '*.ConDs', '*.ConS0', '*.ConS1', '*_con*.val']
+rec.options['includes'] = recording_includes_options
 
 model.setup()
+
+
+
 model.run()
 
 
