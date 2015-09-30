@@ -1,6 +1,7 @@
 """ Optimization of the CADRE MDP."""
 
 from __future__ import print_function
+from six.moves import range
 
 import numpy as np
 
@@ -69,15 +70,25 @@ model.driver.add_desvar("bp3.antAngle", low=-np.pi/4, high=np.pi/4)
 # Add objective
 model.driver.add_objective('obj.val')
 
-# For Parallel exeuction, we must use KSP
-model.root.ln_solver = PetscKSP()
+# For Parallel exeuction, we must use KSP or LinearGS
+#model.root.ln_solver = PetscKSP()
+model.root.ln_solver = LinearGaussSeidel)
+model.root.parallel.ln_solver = LinearGaussSeidel)
+model.root.parallel.pt0.ln_solver = LinearGaussSeidel)
+model.root.parallel.pt1.ln_solver = LinearGaussSeidel)
+model.root.parallel.pt2.ln_solver = LinearGaussSeidel)
+model.root.parallel.pt3.ln_solver = LinearGaussSeidel)
+model.root.parallel.pt4.ln_solver = LinearGaussSeidel)
+model.root.parallel.pt5.ln_solver = LinearGaussSeidel)
 
 # Recording
 # Some constraints only exit on one process so cannot record everything
-if MPI:
-  recording_includes_options = ['obj.val',  '*_con*.val']
-else:
-  recording_includes_options = ['obj.val', '*.ConCh', '*.ConDs', '*.ConS0', '*.ConS1', '*_con*.val']
+recording_includes_options = ['obj.val']
+for j in range(npts):
+    recording_includes_options.append['pt%s.ConCh' % str(j)]
+    recording_includes_options.append['pt%s.ConDs' % str(j)]
+    recording_includes_options.append['pt%s.ConS0' % str(j)]
+    recording_includes_options.append['pt%s.ConS1' % str(j)]
 
 # from openmdao.recorders import DumpRecorder
 # rec = DumpRecorder(out='data.dmp')
