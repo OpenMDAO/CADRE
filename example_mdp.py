@@ -73,10 +73,21 @@ model.driver.add_objective('obj.val')
 model.root.ln_solver = PetscKSP()
 
 # Recording
-from openmdao.recorders import DumpRecorder
-rec = DumpRecorder(out='data.dmp')
+# Some constraints only exit on one process so cannot record everything
+if MPI:
+  recording_includes_options = ['obj.val',  '*_con*.val']
+else:
+  recording_includes_options = ['obj.val', '*.ConCh', '*.ConDs', '*.ConS0', '*.ConS1', '*_con*.val']
+
+# from openmdao.recorders import DumpRecorder
+# rec = DumpRecorder(out='data.dmp')
+# model.driver.add_recorder(rec)
+# rec.options['includes'] = recording_includes_options
+
+from openmdao.recorders import SqliteRecorder
+rec = SqliteRecorder(out='data.sql')
 model.driver.add_recorder(rec)
-rec.options['includes'] = ['obj.val', '*.ConCh', '*.ConDs', '*.ConS0', '*.ConS1', '*_con*.val']
+rec.options['includes'] = recording_includes_options
 
 model.setup()
 model.run()
