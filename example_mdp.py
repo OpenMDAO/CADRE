@@ -72,14 +72,14 @@ model.driver.add_objective('obj.val')
 
 # For Parallel exeuction, we must use KSP or LinearGS
 #model.root.ln_solver = PetscKSP()
-model.root.ln_solver = LinearGaussSeidel)
-model.root.parallel.ln_solver = LinearGaussSeidel)
-model.root.parallel.pt0.ln_solver = LinearGaussSeidel)
-model.root.parallel.pt1.ln_solver = LinearGaussSeidel)
-model.root.parallel.pt2.ln_solver = LinearGaussSeidel)
-model.root.parallel.pt3.ln_solver = LinearGaussSeidel)
-model.root.parallel.pt4.ln_solver = LinearGaussSeidel)
-model.root.parallel.pt5.ln_solver = LinearGaussSeidel)
+model.root.ln_solver = LinearGaussSeidel()
+model.root.parallel.ln_solver = LinearGaussSeidel()
+model.root.parallel.pt0.ln_solver = LinearGaussSeidel()
+model.root.parallel.pt1.ln_solver = LinearGaussSeidel()
+model.root.parallel.pt2.ln_solver = LinearGaussSeidel()
+model.root.parallel.pt3.ln_solver = LinearGaussSeidel()
+model.root.parallel.pt4.ln_solver = LinearGaussSeidel()
+model.root.parallel.pt5.ln_solver = LinearGaussSeidel()
 
 # Recording
 # Some constraints only exit on one process so cannot record everything
