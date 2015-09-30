@@ -89,6 +89,7 @@ for j in range(npts):
     recording_includes_options.append('pt%s.ConDs' % str(j))
     recording_includes_options.append('pt%s.ConS0' % str(j))
     recording_includes_options.append('pt%s.ConS1' % str(j))
+    recording_includes_options.append('pt%s_con5.val' % str(j))
 
 from openmdao.recorders import DumpRecorder
 rec = DumpRecorder(out='data.dmp')
