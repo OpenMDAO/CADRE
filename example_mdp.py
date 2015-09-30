@@ -85,10 +85,10 @@ model.root.parallel.pt5.ln_solver = LinearGaussSeidel()
 # Some constraints only exit on one process so cannot record everything
 recording_includes_options = ['obj.val']
 for j in range(npts):
-    recording_includes_options.append['pt%s.ConCh' % str(j)]
-    recording_includes_options.append['pt%s.ConDs' % str(j)]
-    recording_includes_options.append['pt%s.ConS0' % str(j)]
-    recording_includes_options.append['pt%s.ConS1' % str(j)]
+    recording_includes_options.append('pt%s.ConCh' % str(j))
+    recording_includes_options.append('pt%s.ConDs' % str(j))
+    recording_includes_options.append('pt%s.ConS0' % str(j))
+    recording_includes_options.append('pt%s.ConS1' % str(j))
 
 # from openmdao.recorders import DumpRecorder
 # rec = DumpRecorder(out='data.dmp')
