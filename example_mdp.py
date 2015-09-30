@@ -103,6 +103,8 @@ rec.options['includes'] = recording_includes_options
 model.setup()
 model.run()
 
+import resource
+print("Memory Usage:", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000.0, "MB (on unix)")
 
 #----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
