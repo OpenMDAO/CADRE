@@ -91,15 +91,15 @@ for j in range(npts):
     recording_includes_options.append('pt%s.ConS1' % str(j))
     recording_includes_options.append('pt%s_con5.val' % str(j))
 
-from openmdao.recorders import DumpRecorder
-rec = DumpRecorder(out='data.dmp')
-model.driver.add_recorder(rec)
-rec.options['includes'] = recording_includes_options
-
-#from openmdao.recorders import SqliteRecorder
-#rec = SqliteRecorder(out='data.sql')
+#from openmdao.recorders import DumpRecorder
+#rec = DumpRecorder(out='data.dmp')
 #model.driver.add_recorder(rec)
 #rec.options['includes'] = recording_includes_options
+
+from openmdao.recorders import SqliteRecorder
+rec = SqliteRecorder(out='data.sql')
+model.driver.add_recorder(rec)
+rec.options['includes'] = recording_includes_options
 
 model.setup()
 model.run()
