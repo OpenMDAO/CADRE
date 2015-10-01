@@ -81,6 +81,10 @@ model.root.parallel.pt3.ln_solver = LinearGaussSeidel()
 model.root.parallel.pt4.ln_solver = LinearGaussSeidel()
 model.root.parallel.pt5.ln_solver = LinearGaussSeidel()
 
+# Parallel Derivative calculation
+#for con_name in ['.ConCh','.ConDs','.ConS0','.ConS1','_con5.val']:
+#    model.driver.parallel_derivs(['%s%s'%(n,con_name) for n in names])
+
 # Recording
 # Some constraints only exit on one process so cannot record everything
 recording_includes_options = ['obj.val']
