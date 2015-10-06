@@ -68,7 +68,7 @@ def extract_all_vars(name):
     return data
 
 #filename = 'data.dmp' # use this when plotting the results of a serial run
-filename = 'data_0.dmp' # use this when plotting the results of a parallel run
+#filename = 'data_0.dmp' # use this when plotting the results of a parallel run
 
 filename_sql = 'data.sql'
 
