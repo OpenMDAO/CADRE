@@ -5,8 +5,10 @@ from six.moves import range
 import os.path
 import numpy as np
 
-from openmdao.components import ExecComp, IndepVarComp
-from openmdao.core import Group, ParallelGroup
+from openmdao.components.exec_comp import ExecComp
+from openmdao.components.indep_var_comp import IndepVarComp
+from openmdao.core.group import Group
+from openmdao.core.parallel_group import ParallelGroup
 
 
 from CADRE.CADRE_group import CADRE

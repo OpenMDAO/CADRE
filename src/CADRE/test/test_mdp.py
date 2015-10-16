@@ -10,15 +10,15 @@ import unittest
 
 import numpy as np
 
-from openmdao.core import Problem
 from openmdao.core.mpi_wrap import MPI
+from openmdao.core.problem import Problem
 from openmdao.solvers.petsc_ksp import PetscKSP
 from openmdao.test.mpi_util import MPITestCase
 
 if MPI:
     from openmdao.core.petsc_impl import PetscImpl as impl
 else:
-    from openmdao.core import BasicImpl as impl
+    from openmdao.core.basic_impl import BasicImpl as impl
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
