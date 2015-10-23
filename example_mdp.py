@@ -39,6 +39,7 @@ root = model.root = CADRE_MDP_Group(n=n, m=m, npts=npts)
 model.driver = pyOptSparseDriver()
 model.driver.options['optimizer'] = "SNOPT"
 model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
+                             'Major feasibility tolerance': 1.0e-5,
                              'Iterations limit': 500000000,
                              "New basis file": 10}
 
