@@ -101,7 +101,7 @@ for j in range(npts):
 #model.driver.add_recorder(rec)
 #rec.options['includes'] = recording_includes_options
 
-from openmdao.recorders import SqliteRecorder
+from openmdao.recorders.sqlite_recorder import SqliteRecorder
 rec = SqliteRecorder(out='data.sql')
 model.driver.add_recorder(rec)
 rec.options['includes'] = recording_includes_options
