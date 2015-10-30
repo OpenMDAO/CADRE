@@ -119,7 +119,7 @@ class Solar_ExposedArea(Component):
         self.x[:, 1] = result[0]
         self.x[:, 2] = result[1]
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.Jfin = self.MBI.evaluate(self.x, 1).reshape(self.n, 7, 12,

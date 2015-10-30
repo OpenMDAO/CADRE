@@ -215,7 +215,7 @@ class Orbit_Initial(Component):
         unknowns['r_e2b_I0'][:3] = r0_ECI.real
         unknowns['r_e2b_I0'][3:] = v0_ECI.real
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         h = 1e-16

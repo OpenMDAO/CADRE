@@ -82,7 +82,7 @@ class Comm_AntRotation(Component):
         q_A[2, :] = - np.sin(antAngle/2.) / rt2
         q_A[3, :] = 0.0
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         antAngle = params['antAngle']
@@ -146,7 +146,7 @@ class Comm_AntRotationMtx(Component):
 
             O_AB[:, :, i] = np.dot(A.T, B)
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         q_A = params['q_A']
@@ -285,7 +285,7 @@ class Comm_BitRate(Component):
             Dr[i] = self.alpha * P_comm[i] * gain[i] * \
                 CommLOS[i] / S2 ** 2
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         P_comm = params['P_comm']
@@ -367,7 +367,7 @@ class Comm_Distance(Component):
         for i in range(0, self.n):
             GSdist[i] = np.dot(r_b2g_A[:, i], r_b2g_A[:, i])**0.5
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         r_b2g_A = params['r_b2g_A']
@@ -419,7 +419,7 @@ class Comm_EarthsSpin(Component):
         q_E[0, :] = np.cos(theta)
         q_E[3, :] = -np.sin(theta)
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         t = params['t']
@@ -484,7 +484,7 @@ class Comm_EarthsSpinMtx(Component):
 
             O_IE[:, :, i] = np.dot(A.T, B)
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         q_E = params['q_E']
@@ -616,7 +616,7 @@ class Comm_GainPattern(Component):
         self.x[:, 1] = result[1]
         unknowns['gain'] = self.MBI.evaluate(self.x)[:, 0]
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.dg_daz = self.MBI.evaluate(self.x, 1)[:, 0]
@@ -680,7 +680,7 @@ class Comm_GSposEarth(Component):
         r_e2g_E[1, :] = r_GS * cos_lat * np.sin(self.d2r*lon)
         r_e2g_E[2, :] = r_GS * np.sin(self.d2r*lat)
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         lat = params['lat']
@@ -770,7 +770,7 @@ class Comm_GSposECI(Component):
         for i in range(0, self.n):
             r_e2g_I[:, i] = np.dot(O_IE[:, :, i], r_e2g_E[:, i])
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         O_IE = params['O_IE']
@@ -858,7 +858,7 @@ class Comm_LOS(Component):
                 x = (proj - 0) / (-Rb - 0)
                 CommLOS[i] = 3 * x ** 2 - 2 * x ** 3
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         r_b2g_I = params['r_b2g_I']
@@ -936,7 +936,7 @@ class Comm_VectorAnt(Component):
         unknowns['r_b2g_A'] = computepositionrotd(self.n, params['r_b2g_B'],
                                                   params['O_AB'])
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.J1, self.J2 = computepositionrotdjacobian(self.n, params['r_b2g_B'],
@@ -1005,7 +1005,7 @@ class Comm_VectorBody(Component):
         for i in range(0, self.n):
             r_b2g_B[:, i] = np.dot(O_BI[:, :, i], r_b2g_I[:, i])
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         r_b2g_I = params['r_b2g_I']
@@ -1125,7 +1125,7 @@ class Comm_VectorSpherical(Component):
         unknowns['azimuthGS'] = azimuthGS
         unknowns['elevationGS'] = elevationGS
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.Ja1, self.Ji1, self.Jj1, self.Ja2, self.Ji2, self.Jj2 = \

@@ -82,7 +82,7 @@ class Power_CellVoltage(Component):
         for c in range(7):
             unknowns['V_sol'] += self.raw[:, c, :].T
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         exposedArea = params['exposedArea']

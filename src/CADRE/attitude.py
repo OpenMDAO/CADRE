@@ -48,7 +48,7 @@ class Attitude_Angular(Component):
             w_B[1, i] = np.dot(Odot_BI[0, :, i], O_BI[2, :, i])
             w_B[2, i] = np.dot(Odot_BI[1, :, i], O_BI[0, :, i])
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         O_BI = params['O_BI']
@@ -224,7 +224,7 @@ class Attitude_Attitude(Component):
             O_RI[1, :, i] = jB
             O_RI[2, :, i] = -v
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         r_e2b_I = params['r_e2b_I']
@@ -340,7 +340,7 @@ class Attitude_Roll(Component):
         O_BR[1, 1, :] = O_BR[0, 0, :]
         O_BR[2, 2, :] = np.ones(self.n)
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         Gamma = params['Gamma']
@@ -526,7 +526,7 @@ class Attitude_Sideslip(Component):
 
         v_e2b_B[:] = computepositionrotd(self.n, r_e2b_I[3:, :], O_BI)
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         r_e2b_I = params['r_e2b_I']
@@ -620,7 +620,7 @@ class Attitude_Torque(Component):
             T_tot[:, i] = np.dot(self.J, wdot_B[:, i]) + \
                 np.dot(wx, np.dot(self.J, w_B[:, i]))
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         w_B = params['w_B']
