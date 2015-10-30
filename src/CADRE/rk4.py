@@ -7,7 +7,7 @@ import scipy.sparse
 import scipy.sparse.linalg
 
 from openmdao.core.component import Component
-from openmdao.core.options import OptionsDictionary
+from openmdao.util.options import OptionsDictionary
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103
