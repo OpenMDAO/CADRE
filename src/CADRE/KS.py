@@ -3,7 +3,7 @@
 import numpy as np
 
 from openmdao.core.component import Component
-from openmdao.core.options import OptionsDictionary
+from openmdao.util.options import OptionsDictionary
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103
@@ -72,5 +72,3 @@ class KSComp(Component):
         #use g_max, exponsnte, summation from last executed point
         J = {}
         J['KS', 'g'] = np.hstack(self._ks.derivatives())
-
-
