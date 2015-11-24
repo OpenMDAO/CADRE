@@ -92,7 +92,7 @@ class Testcase_RK_deriv(unittest.TestCase):
                             promotes=['*'])
 
         for item in inputs + state0:
-            pshape = self.model.root.comp._params_dict[item]['shape']
+            pshape = self.model.root.comp._init_params_dict[item]['shape']
             self.model.root.add('p_%s' % item, IndepVarComp(item, np.zeros((pshape))),
                                 promotes=['*'])
 
