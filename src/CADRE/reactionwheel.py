@@ -52,7 +52,7 @@ class ReactionWheel_Motor(Component):
 
             T_m[:,i] = -T_RW[:,i] - np.dot(w_Bx , h_RW[:,i])
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         T_RW = params['T_RW']
@@ -153,7 +153,7 @@ class ReactionWheel_Power(Component):
             for k in range(3):
                 P_RW[k, i] = self.V * (self.a * w_RW[k, i] + self.b * T_RW[k, i])**2 + self.V * self.I0
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         w_RW = params['w_RW']

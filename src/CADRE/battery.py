@@ -143,7 +143,7 @@ class BatteryPower(Component):
         self.V = IR * self.voc * self.exponential
         unknowns['I_bat'] = P_bat/self.V
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         SOC = params['SOC']
@@ -240,7 +240,7 @@ class BatteryConstraints(Component):
         unknowns['ConS0'] = self.KS_s0.compute(self.SOC0 - SOC, self.rho)
         unknowns['ConS1'] = self.KS_s1.compute(SOC - self.SOC1, self.rho)
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.dCh_dg, self.dCh_drho = self.KS_ch.derivatives()

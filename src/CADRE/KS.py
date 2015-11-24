@@ -66,7 +66,7 @@ class KSComp(Component):
 
         unknowns['KS'] = self._ks.compute(params['g'], self.options['rho'])
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         #use g_max, exponsnte, summation from last executed point

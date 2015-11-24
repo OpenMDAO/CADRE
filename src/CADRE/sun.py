@@ -62,7 +62,7 @@ class Sun_LOS(Component):
                 x = ( dist - self.r1 ) / ( self.r2 - self.r1 )
                 LOS[i] = 3*x**2 - 2*x**3
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         r_e2b_I = params['r_e2b_I']
@@ -192,7 +192,7 @@ class Sun_PositionBody( Component ):
         unknowns['r_e2s_B'] = computepositionrotd(self.n, params['r_e2s_I'],
                                                   params['O_BI'])
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.J1, self.J2 = computepositionrotdjacobian(self.n, params['r_e2s_I'],
@@ -272,7 +272,7 @@ class Sun_PositionECI( Component ):
             r_e2s_I[1, i] = np.sin(Lambda)*np.cos(eps)
             r_e2s_I[2, i] = np.sin(Lambda)*np.sin(eps)
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         T = params['LD']  + params['t'][:]/3600./24.
@@ -349,7 +349,7 @@ class Sun_PositionSpherical(Component):
         unknowns['azimuth'] = azimuth
         unknowns['elevation'] = elevation
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.Ja1, self.Ji1, self.Jj1, self.Ja2, self.Ji2, self.Jj2 = \

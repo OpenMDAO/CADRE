@@ -190,7 +190,7 @@ class RK4(Component):
         state_var_name = self.name_map['y']
         unknowns[state_var_name][:] = self.y.T.reshape((n_time, n_state)).T
 
-    def jacobian(self, params, unknowns, resids):
+    def linearize(self, params, unknowns, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         n_state = self.n_states
