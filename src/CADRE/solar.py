@@ -54,7 +54,7 @@ class Solar_ExposedArea(Component):
         # Outputs
         self.add_output('exposedArea', np.zeros((self.nc, self.np, self.n)),
                         desc="Exposed area to sun for each solar cell over time",
-                        units='m**2', low=-5e-3, high=1.834e-1)
+                        units='m**2', lower=-5e-3, upper=1.834e-1)
 
         self.na = 10
         self.nz = 73
