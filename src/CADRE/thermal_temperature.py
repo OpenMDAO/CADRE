@@ -38,19 +38,19 @@ class ThermalTemperature(RK4):
                        desc="Exposed area to the sun for each solar cell over time")
 
         self.add_param("cellInstd", np.ones((7, 12)), units='unitless',
-                       desc="Cell/Radiator indication", low=0, high=1)
+                       desc="Cell/Radiator indication", lower=0, upper=1)
 
         self.add_param("LOS", np.zeros((n_times, )), units='unitless',
                        desc="Satellite to Sun line of sight over time",
-                       low=0, high=1)
+                       lower=0, upper=1)
 
         self.add_param("P_comm", np.ones((n_times, )), units='W',
-                       desc="Communication power over time", low=0, high=1)
+                       desc="Communication power over time", lower=0, upper=1)
 
         # Outputs
         self.add_output("temperature", np.zeros((5, n_times)), units="degK",
                         desc="Temperature for the 4 fins and body over time.",
-                        low=50, high=400)
+                        lower=50, upper=400)
 
         self.options['state_var'] = "temperature"
         self.options['init_state_var'] = "T0"
@@ -184,9 +184,3 @@ class ThermalTemperature(RK4):
         dfdx[4, 85] += 4.0 / m_b / cp_b
 
         return dfdx
-
-
-
-
-
-

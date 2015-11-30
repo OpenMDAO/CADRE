@@ -33,10 +33,10 @@ names = ['pt%s' % i for i in range(npts)]
 for i, name in enumerate(names):
 
     # add parameters to driver
-    model.driver.add_desvar("%s.CP_Isetpt" % name, low=0., high=0.4)
-    model.driver.add_desvar("%s.CP_gamma" % name, low=0, high=np.pi/2.)
-    model.driver.add_desvar("%s.CP_P_comm" % name, low=0., high=25.)
-    model.driver.add_desvar("%s.iSOC" % name, indices=[0], low=0.2, high=1.)
+    model.driver.add_desvar("%s.CP_Isetpt" % name, lower=0., upper=0.4)
+    model.driver.add_desvar("%s.CP_gamma" % name, lower=0, upper=np.pi/2.)
+    model.driver.add_desvar("%s.CP_P_comm" % name, lower=0., upper=25.)
+    model.driver.add_desvar("%s.iSOC" % name, indices=[0], lower=0.2, upper=1.)
 
     model.driver.add_constraint('%s.ConCh'% name, upper=0.0)
     model.driver.add_constraint('%s.ConDs'% name, upper=0.0)
@@ -45,9 +45,9 @@ for i, name in enumerate(names):
     model.driver.add_constraint('%s_con5.val'% name, equals=0.0)
 
 # Add Parameter groups
-model.driver.add_desvar("bp1.cellInstd", low=0., high=1.0)
-model.driver.add_desvar("bp2.finAngle", low=0., high=np.pi/2.)
-model.driver.add_desvar("bp3.antAngle", low=-np.pi/4, high=np.pi/4)
+model.driver.add_desvar("bp1.cellInstd", lower=0., upper=1.0)
+model.driver.add_desvar("bp2.finAngle", lower=0., upper=np.pi/2.)
+model.driver.add_desvar("bp3.antAngle", lower=-np.pi/4, upper=np.pi/4)
 
 
 # Add objective
