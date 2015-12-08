@@ -4,7 +4,7 @@ from six.moves import range
 
 import numpy as np
 
-from openmdao.api import IndepVarComp, Component, Group, Problem
+from openmdao.api import IndepVarComp, Component, Group, Problem, ParallelGroup
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
 from CADRE.power import Power_SolarPower, Power_CellVoltage
@@ -68,7 +68,7 @@ class MPPT(Group):
       #self.connect("power.P_sol", "perf.P_sol")
 
 
-class MPPT_MDP(Group):
+class MPPT_MDP(ParallelGroup):
 
   def __init__(self):
     super(MPPT_MDP, self).__init__()
@@ -86,19 +86,20 @@ class MPPT_MDP(Group):
                          data['1:exposedArea'], 
                          m, n))
 
-    self.add("perf", Perf(1500))
-
-    self.connect("pt0.power.P_sol", "perf.P_sol1")
-    self.connect("pt1.power.P_sol", "perf.P_sol2")
 
 
 if __name__ == "__main__":
 
-  import pylab
   import time
+  import sys
 
   model = Problem(impl=impl)
-  model.root = MPPT_MDP()
+  model.root = root = Group()
+  mdp = model.root.add('mdp', MPPT_MDP(), promotes=['*'])
+  root.add("perf", Perf(1500))
+
+  root.connect("pt0.power.P_sol", "perf.P_sol1")
+  root.connect("pt1.power.P_sol", "perf.P_sol2")
 
   # add SNOPT driver
   model.driver = pyOptSparseDriver()
@@ -106,7 +107,8 @@ if __name__ == "__main__":
   model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
                                'Major feasibility tolerance': 1.0e-5,
                                'Iterations limit': 500000000,
-                               "New basis file": 10}
+                               #"New basis file": 10
+                             }
 
   model.driver.add_objective("perf.result")
   model.driver.add_desvar("pt0.param.CP_Isetpt", lower=0., upper=0.4)
@@ -114,18 +116,23 @@ if __name__ == "__main__":
 
   model.setup()
 
-  pylab.figure()
-  pylab.subplot(211)
-  pylab.plot(model['pt0.param.CP_Isetpt'].T)
-  pylab.plot(model['pt1.param.CP_Isetpt'].T)
+  if 'plot' in sys.argv:
+      import pylab
+      pylab.figure()
+      pylab.subplot(211)
+      pylab.plot(model['pt0.param.CP_Isetpt'].T)
+      pylab.plot(model['pt1.param.CP_Isetpt'].T)
 
   t = time.time()
 
   model.run()
 
-  pylab.subplot(212)
-  pylab.plot(model['pt0.param.CP_Isetpt'].T)
-  pylab.plot(model['pt1.param.CP_Isetpt'].T)
-
   print time.time() - t
-  pylab.show()
+
+  if 'plot' in sys.argv:
+      pylab.subplot(212)
+      pylab.plot(model['pt0.param.CP_Isetpt'].T)
+      pylab.plot(model['pt1.param.CP_Isetpt'].T)
+
+      pylab.show()
+
