@@ -6,6 +6,7 @@ import numpy as np
 
 from openmdao.api import IndepVarComp, Component, Group, Problem
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
+from openmdao.core.parallel_group import ParallelGroup
 
 from CADRE.power import Power_SolarPower, Power_CellVoltage
 from CADRE.parameters import BsplineParameters
@@ -68,7 +69,7 @@ class MPPT(Group):
       #self.connect("power.P_sol", "perf.P_sol")
 
 
-class MPPT_MDP(Group):
+class MPPT_MDP(ParallelGroup):
 
   def __init__(self):
     super(MPPT_MDP, self).__init__()
