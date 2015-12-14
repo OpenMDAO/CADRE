@@ -4,7 +4,7 @@ from six.moves import range
 
 import numpy as np
 
-from openmdao.api import IndepVarComp, Component, Group, Problem
+from openmdao.api import IndepVarComp, Component, Group, Problem, ParallelGroup
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
 from CADRE.power import Power_SolarPower, Power_CellVoltage
@@ -77,11 +77,14 @@ class MPPT_MDP(Group):
     fpath = os.path.dirname(os.path.realpath(__file__))
     data = pickle.load(open(fpath + "/src/CADRE/test/data1346.pkl", 'rb'))
 
-    self.add("pt0", MPPT(data['0:LOS'], 
+    # CADRE instances go into a Parallel Group
+    para = self.add('parallel', ParallelGroup(), promotes=['*'])
+
+    para.add("pt0", MPPT(data['0:LOS'], 
                          data['0:temperature'], 
                          data['0:exposedArea'], 
                          m, n))
-    self.add("pt1", MPPT(data['1:LOS'], 
+    para.add("pt1", MPPT(data['1:LOS'], 
                          data['1:temperature'], 
                          data['1:exposedArea'], 
                          m, n))
@@ -94,7 +97,7 @@ class MPPT_MDP(Group):
 
 if __name__ == "__main__":
 
-  import pylab
+  #import pylab
   import time
 
   model = Problem(impl=impl)
@@ -114,18 +117,18 @@ if __name__ == "__main__":
 
   model.setup()
 
-  pylab.figure()
-  pylab.subplot(211)
-  pylab.plot(model['pt0.param.CP_Isetpt'].T)
-  pylab.plot(model['pt1.param.CP_Isetpt'].T)
+  #pylab.figure()
+  #pylab.subplot(211)
+  #pylab.plot(model['parallel.pt0.param.CP_Isetpt'].T)
+  #pylab.plot(model['parallel.pt1.param.CP_Isetpt'].T)
 
   t = time.time()
 
   model.run()
 
-  pylab.subplot(212)
-  pylab.plot(model['pt0.param.CP_Isetpt'].T)
-  pylab.plot(model['pt1.param.CP_Isetpt'].T)
+  #pylab.subplot(212)
+  #pylab.plot(model['pt0.param.CP_Isetpt'].T)
+  #pylab.plot(model['pt1.param.CP_Isetpt'].T)
 
   print time.time() - t
-  pylab.show()
+  #pylab.show()
