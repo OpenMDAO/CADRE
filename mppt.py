@@ -97,7 +97,7 @@ class MPPT_MDP(Group):
 
 if __name__ == "__main__":
 
-  import pylab
+  #import pylab
   import time
 
   model = Problem(impl=impl)
