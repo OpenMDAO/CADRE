@@ -40,12 +40,7 @@ model.driver = pyOptSparseDriver()
 model.driver.options['optimizer'] = "SNOPT"
 model.driver.opt_settings = {'Major optimality tolerance': 1e-3,
                              'Major feasibility tolerance': 1.0e-5,
-                             'Iterations limit': 500000000,
-                             "New basis file": 10}
-
-# Restart File
-if restart is True and os.path.exists("fort.10"):
-    model.driver.opt_settings["Old basis file"] = 10
+                             'Iterations limit': 500000000}
 
 # Add parameters and constraints to each CADRE instance.
 names = ['pt%s' % i for i in range(npts)]
@@ -83,8 +78,8 @@ model.root.parallel.pt4.ln_solver = LinearGaussSeidel()
 model.root.parallel.pt5.ln_solver = LinearGaussSeidel()
 
 # Parallel Derivative calculation
-#for con_name in ['.ConCh','.ConDs','.ConS0','.ConS1','_con5.val']:
-#    model.driver.parallel_derivs(['%s%s'%(n,con_name) for n in names])
+for con_name in ['.ConCh','.ConDs','.ConS0','.ConS1','_con5.val']:
+    model.driver.parallel_derivs(['%s%s'%(n,con_name) for n in names])
 
 # Recording
 # Some constraints only exit on one process so cannot record everything
@@ -95,11 +90,6 @@ for j in range(npts):
     recording_includes_options.append('pt%s.ConS0' % str(j))
     recording_includes_options.append('pt%s.ConS1' % str(j))
     recording_includes_options.append('pt%s_con5.val' % str(j))
-
-#from openmdao.recorders import DumpRecorder
-#rec = DumpRecorder(out='data.dmp')
-#model.driver.add_recorder(rec)
-#rec.options['includes'] = recording_includes_options
 
 from openmdao.recorders.sqlite_recorder import SqliteRecorder
 rec = SqliteRecorder(out='data.sql')

@@ -36,7 +36,7 @@ class Perf(Component):
 
   def linearize(self, p, u, r):
 
-    return {("result", "P_sol1") : self.J, 
+    return {("result", "P_sol1") : self.J,
             ("result", "P_sol2") : self.J}
 
 class MPPT(Group):
@@ -44,9 +44,9 @@ class MPPT(Group):
     def __init__(self, LOS, temp, area, m, n):
       super(MPPT, self).__init__()
 
-      params = (("LOS" ,LOS, {"units" : "unitless"}), 
-                ("temperature" , temp, {"units" : "degK"}), 
-                ("exposedArea" , area, {"units" : "m**2"}), 
+      params = (("LOS" ,LOS, {"units" : "unitless"}),
+                ("temperature" , temp, {"units" : "degK"}),
+                ("exposedArea" , area, {"units" : "m**2"}),
                 ("CP_Isetpt" , np.zeros((12, m)),  {"units" : "A"}))
 
       self.add("param", IndepVarComp(params))
@@ -58,10 +58,10 @@ class MPPT(Group):
       self.connect("param.LOS", "voltage.LOS")
       self.connect("param.temperature", "voltage.temperature")
       self.connect("param.exposedArea", "voltage.exposedArea")
-      
+
       self.connect("param.CP_Isetpt", "bspline.CP_Isetpt")
       self.connect("bspline.Isetpt", "voltage.Isetpt")
-      
+
       self.connect("bspline.Isetpt", "power.Isetpt")
       self.connect("voltage.V_sol", "power.V_sol")
 
@@ -77,13 +77,16 @@ class MPPT_MDP(ParallelGroup):
     fpath = os.path.dirname(os.path.realpath(__file__))
     data = pickle.load(open(fpath + "/src/CADRE/test/data1346.pkl", 'rb'))
 
-    self.add("pt0", MPPT(data['0:LOS'], 
-                         data['0:temperature'], 
-                         data['0:exposedArea'], 
+    # CADRE instances go into a Parallel Group
+    para = self.add('parallel', ParallelGroup(), promotes=['*'])
+
+    para.add("pt0", MPPT(data['0:LOS'],
+                         data['0:temperature'],
+                         data['0:exposedArea'],
                          m, n))
-    self.add("pt1", MPPT(data['1:LOS'], 
-                         data['1:temperature'], 
-                         data['1:exposedArea'], 
+    para.add("pt1", MPPT(data['1:LOS'],
+                         data['1:temperature'],
+                         data['1:exposedArea'],
                          m, n))
 
     self.add("perf", Perf(1500))
@@ -94,7 +97,7 @@ class MPPT_MDP(ParallelGroup):
 
 if __name__ == "__main__":
 
-  import pylab
+  #import pylab
   import time
 
   model = Problem(impl=impl)
@@ -114,19 +117,18 @@ if __name__ == "__main__":
 
   model.setup()
 
-  pylab.figure()
-  pylab.subplot(211)
-  pylab.plot(model['pt0.param.CP_Isetpt'].T)
-  pylab.plot(model['pt1.param.CP_Isetpt'].T)
+  #pylab.figure()
+  #pylab.subplot(211)
+  #pylab.plot(model['parallel.pt0.param.CP_Isetpt'].T)
+  #pylab.plot(model['parallel.pt1.param.CP_Isetpt'].T)
 
   t = time.time()
 
   model.run()
 
-  pylab.subplot(212)
-  pylab.plot(model['pt0.param.CP_Isetpt'].T)
-  pylab.plot(model['pt1.param.CP_Isetpt'].T)
+  #pylab.subplot(212)
+  #pylab.plot(model['pt0.param.CP_Isetpt'].T)
+  #pylab.plot(model['pt1.param.CP_Isetpt'].T)
 
   print time.time() - t
-  pylab.show()
-
+  #pylab.show()
