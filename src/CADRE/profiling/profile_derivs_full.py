@@ -58,12 +58,6 @@ model.root.ln_solver = PetscKSP()
 #model.root.parallel.pt1.ln_solver = LinearGaussSeidel()
 
 model.setup()
-
-#from openmdao.devtools.d3graph import view_tree
-#view_tree(model.root)
-#view_dagre(model.root._probdata.relevance._sgraph, port=8811)
-#view_cyto(model.root._probdata.relevance._sgraph, port=8811)
-
 model.run()
 
 #----------------------------------------------------------------
