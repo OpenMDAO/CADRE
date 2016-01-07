@@ -118,7 +118,7 @@ def computepositionsphericaljacobian(n, nJ, v):
         da_dr = 1.0/r * np.array([-np.sin(a)/np.sin(e), np.cos(a)/np.sin(e), 0.0])
         de_dr = 1.0/r * np.array([np.cos(a)*np.cos(e), np.sin(a)*np.cos(e), -np.sin(e)])
 
-        for k in xrange(3):
+        for k in range(3):
             iJ = i*3 + k
             Ja1[iJ] = da_dr[k]
             Ji1[iJ] = i

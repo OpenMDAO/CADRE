@@ -36,7 +36,7 @@ class Perf(Component):
 
   def linearize(self, p, u, r):
 
-    return {("result", "P_sol1") : self.J, 
+    return {("result", "P_sol1") : self.J,
             ("result", "P_sol2") : self.J}
 
 class MPPT(Group):
@@ -44,9 +44,9 @@ class MPPT(Group):
     def __init__(self, LOS, temp, area, m, n):
       super(MPPT, self).__init__()
 
-      params = (("LOS" ,LOS, {"units" : "unitless"}), 
-                ("temperature" , temp, {"units" : "degK"}), 
-                ("exposedArea" , area, {"units" : "m**2"}), 
+      params = (("LOS" ,LOS, {"units" : "unitless"}),
+                ("temperature" , temp, {"units" : "degK"}),
+                ("exposedArea" , area, {"units" : "m**2"}),
                 ("CP_Isetpt" , np.zeros((12, m)),  {"units" : "A"}))
 
       self.add("param", IndepVarComp(params))
@@ -58,17 +58,17 @@ class MPPT(Group):
       self.connect("param.LOS", "voltage.LOS")
       self.connect("param.temperature", "voltage.temperature")
       self.connect("param.exposedArea", "voltage.exposedArea")
-      
+
       self.connect("param.CP_Isetpt", "bspline.CP_Isetpt")
       self.connect("bspline.Isetpt", "voltage.Isetpt")
-      
+
       self.connect("bspline.Isetpt", "power.Isetpt")
       self.connect("voltage.V_sol", "power.V_sol")
 
       #self.connect("power.P_sol", "perf.P_sol")
 
 
-class MPPT_MDP(Group):
+class MPPT_MDP(ParallelGroup):
 
   def __init__(self):
     super(MPPT_MDP, self).__init__()
@@ -80,13 +80,13 @@ class MPPT_MDP(Group):
     # CADRE instances go into a Parallel Group
     para = self.add('parallel', ParallelGroup(), promotes=['*'])
 
-    para.add("pt0", MPPT(data['0:LOS'], 
-                         data['0:temperature'], 
-                         data['0:exposedArea'], 
+    para.add("pt0", MPPT(data['0:LOS'],
+                         data['0:temperature'],
+                         data['0:exposedArea'],
                          m, n))
-    para.add("pt1", MPPT(data['1:LOS'], 
-                         data['1:temperature'], 
-                         data['1:exposedArea'], 
+    para.add("pt1", MPPT(data['1:LOS'],
+                         data['1:temperature'],
+                         data['1:exposedArea'],
                          m, n))
 
     self.add("perf", Perf(1500))

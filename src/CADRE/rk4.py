@@ -1,5 +1,6 @@
 """ RK4 time integration component """
 
+from six import iteritems
 from six.moves import range
 
 import numpy as np
@@ -259,7 +260,7 @@ class RK4(Component):
         else:
             r2 = self._applyJextT_limited(dparams, dresids)
 
-            for k, v in r2.iteritems():
+            for k, v in iteritems(r2):
                 dparams[k] += v
 
     def _applyJext(self, dparams, dresids):
@@ -385,7 +386,7 @@ class RK4(Component):
                 fact = fact.dot(-self.Jy[k, :, :].T)
                 result[name] += fact.dot(argsv[k+1, :])
 
-        for name, val in result.iteritems():
+        for name, val in iteritems(result):
             dvar = dparams[name]
             result[name] = val.reshape(dvar.shape)
 
