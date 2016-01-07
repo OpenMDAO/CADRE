@@ -5,7 +5,7 @@ from six.moves import range
 
 import numpy as np
 import scipy.sparse
-from MBI.MBI import MBI
+from MBI import MBI
 
 from openmdao.core.component import Component
 

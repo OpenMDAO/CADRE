@@ -7,7 +7,7 @@ import numpy as np
 
 from openmdao.core.component import Component
 
-from MBI.MBI import MBI
+from MBI import MBI
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103
