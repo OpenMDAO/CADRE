@@ -103,7 +103,7 @@ class CADREMDPTests(MPITestCase):
                 assert rel <= 1e-3
 
         # Now do derivatives
-        params = model.driver.get_desvars().keys()
+        params = list(model.driver.get_desvars().keys())
         unks = list(model.driver.get_objectives().keys()) + list(model.driver.get_constraints().keys())
         Jb = model.calc_gradient(params, unks, mode='rev', return_format='dict')
 
