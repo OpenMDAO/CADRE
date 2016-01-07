@@ -29,6 +29,14 @@ class CADREMDPTests(MPITestCase):
 
     def test_CADRE_MDP(self):
 
+        # Read pickles
+        fpath = os.path.dirname(os.path.realpath(__file__))
+        with open(fpath + "/mdp_execute.pkl", 'rb') as f:
+            data = pickle.load(f)
+
+        with open(fpath + "/mdp_derivs.pkl", 'rb') as f:
+            Ja = pickle.load(f)
+
         n = 1500
         m = 300
         npts = 2
@@ -68,10 +76,6 @@ class CADREMDPTests(MPITestCase):
         model.setup()
         model.run()
 
-        # Read pickle
-        fpath = os.path.dirname(os.path.realpath(__file__))
-        data = pickle.load(open(fpath + "/mdp_execute.pkl", 'rb'))
-
         for var in data:
 
             # We changed constraint names
@@ -100,16 +104,11 @@ class CADREMDPTests(MPITestCase):
 
         # Now do derivatives
         params = model.driver.get_desvars().keys()
-        unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
+        unks = list(model.driver.get_objectives().keys()) + list(model.driver.get_constraints().keys())
         Jb = model.calc_gradient(params, unks, mode='rev', return_format='dict')
-
-        # Read pickle
-        fpath = os.path.dirname(os.path.realpath(__file__))
-        Ja = pickle.load(open(fpath + "/mdp_derivs.pkl", 'rb'))
 
         for key1, value in sorted(Ja.items()):
             for key2 in sorted(value.keys()):
-
                 # We changed constraint names
                 xkey1 = key1
                 if '_con1' in xkey1:
@@ -138,4 +137,3 @@ if __name__ == '__main__':
     from openmdao.test.mpi_util import mpirun_tests
     #mpirun_tests()
     unittest.main()
-
