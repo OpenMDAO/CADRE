@@ -4,8 +4,8 @@ import numpy as np
 
 from openmdao.core.component import Component
 
-import KS
-import rk4
+from CADRE import KS
+from CADRE import rk4
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103

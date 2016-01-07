@@ -7,7 +7,7 @@ import numpy as np
 from openmdao.core.component import Component
 
 from CADRE.kinematics import fixangles
-from MBI import MBI
+from MBI.MBI import MBI
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103

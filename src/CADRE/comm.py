@@ -5,7 +5,7 @@ from six.moves import range
 
 import numpy as np
 import scipy.sparse
-import MBI
+from MBI.MBI import MBI
 
 from openmdao.core.component import Component
 
@@ -13,7 +13,7 @@ from CADRE.kinematics import fixangles, computepositionspherical, \
     computepositionsphericaljacobian, computepositionrotd,\
     computepositionrotdjacobian
 
-import rk4
+from CADRE import rk4
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103
@@ -605,7 +605,7 @@ class Comm_GainPattern(Component):
         az = np.linspace(0, 2 * pi, 361)
         el = np.linspace(0, 2 * pi, 361)
 
-        self.MBI = MBI.MBI(rawG, [az, el], [15, 15], [4, 4])
+        self.MBI = MBI(rawG, [az, el], [15, 15], [4, 4])
         self.x = np.zeros((self.n, 2), order='F')
 
     def solve_nonlinear(self, params, unknowns, resids):

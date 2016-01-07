@@ -5,7 +5,7 @@ import numpy as np
 
 from openmdao.core.component import Component
 
-from MBI import MBI
+from MBI.MBI import MBI
 
 
 class BsplineParameters(Component):

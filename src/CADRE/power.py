@@ -7,7 +7,7 @@ import numpy as np
 
 from openmdao.core.component import Component
 
-import MBI
+from MBI.MBI import MBI
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103
@@ -49,7 +49,7 @@ class Power_CellVoltage(Component):
         I = dat[3 + nT + nA:3 + nT + nA + nI]
         V = dat[3 + nT + nA + nI:].reshape((nT, nA, nI), order='F')
 
-        self.MBI = MBI.MBI(V, [T, A, I], [6, 6, 15], [3, 3, 3])
+        self.MBI = MBI(V, [T, A, I], [6, 6, 15], [3, 3, 3])
 
         self.x = np.zeros((84 * self.n, 3), order='F')
         self.xV = self.x.reshape((self.n, 7, 12, 3), order='F')

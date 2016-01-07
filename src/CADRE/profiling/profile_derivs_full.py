@@ -69,8 +69,8 @@ model.run()
 #----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
-params = model.driver.get_desvars().keys()
-unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
+params = list(model.driver.get_desvars().keys())
+unks = list(model.driver.get_objectives().keys()) + list(model.driver.get_constraints().keys())
 
 import cProfile
 import pstats

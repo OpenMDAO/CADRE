@@ -5,7 +5,7 @@ import numpy as np
 
 from openmdao.core.component import Component
 
-import rk4
+from CADRE import rk4
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103
@@ -276,4 +276,3 @@ class ReactionWheel_Dynamics(rk4.RK4):
             self.jx[i, 0:3] = -self.djy_dx[:,:,i].dot(state)
             self.jx[i, i+3] = -1.0 / self.J_RW
         return self.jx
-
