@@ -4,7 +4,7 @@ from six.moves import range
 
 import numpy as np
 
-from openmdao.api import IndepVarComp, Component, Group, Problem
+from openmdao.api import IndepVarComp, Component, Group, Problem, ParallelGroup
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
 from CADRE.power import Power_SolarPower, Power_CellVoltage
@@ -68,7 +68,7 @@ class MPPT(Group):
       #self.connect("power.P_sol", "perf.P_sol")
 
 
-class MPPT_MDP(Group):
+class MPPT_MDP(ParallelGroup):
 
   def __init__(self):
     super(MPPT_MDP, self).__init__()
@@ -129,3 +129,4 @@ if __name__ == "__main__":
 
   print time.time() - t
   pylab.show()
+
