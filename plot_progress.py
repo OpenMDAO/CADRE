@@ -30,7 +30,7 @@ def extract_all_vars_sql(name):
     db = sqlitedict.SqliteDict( name, 'openmdao' )
 
     data = {}
-    for iteration in range(len(db)):
+    for iteration in range(len(db)-1):
         iteration_coordinate = 'SNOPT/{}'.format(iteration + 1 )
 
         record = db[iteration_coordinate]
