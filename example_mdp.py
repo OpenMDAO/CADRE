@@ -95,6 +95,7 @@ from openmdao.recorders.sqlite_recorder import SqliteRecorder
 rec = SqliteRecorder(out='data.sql')
 model.driver.add_recorder(rec)
 rec.options['includes'] = recording_includes_options
+rec.options['record_derivs'] = False
 
 model.setup()
 model.run()
