@@ -6,8 +6,8 @@ import scipy.sparse
 
 from openmdao.core.component import Component
 
-from kinematics import computepositionrotd, computepositionrotdjacobian
-from kinematics import computepositionspherical, computepositionsphericaljacobian
+from CADRE.kinematics import computepositionrotd, computepositionrotdjacobian
+from CADRE.kinematics import computepositionspherical, computepositionsphericaljacobian
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable=C0103
@@ -381,4 +381,3 @@ class Sun_PositionSpherical(Component):
                 elevation = dresids['elevation'][:]
                 dparams['r_e2s_B'] += self.J2T.dot(elevation).reshape((3, self.n),
                                                                       order='F')
-

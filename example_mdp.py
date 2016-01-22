@@ -107,8 +107,8 @@ print("Memory Usage:", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000.0
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
 #profile = False
-#params = model.driver.get_desvars().keys()
-#unks = model.driver.get_objectives().keys() + model.driver.get_constraints().keys()
+#params = list(model.driver.get_desvars().keys())
+#unks = list(model.driver.get_objectives().keys()) + list(model.driver.get_constraints().keys())
 #if profile is True:
 #    import cProfile
 #    import pstats

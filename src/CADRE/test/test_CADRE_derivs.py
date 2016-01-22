@@ -1,4 +1,5 @@
 """ Poor man's test_total_derivatives for CADRE."""
+from __future__ import print_function
 
 import os
 import unittest
@@ -70,15 +71,15 @@ class Testcase_CADRE_deriv(unittest.TestCase):
         print('Fd', time()-t0)
 
         np.set_printoptions(threshold='nan')
-        #print np.nonzero(J1)
-        #print np.nonzero(J2)
-        #print np.nonzero(Jfd)
-        #print J1
-        #print J2
-        #print Jfd
-        print np.max(abs(J1-Jfd))
-        print np.max(abs(J2-Jfd))
-        print np.max(abs(J1-J2))
+        #print(np.nonzero(J1))
+        #print(np.nonzero(J2))
+        #print(np.nonzero(Jfd))
+        #print(J1)
+        #print(J2)
+        #print(Jfd)
+        print(np.max(abs(J1-Jfd)))
+        print(np.max(abs(J2-Jfd)))
+        print(np.max(abs(J1-J2)))
 
         self.assertTrue( np.max(abs(J1-J2)) < 1.0e-6 )
         self.assertTrue( np.max(abs(J1-Jfd)) < 1.0e-4 )
