@@ -111,6 +111,8 @@ class MPPT_MDP(Group):
 
 
 class BenchmarkMPPT(MPITestCase):
+    N_PROCS=2
+
     def benchmark_mppt(self):
         model = Problem(impl=impl)
         model.root = MPPT_MDP()
