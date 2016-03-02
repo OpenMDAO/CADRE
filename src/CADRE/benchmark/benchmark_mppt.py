@@ -5,14 +5,13 @@ import os
 import pickle
 import numpy as np
 
-from numpy.testing import assert_almost_equal
-
 from openmdao.components.indep_var_comp import IndepVarComp
 from openmdao.core.component import Component
 from openmdao.core.group import Group
 from openmdao.core.problem import Problem
 from openmdao.core.parallel_group import ParallelGroup
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
+from openmdao.test.util import assert_rel_error
 
 try:
     from openmdao.core.petsc_impl import PetscImpl as impl
@@ -133,4 +132,4 @@ class BenchmarkMPPT(MPITestCase):
         model.setup(check=False)
         model.run()
 
-        assert_almost_equal(model["perf.result"], -9.4308562238E+03, decimal=3)
+        assert_rel_error(self, model["perf.result"], -9.4308562238E+03, 1e-6)
