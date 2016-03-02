@@ -114,7 +114,8 @@ class BenchmarkMPPT(MPITestCase):
 
         # add SNOPT driver
         self.model.driver = pyOptSparseDriver()
-        self.model.driver.options['optimizer'] = "SNOPT"
+        # self.model.driver.options['optimizer'] = "SNOPT"
+        self.model.driver.options['optimizer'] = "SLSQP"
         self.model.driver.opt_settings = {
             'Major optimality tolerance': 1e-3,
             'Major feasibility tolerance': 1.0e-5,
