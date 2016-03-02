@@ -1,7 +1,11 @@
 """ Optimization of the CADRE MDP."""
+from __future__ import print_function
+
 import os
 import pickle
 import numpy as np
+
+from numpy.testing import assert_almost_equal
 
 from openmdao.components.indep_var_comp import IndepVarComp
 from openmdao.core.component import Component
@@ -109,23 +113,24 @@ class MPPT_MDP(Group):
 
 class BenchmarkMPPT(MPITestCase):
     def benchmark_mppt(self):
-        self.model = Problem(impl=impl)
-        self.model.root = MPPT_MDP()
+        model = Problem(impl=impl)
+        model.root = MPPT_MDP()
 
-        # add SNOPT driver
-        self.model.driver = pyOptSparseDriver()
-        # self.model.driver.options['optimizer'] = "SNOPT"
-        self.model.driver.options['optimizer'] = "SLSQP"
-        self.model.driver.opt_settings = {
+        # add optimizer
+        model.driver = pyOptSparseDriver()
+        model.driver.options['optimizer'] = "SNOPT"
+        model.driver.opt_settings = {
             'Major optimality tolerance': 1e-3,
             'Major feasibility tolerance': 1.0e-5,
             'Iterations limit': 500000000,
             'New basis file': 10
         }
 
-        self.model.driver.add_objective("perf.result")
-        self.model.driver.add_desvar("pt0.param.CP_Isetpt", lower=0., upper=0.4)
-        self.model.driver.add_desvar("pt1.param.CP_Isetpt", lower=0., upper=0.4)
+        model.driver.add_objective("perf.result")
+        model.driver.add_desvar("pt0.param.CP_Isetpt", lower=0., upper=0.4)
+        model.driver.add_desvar("pt1.param.CP_Isetpt", lower=0., upper=0.4)
 
-        self.model.setup(check=False)
-        self.model.run()
+        model.setup(check=False)
+        model.run()
+
+        assert_almost_equal(model["perf.result"], -9.4308562238E+03, decimal=3)
