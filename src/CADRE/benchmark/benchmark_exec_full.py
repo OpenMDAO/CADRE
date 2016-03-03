@@ -9,6 +9,7 @@ from openmdao.core.problem import Problem
 from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
 from openmdao.solvers.petsc_ksp import PetscKSP
 from openmdao.test.mpi_util import MPITestCase
+from openmdao.test.util import assert_rel_error
 
 try:
     from openmdao.core.petsc_impl import PetscImpl as impl
@@ -18,9 +19,9 @@ except ImportError:
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 
-class BenchmarkDerivsSerial(MPITestCase):
+class BenchmarkExecSerial(MPITestCase):
 
-    def benchmark_cadre_mdp_derivs_full(self):
+    def benchmark_cadre_mdp_exec_full(self):
 
         # These numbers are for the CADRE problem in the paper.
         n = 1500
@@ -56,19 +57,12 @@ class BenchmarkDerivsSerial(MPITestCase):
         # Add objective
         model.driver.add_objective('obj.val')
 
-        model.root.ln_solver = LinearGaussSeidel()
-        model.root.parallel.ln_solver = LinearGaussSeidel()
-        model.root.parallel.pt0.ln_solver = LinearGaussSeidel()
-        model.root.parallel.pt1.ln_solver = LinearGaussSeidel()
-        model.root.parallel.pt2.ln_solver = LinearGaussSeidel()
-        model.root.parallel.pt3.ln_solver = LinearGaussSeidel()
-        model.root.parallel.pt4.ln_solver = LinearGaussSeidel()
-        model.root.parallel.pt5.ln_solver = LinearGaussSeidel()
-
         model.setup(check=False)
 
         #----------------------------------------
         # This is what we are really profiling
         #----------------------------------------
         model.run()
+        print(model['obj.val'])
+        assert_rel_error(self, model['obj.val'], -393.805453491, 1.0e-5)
 
