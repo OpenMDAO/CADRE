@@ -9,9 +9,7 @@ from openmdao.core.problem import Problem
 from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
 from openmdao.solvers.petsc_ksp import PetscKSP
 from openmdao.test.mpi_util import MPITestCase
-
-from openmdao.core.mpi_wrap import MPI
-from openmdao.test.mpi_util import MPITestCase
+from openmdao.test.util import assert_rel_error
 
 if MPI:
     from openmdao.core.petsc_impl import PetscImpl as impl
@@ -24,7 +22,7 @@ from CADRE.CADRE_mdp import CADRE_MDP_Group
 class BenchmarkDerivsParallel(MPITestCase):
     N_PROCS=6
 
-    def benchmark_cadre_mdp_derivs_full(self):
+    def benchmark_cadre_mdp_derivs_full_par(self):
 
         # These numbers are for the CADRE problem in the paper.
         n = 1500
@@ -78,5 +76,8 @@ class BenchmarkDerivsParallel(MPITestCase):
         #----------------------------------------
         # This is what we are really profiling
         #----------------------------------------
-        model.calc_gradient(params, unks, mode='rev', return_format='dict')
+        J = model.calc_gradient(params, unks, mode='rev', return_format='dict')
+
+        assert_rel_error(self, J['obj.val']['bp3.antAngle'], 67.13247594, 1e-5)
+        assert_rel_error(self, J['obj.val']['pt1.CP_gamma'][-1][-1], -0.62480529972074561, 1e-5)
 
