@@ -73,7 +73,7 @@ class CADREMDPTests(MPITestCase):
         if MPI:
             model.root.ln_solver = PetscKSP()
 
-        model.setup()
+        model.setup(check=False)
         model.run()
 
         for var in data:
