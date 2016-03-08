@@ -77,6 +77,7 @@ class BenchmarkDerivsSerial(MPITestCase):
         #----------------------------------------
         J = model.calc_gradient(params, unks, mode='rev', return_format='dict')
 
-        assert_rel_error(self, J['obj.val']['bp3.antAngle'], 67.13247594, 1e-5)
-        assert_rel_error(self, J['obj.val']['pt1.CP_gamma'][-1][-1], -0.62480529972074561, 1e-5)
+        assert_rel_error(self, J['obj.val']['bp3.antAngle'], 67.15777407, 1e-4)
+        assert_rel_error(self, J['obj.val']['pt1.CP_gamma'][-1][-1], -0.62410223816776056, 1e-4)
+
 

@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+import sys
 import os
 import pickle
 import unittest
@@ -21,7 +22,10 @@ idx = '0'
 
 setd = {}
 fpath = os.path.dirname(os.path.realpath(__file__))
-data = pickle.load(open(fpath + "/data1346.pkl", 'rb'))
+if sys.version_info.major == 2:
+    data = pickle.load(open(fpath + "/data1346_py2.pkl", 'rb'))
+else:
+    data = pickle.load(open(fpath + "/data1346_py2.pkl", 'rb'))
 
 for key in data.keys():
     if key[0] == idx or not key[0].isdigit():

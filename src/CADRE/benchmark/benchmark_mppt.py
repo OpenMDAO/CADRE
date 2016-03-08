@@ -1,6 +1,7 @@
 """ Optimization of the CADRE MDP."""
 from __future__ import print_function
 
+import sys
 import os
 import pickle
 import numpy as np
@@ -90,7 +91,10 @@ class MPPT_MDP(Group):
         n = 1500
         m = 300
         cadre_path = os.path.dirname(os.path.realpath(CADRE.__file__))
-        data = pickle.load(open(cadre_path + "/test/data1346.pkl", 'rb'))
+        if sys.version_info.major == 2:
+           data = pickle.load(open(cadre_path + "/test/data1346_py2.pkl", 'rb'))
+        else:
+           data = pickle.load(open(cadre_path + "/test/data1346.pkl", 'rb'))
 
         # CADRE instances go into a Parallel Group
         para = self.add('parallel', ParallelGroup(), promotes=['*'])
