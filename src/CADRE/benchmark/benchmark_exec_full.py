@@ -64,5 +64,5 @@ class BenchmarkExecSerial(MPITestCase):
         #----------------------------------------
         model.run()
         print(model['obj.val'])
-        assert_rel_error(self, model['obj.val'], -393.805453491, 1.0e-5)
+        assert_rel_error(self, model['obj.val'], -393.789941398, 1.0e-4)
 
