@@ -4,6 +4,7 @@ This is set up so that it can be tested in parallel too."""
 
 from __future__ import print_function
 
+import sys
 import os
 import pickle
 import unittest
@@ -31,10 +32,17 @@ class CADREMDPTests(MPITestCase):
 
         # Read pickles
         fpath = os.path.dirname(os.path.realpath(__file__))
-        with open(fpath + "/mdp_execute.pkl", 'rb') as f:
+        if sys.version_info.major == 2:
+            file1 = fpath + "/mdp_execute_py2.pkl"
+            file2 = fpath + "/mdp_derivs_py2.pkl"
+        else:
+            file1 = fpath + "/mdp_execute.pkl"
+            file2 = fpath + "/mdp_derivs.pkl"
+
+        with open(file1, 'rb') as f:
             data = pickle.load(f)
 
-        with open(fpath + "/mdp_derivs.pkl", 'rb') as f:
+        with open(file2, 'rb') as f:
             Ja = pickle.load(f)
 
         n = 1500
@@ -73,7 +81,7 @@ class CADREMDPTests(MPITestCase):
         if MPI:
             model.root.ln_solver = PetscKSP()
 
-        model.setup()
+        model.setup(check=False)
         model.run()
 
         for var in data:
