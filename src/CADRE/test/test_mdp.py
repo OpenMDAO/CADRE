@@ -84,6 +84,8 @@ class CADREMDPTests(MPITestCase):
         model.setup(check=False)
         model.run()
 
+        abs_u = model.root._sysdata.to_abs_uname
+
         for var in data:
 
             # We changed constraint names
@@ -97,18 +99,23 @@ class CADREMDPTests(MPITestCase):
             if '_con4' in xvar:
                 xvar = xvar.replace('_con4.val', '.ConS1')
 
-            computed = model[xvar]
-            actual = data[var]
-            if isinstance(computed, np.ndarray):
-                rel = np.linalg.norm(actual - computed)/np.linalg.norm(actual)
-            else:
-                rel = np.abs(actual - computed)/np.abs(actual)
+            # make sure var is local before we try to look it up
 
-            print(xvar)
-            print(computed)
-            print(actual)
-            if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
-                assert rel <= 1e-3
+            compname = abs_u[xvar].rsplit('.', 1)[0]
+            comp = model.root._subsystem(compname)
+            if comp.is_active():
+                computed = model[xvar]
+                actual = data[var]
+                if isinstance(computed, np.ndarray):
+                    rel = np.linalg.norm(actual - computed)/np.linalg.norm(actual)
+                else:
+                    rel = np.abs(actual - computed)/np.abs(actual)
+
+                print(xvar)
+                print(computed)
+                print(actual)
+                if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
+                    assert rel <= 1e-3
 
         # Now do derivatives
         params = list(model.driver.get_desvars().keys())
