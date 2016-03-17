@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import sys
 import os
+import time
 import pickle
 import unittest
 
@@ -81,8 +82,12 @@ class CADREMDPTests(MPITestCase):
         if MPI:
             model.root.ln_solver = PetscKSP()
 
+        start_time = time.time()
+
         model.setup(check=False)
         model.run()
+
+        abs_u = model.root._sysdata.to_abs_uname
 
         for var in data:
 
@@ -97,18 +102,23 @@ class CADREMDPTests(MPITestCase):
             if '_con4' in xvar:
                 xvar = xvar.replace('_con4.val', '.ConS1')
 
-            computed = model[xvar]
-            actual = data[var]
-            if isinstance(computed, np.ndarray):
-                rel = np.linalg.norm(actual - computed)/np.linalg.norm(actual)
-            else:
-                rel = np.abs(actual - computed)/np.abs(actual)
+            # make sure var is local before we try to look it up
 
-            print(xvar)
-            print(computed)
-            print(actual)
-            if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
-                assert rel <= 1e-3
+            compname = abs_u[xvar].rsplit('.', 1)[0]
+            comp = model.root._subsystem(compname)
+            if comp.is_active():
+                computed = model[xvar]
+                actual = data[var]
+                if isinstance(computed, np.ndarray):
+                    rel = np.linalg.norm(actual - computed)/np.linalg.norm(actual)
+                else:
+                    rel = np.abs(actual - computed)/np.abs(actual)
+
+                print(xvar)
+                print(computed)
+                print(actual)
+                if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
+                    assert rel <= 1e-3
 
         # Now do derivatives
         params = list(model.driver.get_desvars().keys())
@@ -140,6 +150,8 @@ class CADREMDPTests(MPITestCase):
                 print(actual)
                 if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
                     assert rel <= 1e-3
+
+        print("\n\nElapsed time:", time.time()-start_time) 
 
 if __name__ == '__main__':
     from openmdao.test.mpi_util import mpirun_tests
