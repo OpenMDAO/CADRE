@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import sys
 import os
+import time
 import pickle
 import unittest
 
@@ -81,6 +82,8 @@ class CADREMDPTests(MPITestCase):
         if MPI:
             model.root.ln_solver = PetscKSP()
 
+        start_time = time.time()
+
         model.setup(check=False)
         model.run()
 
@@ -147,6 +150,8 @@ class CADREMDPTests(MPITestCase):
                 print(actual)
                 if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
                     assert rel <= 1e-3
+
+        print("\n\nElapsed time:", time.time()-start_time) 
 
 if __name__ == '__main__':
     from openmdao.test.mpi_util import mpirun_tests
