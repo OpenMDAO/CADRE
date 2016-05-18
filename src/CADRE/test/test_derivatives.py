@@ -544,7 +544,7 @@ class Testcase_CADRE(unittest.TestCase):
         self.model['T_RW'] = np.random.random(shape) * 1e-1
         shape = self.model.root.comp._init_params_dict['w_RW']['shape']
         self.model['w_RW'] = np.random.random(shape) * 1e-1
-        self.model.root.comp.fd_options['step_type'] = 'relative'
+        self.model.root.comp.deriv_options['step_calc'] = 'relative'
 
         self.run_model()
         self.compare_derivatives(inputs, outputs, rel_error=True)
