@@ -105,7 +105,7 @@ class CADREMDPTests(MPITestCase):
             # make sure var is local before we try to look it up
 
             compname = abs_u[xvar].rsplit('.', 1)[0]
-            comp = model.root._subsystem(compname)
+            comp = model.root.find_subsystem(compname)
             if comp.is_active():
                 computed = model[xvar]
                 actual = data[var]
@@ -151,7 +151,7 @@ class CADREMDPTests(MPITestCase):
                 if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
                     assert rel <= 1e-3
 
-        print("\n\nElapsed time:", time.time()-start_time) 
+        print("\n\nElapsed time:", time.time()-start_time)
 
 if __name__ == '__main__':
     from openmdao.test.mpi_util import mpirun_tests
