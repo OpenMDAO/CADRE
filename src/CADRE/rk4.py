@@ -284,7 +284,7 @@ class RK4(Component):
 
             # Collapse incoming a*b*...*c*n down to (ab...c)*n
             shape = dvar.shape
-            dvar = dvar.reshape((np.prod(shape[:-1]), shape[-1]))
+            dvar = dvar.reshape((int(np.prod(shape[:-1])), shape[-1]))
 
             i_ext = self.ext_index_map[name]
             ext_length = np.prod(dvar[:, 0].shape)

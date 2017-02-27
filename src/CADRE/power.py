@@ -44,6 +44,9 @@ class Power_CellVoltage(Component):
                         desc="Output voltage of solar panel over time")
 
         nT, nA, nI = dat[:3]
+        nT = int(nT)
+        nA = int(nA)
+        nI = int(nI)
         T = dat[3:3 + nT]
         A = dat[3 + nT:3 + nT + nA]
         I = dat[3 + nT + nA:3 + nT + nA + nI]
