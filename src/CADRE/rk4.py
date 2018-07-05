@@ -8,7 +8,7 @@ import scipy.sparse
 import scipy.sparse.linalg
 
 from openmdao.core.component import Component
-from openmdao.util.options import OptionsDictionary
+from openmdao.utils.options_dictionary import OptionsDictionary
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103
@@ -20,7 +20,6 @@ class RK4(Component):
     State variable dimension: (num_states, num_time_points)
     External input dimension: (input width, num_time_points)
     """
-
 
     def __init__(self, n=2, h=.01):
         super(RK4, self).__init__()
@@ -46,7 +45,7 @@ class RK4(Component):
                        "external to the system but DO NOT "
                        "vary with time.")
 
-    def initialize(self, params, unknowns):
+    def initialize(self, inputs, outputs):
         """Set up dimensions and other data structures."""
 
         state_var = self.options['state_var']
@@ -54,8 +53,8 @@ class RK4(Component):
         external_vars = self.options['external_vars']
         fixed_external_vars = self.options['fixed_external_vars']
 
-        self.y = unknowns[state_var]
-        self.y0 = params[init_state_var]
+        self.y = outputs[state_var]
+        self.y0 = inputs[init_state_var]
 
 
         self.n_states, self.n = self.y.shape
@@ -65,7 +64,7 @@ class RK4(Component):
         ext = []
         self.ext_index_map = {}
         for name in external_vars:
-            var = params[name]
+            var = inputs[name]
             self.ext_index_map[name] = len(ext)
 
             #TODO: Check that shape[-1]==self.n
@@ -73,7 +72,7 @@ class RK4(Component):
 
 
         for name in fixed_external_vars:
-            var = params[name]
+            var = inputs[name]
             self.ext_index_map[name] = len(ext)
 
             flat_var = var.flatten()
@@ -149,10 +148,10 @@ class RK4(Component):
         """
         raise NotImplementedError
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        self.initialize(params, unknowns)
+        self.initialize(inputs, outputs)
 
         n_state = self.n_states
         n_time = self.n
@@ -174,8 +173,7 @@ class RK4(Component):
             k2 = (k+1)*n_state
 
             # Next state a function of current input
-            ex = self.external[:, k] if self.external.shape[0] \
-                                       else np.array([])
+            ex = self.external[:, k] if self.external.shape[0]  else np.array([])
 
             # Next state a function of previous state
             y = self.y[k1:k2]
@@ -189,9 +187,9 @@ class RK4(Component):
                 y + h/6.*(a + 2*(b + c) + d)
 
         state_var_name = self.name_map['y']
-        unknowns[state_var_name][:] = self.y.T.reshape((n_time, n_state)).T
+        outputs[state_var_name][:] = self.y.T.reshape((n_time, n_state)).T
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         n_state = self.n_states
@@ -210,8 +208,7 @@ class RK4(Component):
             k1 = k*n_state
             k2 = k1 + n_state
 
-            ex = self.external[:, k] if self.external.shape[0] \
-                                        else np.array([])
+            ex = self.external[:, k] if self.external.shape[0] else np.array([])
 
             y = self.y[k1:k2]
 
@@ -248,22 +245,22 @@ class RK4(Component):
             # No Jacobian with respect to previous time points.
             self.Jx[k+1, :, :] = h/6*(da_dx + 2*(db_dx + dc_dx) + dd_dx).T
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         if mode == 'fwd':
-            result_ext = self._applyJext(dparams, dresids)
+            result_ext = self._applyJext(dinputs, dresids)
 
             svar = self.options['state_var']
             dresids[svar] += result_ext
 
         else:
-            r2 = self._applyJextT_limited(dparams, dresids)
+            r2 = self._applyJextT_limited(dinputs, dresids)
 
             for k, v in iteritems(r2):
-                dparams[k] += v
+                dinputs[k] += v
 
-    def _applyJext(self, dparams, dresids):
+    def _applyJext(self, dinputs, dresids):
         """Apply derivatives with respect to inputs"""
 
         #Jx --> (n_times, n_external, n_states)
@@ -274,11 +271,11 @@ class RK4(Component):
         # Time-varying inputs
         for name in self.options['external_vars']:
 
-            if name not in dparams:
+            if name not in dinputs:
                 continue
 
             # Take advantage of fact that arg is often pretty sparse
-            dvar = dparams[name]
+            dvar = dinputs[name]
             if len(np.nonzero(dvar)[0]) == 0:
                 continue
 
@@ -296,11 +293,11 @@ class RK4(Component):
         # Time-invariant inputs
         for name in self.options['fixed_external_vars']:
 
-            if name not in dparams:
+            if name not in dinputs:
                 continue
 
             # Take advantage of fact that arg is often pretty sparse
-            dvar = dparams[name]
+            dvar = dinputs[name]
             if len(np.nonzero(dvar)[0]) == 0:
                 continue
 
@@ -315,10 +312,10 @@ class RK4(Component):
 
         # Initial State
         name = self.options['init_state_var']
-        if name in dparams:
+        if name in dinputs:
 
             # Take advantage of fact that arg is often pretty sparse
-            dvar = dparams[name]
+            dvar = dinputs[name]
             if len(np.nonzero(dvar)[0]) > 0:
                 fact = np.eye(self.n_states)
                 result[:, 0] = dvar
@@ -328,7 +325,7 @@ class RK4(Component):
 
         return result
 
-    def _applyJextT_limited(self, dparams, dresids):
+    def _applyJextT_limited(self, dinputs, dresids):
         """Apply derivatives with respect to inputs"""
 
         # Jx --> (n_times, n_external, n_states)
@@ -348,10 +345,10 @@ class RK4(Component):
         # Time-varying inputs
         for name in self.options['external_vars']:
 
-            if name not in dparams:
+            if name not in dinputs:
                 continue
 
-            dext_var = dparams[name]
+            dext_var = dinputs[name]
             i_ext = self.ext_index_map[name]
             ext_length = np.prod(dext_var.shape) / n_time
             result[name] = np.zeros((ext_length, n_time))
@@ -364,10 +361,10 @@ class RK4(Component):
         # Time-invariant inputs
         for name in self.options['fixed_external_vars']:
 
-            if name not in dparams:
+            if name not in dinputs:
                 continue
 
-            di_ext_var = dparams[name]
+            di_ext_var = dinputs[name]
             i_ext = self.ext_index_map[name]
             ext_length = np.prod(di_ext_var.shape)
             result[name] = np.zeros((ext_length))
@@ -379,7 +376,7 @@ class RK4(Component):
 
         # Initial State
         name = self.options['init_state_var']
-        if name in dparams:
+        if name in dinputs:
             fact = -self.Jy[0, :, :].T
             result[name] = argsv[0, :] + fact.dot(argsv[1, :])
             for k in range(1, n_time-1):
@@ -387,7 +384,7 @@ class RK4(Component):
                 result[name] += fact.dot(argsv[k+1, :])
 
         for name, val in iteritems(result):
-            dvar = dparams[name]
+            dvar = dinputs[name]
             result[name] = val.reshape(dvar.shape)
 
         return result

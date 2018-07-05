@@ -15,12 +15,6 @@ import numpy as np
 from openmdao.core.mpi_wrap import MPI
 from openmdao.core.problem import Problem
 from openmdao.solvers.petsc_ksp import PetscKSP
-from openmdao.test.mpi_util import MPITestCase
-
-if MPI:
-    from openmdao.core.petsc_impl import PetscImpl as impl
-else:
-    from openmdao.core.basic_impl import BasicImpl as impl
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
@@ -64,11 +58,11 @@ class CADREMDPTests(MPITestCase):
             model.driver.add_desvar("%s.CP_P_comm" % name, lower=0., upper=25.)
             model.driver.add_desvar("%s.iSOC" % name, indices=[0], lower=0.2, upper=1.)
 
-            model.driver.add_constraint('%s.ConCh'% name, upper=0.0)
-            model.driver.add_constraint('%s.ConDs'% name, upper=0.0)
-            model.driver.add_constraint('%s.ConS0'% name, upper=0.0)
-            model.driver.add_constraint('%s.ConS1'% name, upper=0.0)
-            model.driver.add_constraint('%s_con5.val'% name, equals=0.0)
+            model.driver.add_constraint("%s.ConCh" % name, upper=0.0)
+            model.driver.add_constraint("%s.ConDs" % name, upper=0.0)
+            model.driver.add_constraint("%s.ConS0" % name, upper=0.0)
+            model.driver.add_constraint("%s.ConS1" % name, upper=0.0)
+            model.driver.add_constraint("%s_con5.val" % name, equals=0.0)
 
         # Add Parameter groups
         model.driver.add_desvar("bp1.cellInstd", lower=0., upper=1.0)
@@ -121,9 +115,9 @@ class CADREMDPTests(MPITestCase):
                     assert rel <= 1e-3
 
         # Now do derivatives
-        params = list(model.driver.get_desvars().keys())
+        inputs = list(model.driver.get_desvars().keys())
         unks = list(model.driver.get_objectives().keys()) + list(model.driver.get_constraints().keys())
-        Jb = model.calc_gradient(params, unks, mode='rev', return_format='dict')
+        Jb = model.calc_gradient(inputs, unks, mode='rev', return_format='dict')
 
         for key1, value in sorted(Ja.items()):
             for key2 in sorted(value.keys()):

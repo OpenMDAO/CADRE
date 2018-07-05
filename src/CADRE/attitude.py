@@ -22,11 +22,11 @@ class Attitude_Angular(Component):
         self.n = n
 
         # Inputs
-        self.add_param('O_BI', np.zeros((3, 3, n)), units="unitless",
+        self.add_input('O_BI', np.zeros((3, 3, n)), units="unitless",
                        desc="Rotation matrix from body-fixed frame to Earth-centered "
                        "inertial frame over time")
 
-        self.add_param('Odot_BI', np.zeros((3, 3, n)), units="unitless",
+        self.add_input('Odot_BI', np.zeros((3, 3, n)), units="unitless",
                        desc="First derivative of O_BI over time")
 
         # Outputs
@@ -36,23 +36,23 @@ class Attitude_Angular(Component):
         self.dw_dOdot = np.zeros((n, 3, 3, 3))
         self.dw_dO = np.zeros((n, 3, 3, 3))
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        O_BI = params['O_BI']
-        Odot_BI = params['Odot_BI']
-        w_B = unknowns['w_B']
+        O_BI = inputs['O_BI']
+        Odot_BI = inputs['Odot_BI']
+        w_B = outputs['w_B']
 
         for i in range(0, self.n):
             w_B[0, i] = np.dot(Odot_BI[2, :, i], O_BI[1, :, i])
             w_B[1, i] = np.dot(Odot_BI[0, :, i], O_BI[2, :, i])
             w_B[2, i] = np.dot(Odot_BI[1, :, i], O_BI[0, :, i])
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        O_BI = params['O_BI']
-        Odot_BI = params['Odot_BI']
+        O_BI = inputs['O_BI']
+        Odot_BI = inputs['Odot_BI']
 
         for i in range(0, self.n):
             self.dw_dOdot[i, 0, 2, :] = O_BI[1, :, i]
@@ -64,7 +64,7 @@ class Attitude_Angular(Component):
             self.dw_dOdot[i, 2, 1, :] = O_BI[0, :, i]
             self.dw_dO[i, 2, 0, :] = Odot_BI[1, :, i]
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dw_B = dresids['w_B']
@@ -73,12 +73,12 @@ class Attitude_Angular(Component):
             for k in range(3):
                 for i in range(3):
                     for j in range(3):
-                        if 'O_BI' in dparams:
+                        if 'O_BI' in dinputs:
                             dw_B[k, :] += self.dw_dO[:, k, i, j] * \
-                                dparams['O_BI'][i, j, :]
-                        if 'Odot_BI' in dparams:
+                                dinputs['O_BI'][i, j, :]
+                        if 'Odot_BI' in dinputs:
                             dw_B[k, :] += self.dw_dOdot[:, k, i, j] * \
-                                dparams['Odot_BI'][i, j, :]
+                                dinputs['Odot_BI'][i, j, :]
 
         else:
 
@@ -86,12 +86,12 @@ class Attitude_Angular(Component):
                 for i in range(3):
                     for j in range(3):
 
-                        if 'O_BI' in dparams:
-                            dparams['O_BI'][i, j, :] += self.dw_dO[:, k, i, j] * \
+                        if 'O_BI' in dinputs:
+                            dinputs['O_BI'][i, j, :] += self.dw_dO[:, k, i, j] * \
                                 dw_B[k, :]
 
-                        if 'Odot_BI' in dparams:
-                            dparams['Odot_BI'][i, j, :] += self.dw_dOdot[:, k, i, j] * \
+                        if 'Odot_BI' in dinputs:
+                            dinputs['Odot_BI'][i, j, :] += self.dw_dOdot[:, k, i, j] * \
                                 dw_B[k, :]
 
 
@@ -105,7 +105,7 @@ class Attitude_AngularRates(Component):
         self.n = n
 
         # Inputs
-        self.add_param('w_B', np.zeros((3, n)), units="1/s",
+        self.add_input('w_B', np.zeros((3, n)), units="1/s",
                        desc="Angular velocity vector in body-fixed frame over time")
 
         # Outputs
@@ -114,43 +114,43 @@ class Attitude_AngularRates(Component):
 
         self.h = h
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        w_B = params['w_B']
+        w_B = inputs['w_B']
         h = self.h
-        wdot_B = unknowns['wdot_B']
+        wdot_B = outputs['wdot_B']
 
         wdot_B[:, 0] = w_B[:, 1] - w_B[:, 0]
         wdot_B[:, 1:-1] = (w_B[:, 2:] - w_B[:, :-2])/ 2.0
         wdot_B[:, -1] = w_B[:, -1] - w_B[:, -2]
         wdot_B *= 1.0/h
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         h = self.h
         dwdot_B = dresids['wdot_B']
 
         if mode == 'fwd':
-            if 'w_B' in dparams:
-                dwdot_B[:, 0] += dparams['w_B'][:, 1] / h
-                dwdot_B[:, 0] -= dparams['w_B'][:, 0] / h
-                dwdot_B[:, 1:-1] += dparams['w_B'][:, 2:] / 2.0 / h
-                dwdot_B[:, 1:-1] -= dparams['w_B'][:, :-2] / 2.0 / h
-                dwdot_B[:, -1] += dparams['w_B'][:, -1] / h
-                dwdot_B[:, -1] -= dparams['w_B'][:, -2] / h
+            if 'w_B' in dinputs:
+                dwdot_B[:, 0] += dinputs['w_B'][:, 1] / h
+                dwdot_B[:, 0] -= dinputs['w_B'][:, 0] / h
+                dwdot_B[:, 1:-1] += dinputs['w_B'][:, 2:] / 2.0 / h
+                dwdot_B[:, 1:-1] -= dinputs['w_B'][:, :-2] / 2.0 / h
+                dwdot_B[:, -1] += dinputs['w_B'][:, -1] / h
+                dwdot_B[:, -1] -= dinputs['w_B'][:, -2] / h
 
         else:
-            if 'w_B' in dparams:
-                w_B = np.zeros(dparams['w_B'].shape)
+            if 'w_B' in dinputs:
+                w_B = np.zeros(dinputs['w_B'].shape)
                 w_B[:, 1] += dwdot_B[:, 0] / h
                 w_B[:, 0] -= dwdot_B[:, 0] / h
                 w_B[:, 2:] += dwdot_B[:, 1:-1] / 2.0 / h
                 w_B[:, :-2] -= dwdot_B[:, 1:-1] / 2.0 / h
                 w_B[:, -1] += dwdot_B[:, -1] / h
                 w_B[:, -2] -= dwdot_B[:, -1] / h
-                dparams['w_B'] += w_B
+                dinputs['w_B'] += w_B
 
 
 class Attitude_Attitude(Component):
@@ -177,7 +177,7 @@ class Attitude_Attitude(Component):
         self.n = n
 
         # Inputs
-        self.add_param('r_e2b_I', np.zeros((6, n)), units="unitless",
+        self.add_input('r_e2b_I', np.zeros((6, n)), units="unitless",
                        desc="Position and velocity vector from earth to satellite in "
                        "Earth-centered inertial frame over time")
 
@@ -188,11 +188,11 @@ class Attitude_Attitude(Component):
 
         self.dO_dr = np.zeros((n, 3, 3, 6))
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        r_e2b_I = params['r_e2b_I']
-        O_RI = unknowns['O_RI']
+        r_e2b_I = inputs['r_e2b_I']
+        O_RI = outputs['O_RI']
 
         O_RI[:] = np.zeros(O_RI.shape)
         for i in range(0, self.n):
@@ -224,10 +224,10 @@ class Attitude_Attitude(Component):
             O_RI[1, :, i] = jB
             O_RI[2, :, i] = -v
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        r_e2b_I = params['r_e2b_I']
+        r_e2b_I = inputs['r_e2b_I']
 
         diB_dv = np.zeros((3, 3))
         djB_dv = np.zeros((3, 3))
@@ -286,7 +286,7 @@ class Attitude_Attitude(Component):
 
             self.dO_dr[i, 2, :, 3:] = -dv_dv
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dO_RI = dresids['O_RI']
@@ -296,13 +296,13 @@ class Attitude_Attitude(Component):
                 for j in range(3):
                     for i in range(6):
                         dO_RI[k, j, :] += self.dO_dr[:, k, j, i] * \
-                            dparams['r_e2b_I'][i, :]
+                            dinputs['r_e2b_I'][i, :]
 
         else:
             for k in range(3):
                 for j in range(3):
                     for i in range(6):
-                        dparams['r_e2b_I'][i, :] += self.dO_dr[:, k, j, i] * \
+                        dinputs['r_e2b_I'][i, :] += self.dO_dr[:, k, j, i] * \
                             dO_RI[k, j, :]
 
 
@@ -316,7 +316,7 @@ class Attitude_Roll(Component):
         self.n = n
 
         # Inputs
-        self.add_param('Gamma', np.zeros(n), units="rad",
+        self.add_input('Gamma', np.zeros(n), units="rad",
                        desc="Satellite roll angle over time")
 
         # Outputs
@@ -327,11 +327,11 @@ class Attitude_Roll(Component):
         self.dO_dg = np.zeros((n, 3, 3))
 
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        Gamma = params['Gamma']
-        O_BR = unknowns['O_BR']
+        Gamma = inputs['Gamma']
+        O_BR = outputs['O_BR']
 
         O_BR[:] = np.zeros((3, 3, self.n))
         O_BR[0, 0, :] = np.cos(Gamma)
@@ -340,10 +340,10 @@ class Attitude_Roll(Component):
         O_BR[1, 1, :] = O_BR[0, 0, :]
         O_BR[2, 2, :] = np.ones(self.n)
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        Gamma = params['Gamma']
+        Gamma = inputs['Gamma']
 
         self.dO_dg = np.zeros((self.n, 3, 3))
         self.dO_dg[:, 0, 0] = -np.sin(Gamma)
@@ -351,7 +351,7 @@ class Attitude_Roll(Component):
         self.dO_dg[:, 1, 0] = -self.dO_dg[:, 0, 1]
         self.dO_dg[:, 1, 1] = self.dO_dg[:, 0, 0]
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dO_BR = dresids['O_BR']
@@ -360,12 +360,12 @@ class Attitude_Roll(Component):
             for k in range(3):
                 for j in range(3):
                     dO_BR[k, j, :] += self.dO_dg[:, k, j] * \
-                        dparams['Gamma']
+                        dinputs['Gamma']
 
         else:
             for k in range(3):
                 for j in range(3):
-                    dparams['Gamma'] += self.dO_dg[:, k, j] * \
+                    dinputs['Gamma'] += self.dO_dg[:, k, j] * \
                         dO_BR[k, j, :]
 
 
@@ -380,11 +380,11 @@ class Attitude_RotationMtx(Component):
         self.n = n
 
         # Inputs
-        self.add_param('O_BR', np.zeros((3, 3, n)), units="unitless",
+        self.add_input('O_BR', np.zeros((3, 3, n)), units="unitless",
                        desc="Rotation matrix from body-fixed frame to rolled "
                        "body-fixed frame over time")
 
-        self.add_param('O_RI', np.zeros((3, 3, n)), units="unitless",
+        self.add_input('O_RI', np.zeros((3, 3, n)), units="unitless",
                        desc="Rotation matrix from rolled body-fixed "
                        "frame to Earth-centered inertial frame over time")
 
@@ -393,43 +393,43 @@ class Attitude_RotationMtx(Component):
                         desc="Rotation matrix from body-fixed frame to "
                         "Earth-centered inertial frame over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        O_BR = params['O_BR']
-        O_RI = params['O_RI']
-        O_BI = unknowns['O_BI']
+        O_BR = inputs['O_BR']
+        O_RI = inputs['O_RI']
+        O_BI = outputs['O_BI']
 
         for i in range(0, self.n):
             O_BI[:, :, i] = np.dot(O_BR[:, :, i], O_RI[:, :, i])
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dO_BI = dresids['O_BI']
-        O_BR = params['O_BR']
-        O_RI = params['O_RI']
+        O_BR = inputs['O_BR']
+        O_RI = inputs['O_RI']
 
         if mode == 'fwd':
             for u in range(3):
                 for v in range(3):
                     for k in range(3):
-                        if 'O_RI' in dparams:
+                        if 'O_RI' in dinputs:
                             dO_BI[u, v, :] += O_BR[u, k, :] * \
-                                dparams['O_RI'][k, v, :]
-                        if 'O_BR' in dparams:
-                            dO_BI[u, v, :] += dparams['O_BR'][u, k, :] * \
+                                dinputs['O_RI'][k, v, :]
+                        if 'O_BR' in dinputs:
+                            dO_BI[u, v, :] += dinputs['O_BR'][u, k, :] * \
                                 O_RI[k, v, :]
 
         else:
             for u in range(3):
                 for v in range(3):
                     for k in range(3):
-                        if 'O_RI' in dparams:
-                            dparams['O_RI'][k, v, :] += O_BR[u, k, :] * \
+                        if 'O_RI' in dinputs:
+                            dinputs['O_RI'][k, v, :] += O_BR[u, k, :] * \
                                 dO_BI[u, v, :]
-                        if 'O_BR' in dparams:
-                            dparams['O_BR'][u, k, :] += dO_BI[u, v, :] * \
+                        if 'O_BR' in dinputs:
+                            dinputs['O_BR'][u, k, :] += dO_BI[u, v, :] * \
                                 O_RI[k, v, :]
 
 
@@ -444,7 +444,7 @@ class Attitude_RotationMtxRates(Component):
         self.h = h
 
         # Inputs
-        self.add_param('O_BI', np.zeros((3, 3, n)), units="unitless",
+        self.add_input('O_BI', np.zeros((3, 3, n)), units="unitless",
                        desc="Rotation matrix from body-fixed frame to Earth-centered "
                        "inertial frame over time")
 
@@ -453,12 +453,12 @@ class Attitude_RotationMtxRates(Component):
                         desc="First derivative of O_BI over time")
 
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        O_BI = params['O_BI']
+        O_BI = inputs['O_BI']
         h = self.h
-        Odot_BI = unknowns['Odot_BI']
+        Odot_BI = outputs['Odot_BI']
 
         Odot_BI[:, :, 0] = O_BI[:, :, 1]
         Odot_BI[:, :, 0] -= O_BI[:, :, 0]
@@ -468,14 +468,14 @@ class Attitude_RotationMtxRates(Component):
         Odot_BI[:, :, -1] -= O_BI[:, :, -2]
         Odot_BI *= 1.0/h
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dOdot_BI = dresids['Odot_BI']
         h = self.h
 
         if mode == 'fwd':
-            dO_BI = dparams['O_BI']
+            dO_BI = dinputs['O_BI']
             dOdot_BI[:, :, 0] += dO_BI[:, :, 1] / h
             dOdot_BI[:, :, 0] -= dO_BI[:, :, 0] / h
             dOdot_BI[:, :, 1:-1] += dO_BI[:, :, 2:] / (2.0*h)
@@ -484,14 +484,14 @@ class Attitude_RotationMtxRates(Component):
             dOdot_BI[:, :, -1] -= dO_BI[:, :, -2] / h
 
         else:
-            dO_BI = np.zeros(dparams['O_BI'].shape)
+            dO_BI = np.zeros(dinputs['O_BI'].shape)
             dO_BI[:, :, 1] += dOdot_BI[:, :, 0] / h
             dO_BI[:, :, 0] -= dOdot_BI[:, :, 0] / h
             dO_BI[:, :, 2:] += dOdot_BI[:, :, 1:-1] / (2.0*h)
             dO_BI[:, :, :-2] -= dOdot_BI[:, :, 1:-1] / (2.0*h)
             dO_BI[:, :, -1] += dOdot_BI[:, :, -1] / h
             dO_BI[:, :, -2] -= dOdot_BI[:, :, -1] / h
-            dparams['O_BI'] += dO_BI
+            dinputs['O_BI'] += dO_BI
 
 
 class Attitude_Sideslip(Component):
@@ -503,11 +503,11 @@ class Attitude_Sideslip(Component):
         self.n = n
 
         # Inputs
-        self.add_param('r_e2b_I', np.zeros((6, n)), units="unitless",
+        self.add_input('r_e2b_I', np.zeros((6, n)), units="unitless",
                        desc="Position and velocity vector from earth to satellite "
                        "in Earth-centered inertial frame over time")
 
-        self.add_param('O_BI', np.zeros((3, 3, n)), units="unitless",
+        self.add_input('O_BI', np.zeros((3, 3, n)), units="unitless",
                        desc="Rotation matrix from body-fixed frame to "
                        "Earth-centered inertial frame over time")
 
@@ -517,52 +517,52 @@ class Attitude_Sideslip(Component):
                         "in body-fixed frame over time")
 
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        r_e2b_I = params['r_e2b_I']
-        O_BI = params['O_BI']
-        v_e2b_B = unknowns['v_e2b_B']
+        r_e2b_I = inputs['r_e2b_I']
+        O_BI = inputs['O_BI']
+        v_e2b_B = outputs['v_e2b_B']
 
         v_e2b_B[:] = computepositionrotd(self.n, r_e2b_I[3:, :], O_BI)
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        r_e2b_I = params['r_e2b_I']
-        O_BI = params['O_BI']
+        r_e2b_I = inputs['r_e2b_I']
+        O_BI = inputs['O_BI']
 
         self.J1, self.J2 = computepositionrotdjacobian(self.n,
                                                        r_e2b_I[3:, :],
                                                        O_BI)
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dv_e2b_B = dresids['v_e2b_B']
 
         if mode == 'fwd':
             for k in range(3):
-                if 'O_BI' in params:
+                if 'O_BI' in inputs:
                     for u in range(3):
                         for v in range(3):
                             dv_e2b_B[k, :] += self.J1[:, k, u, v] * \
-                                dparams['O_BI'][u, v, :]
-                if 'r_e2b_I' in params:
+                                dinputs['O_BI'][u, v, :]
+                if 'r_e2b_I' in inputs:
                     for j in range(3):
                         dv_e2b_B[k, :] += self.J2[:, k, j] * \
-                            dparams['r_e2b_I'][3+j, :]
+                            dinputs['r_e2b_I'][3+j, :]
 
         else:
             for k in range(3):
-                if 'O_BI' in params:
+                if 'O_BI' in inputs:
                     for u in range(3):
                         for v in range(3):
-                            dparams['O_BI'][u, v, :] += self.J1[:, k, u, v] * \
+                            dinputs['O_BI'][u, v, :] += self.J1[:, k, u, v] * \
                                 dv_e2b_B[k, :]
-                if 'r_e2b_I' in params:
+                if 'r_e2b_I' in inputs:
                     for j in range(3):
-                        dparams['r_e2b_I'][3+j, :] += self.J2[:, k, j] * \
+                        dinputs['r_e2b_I'][3+j, :] += self.J2[:, k, j] * \
                             dv_e2b_B[k, :]
 
 
@@ -580,10 +580,10 @@ class Attitude_Torque(Component):
         self.n = n
 
         # Inputs
-        self.add_param('w_B', np.zeros((3, n)), units="1/s",
+        self.add_input('w_B', np.zeros((3, n)), units="1/s",
                        desc="Angular velocity in body-fixed frame over time")
 
-        self.add_param('wdot_B', np.zeros((3, n)), units="1/s**2",
+        self.add_input('wdot_B', np.zeros((3, n)), units="1/s**2",
                        desc="Time derivative of w_B over time")
 
         # Outputs
@@ -605,12 +605,12 @@ class Attitude_Torque(Component):
         self.dwx_dw[1, :, 2] = (1., 0., 0.)
         self.dwx_dw[2, :, 2] = (0., 0., 0.)
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        w_B = params['w_B']
-        wdot_B = params['wdot_B']
-        T_tot = unknowns['T_tot']
+        w_B = inputs['w_B']
+        wdot_B = inputs['wdot_B']
+        T_tot = outputs['T_tot']
 
         wx = np.zeros((3, 3))
         for i in range(0, self.n):
@@ -620,10 +620,10 @@ class Attitude_Torque(Component):
             T_tot[:, i] = np.dot(self.J, wdot_B[:, i]) + \
                 np.dot(wx, np.dot(self.J, w_B[:, i]))
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        w_B = params['w_B']
+        w_B = inputs['w_B']
 
         self.dT_dw = np.zeros((self.n, 3, 3))
         wx = np.zeros((3, 3))
@@ -640,7 +640,7 @@ class Attitude_Torque(Component):
                 self.dT_dw[i, :, k] += np.dot(self.dwx_dw[:, :, k],
                                               np.dot(self.J, w_B[:, i]))
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dT_tot = dresids['T_tot']
@@ -648,19 +648,19 @@ class Attitude_Torque(Component):
         if mode == 'fwd':
             for k in range(3):
                 for j in range(3):
-                    if 'w_B' in dparams:
+                    if 'w_B' in dinputs:
                         dT_tot[k, :] += self.dT_dw[:, k, j] * \
-                            dparams['w_B'][j, :]
-                    if 'wdot_B' in dparams:
+                            dinputs['w_B'][j, :]
+                    if 'wdot_B' in dinputs:
                         dT_tot[k, :] += self.dT_dwdot[:, k, j] * \
-                            dparams['wdot_B'][j, :]
+                            dinputs['wdot_B'][j, :]
 
         else:
             for k in range(3):
                 for j in range(3):
-                    if 'w_B' in dparams:
-                        dparams['w_B'][j, :] += self.dT_dw[:, k, j] * \
+                    if 'w_B' in dinputs:
+                        dinputs['w_B'][j, :] += self.dT_dw[:, k, j] * \
                             dT_tot[k, :]
-                    if 'wdot_B' in dparams:
-                        dparams['wdot_B'][j, :] += self.dT_dwdot[:, k, j] * \
+                    if 'wdot_B' in dinputs:
+                        dinputs['wdot_B'][j, :] += self.dT_dwdot[:, k, j] * \
                             dT_tot[k, :]

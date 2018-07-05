@@ -9,7 +9,7 @@ from openmdao.core.problem import Problem
 from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
 from openmdao.solvers.petsc_ksp import PetscKSP
 from openmdao.test.mpi_util import MPITestCase
-from openmdao.test.util import assert_rel_error
+from openmdao.utils.assert_utils import assert_rel_error
 
 try:
     from openmdao.core.petsc_impl import PetscImpl as impl

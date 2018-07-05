@@ -9,7 +9,7 @@ from openmdao.core.problem import Problem
 from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
 from openmdao.solvers.petsc_ksp import PetscKSP
 from openmdao.test.mpi_util import MPITestCase
-from openmdao.test.util import assert_rel_error
+from openmdao.utils.assert_utils import assert_rel_error
 
 try:
     from openmdao.core.petsc_impl import PetscImpl as impl
@@ -69,13 +69,13 @@ class BenchmarkDerivsSerial(MPITestCase):
         model.setup(check=False)
         model.run()
 
-        params = list(model.driver.get_desvars().keys())
+        inputs = list(model.driver.get_desvars().keys())
         unks = list(model.driver.get_objectives().keys()) + list(model.driver.get_constraints().keys())
 
         #----------------------------------------
         # This is what we are really profiling
         #----------------------------------------
-        J = model.calc_gradient(params, unks, mode='rev', return_format='dict')
+        J = model.calc_gradient(inputs, unks, mode='rev', return_format='dict')
 
         assert_rel_error(self, J['obj.val']['bp3.antAngle'], 67.15777407, 1e-4)
         assert_rel_error(self, J['obj.val']['pt1.CP_gamma'][-1][-1], -0.62410223816776056, 1e-4)

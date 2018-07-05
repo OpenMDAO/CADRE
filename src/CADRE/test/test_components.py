@@ -12,24 +12,23 @@ import numpy as np
 
 from openmdao.core.group import Group
 from openmdao.core.problem import Problem
-from openmdao.test.util import assert_rel_error
+from openmdao.utils.assert_utils import assert_rel_error
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
-     Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
-     Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque
+    Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
+    Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque
 from CADRE.battery import BatterySOC, BatteryPower, BatteryConstraints
 from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMtx, \
-     Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern, \
-     Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, Comm_VectorBody, \
-     Comm_VectorECI, Comm_VectorSpherical
+    Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern, \
+    Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, Comm_VectorBody, \
+    Comm_VectorECI, Comm_VectorSpherical
 from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
 from CADRE.parameters import BsplineParameters
 from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 from CADRE.reactionwheel import ReactionWheel_Motor, ReactionWheel_Power, \
-     ReactionWheel_Torque, ReactionWheel_Dynamics
+    ReactionWheel_Torque, ReactionWheel_Dynamics
 from CADRE.solar import Solar_ExposedArea
-from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, \
-     Sun_PositionSpherical
+from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, Sun_PositionSpherical
 from CADRE.thermal_temperature import ThermalTemperature
 
 # Ignore the numerical warnings from performing the rel error calc.
@@ -82,13 +81,13 @@ class Testcase_CADRE(unittest.TestCase):
     def setup(self, compname, inputs):
 
         try:
-            self.model.root.add('comp', eval('%s(n)' % compname))
+            self.model.root.add_subsystem('comp', eval('%s(n)' % compname))
         except TypeError:
             # At least one comp has no args.
             try:
-                self.model.root.add('comp', eval('%s()' % compname))
+                self.model.root.add_subsystem('comp', eval('%s()' % compname))
             except TypeError:
-                self.model.root.add('comp', eval('%s(n, 300)' % compname))
+                self.model.root.add_subsystem('comp', eval('%s(n, 300)' % compname))
 
         self.model.setup(check=False)
 

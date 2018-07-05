@@ -22,9 +22,9 @@ class Perf(Component):
 
   def __init__(self, n):
     super(Perf, self).__init__()
-    self.add_param('P_sol1', np.zeros((n, )), units="W",
+    self.add_input('P_sol1', np.zeros((n, )), units="W",
                         desc="Solar panels power over time")
-    self.add_param('P_sol2', np.zeros((n, )), units="W",
+    self.add_input('P_sol2', np.zeros((n, )), units="W",
                         desc="Solar panels power over time")
 
     self.add_output("result", 0.0)
@@ -44,16 +44,16 @@ class MPPT(Group):
     def __init__(self, LOS, temp, area, m, n):
       super(MPPT, self).__init__()
 
-      params = (("LOS" ,LOS, {"units" : "unitless"}),
+      inputs = (("LOS" ,LOS, {"units" : "unitless"}),
                 ("temperature" , temp, {"units" : "degK"}),
                 ("exposedArea" , area, {"units" : "m**2"}),
                 ("CP_Isetpt" , np.zeros((12, m)),  {"units" : "A"}))
 
-      self.add("param", IndepVarComp(params))
-      self.add("bspline", BsplineParameters(n, m))
-      self.add("voltage", Power_CellVoltage(n))
-      self.add("power", Power_SolarPower(n))
-      #self.add("perf", Perf(n))
+      self.add_subsystem("param", IndepVarComp(inputs))
+      self.add_subsystem("bspline", BsplineParameters(n, m))
+      self.add_subsystem("voltage", Power_CellVoltage(n))
+      self.add_subsystem("power", Power_SolarPower(n))
+      #self.add_subsystem("perf", Perf(n))
 
       self.connect("param.LOS", "voltage.LOS")
       self.connect("param.temperature", "voltage.temperature")
@@ -78,18 +78,18 @@ class MPPT_MDP(ParallelGroup):
     data = pickle.load(open(fpath + "/src/CADRE/test/data1346.pkl", 'rb'))
 
     # CADRE instances go into a Parallel Group
-    para = self.add('parallel', ParallelGroup(), promotes=['*'])
+    para = self.add_subsystem('parallel', ParallelGroup(), promotes=['*'])
 
-    para.add("pt0", MPPT(data['0:LOS'],
+    para.add_subsystem("pt0", MPPT(data['0:LOS'],
                          data['0:temperature'],
                          data['0:exposedArea'],
                          m, n))
-    para.add("pt1", MPPT(data['1:LOS'],
+    para.add_subsystem("pt1", MPPT(data['1:LOS'],
                          data['1:temperature'],
                          data['1:exposedArea'],
                          m, n))
 
-    self.add("perf", Perf(1500))
+    self.add_subsystem("perf", Perf(1500))
 
     self.connect("pt0.power.P_sol", "perf.P_sol1")
     self.connect("pt1.power.P_sol", "perf.P_sol2")

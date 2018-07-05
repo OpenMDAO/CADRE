@@ -54,12 +54,12 @@ class CADRE_MDP_Group(Group):
         LDs = launch_data[1::2, 0] - 2451545
 
         # Create ParmComps for broadcast parameters.
-        self.add('bp1', IndepVarComp('cellInstd', np.ones((7, 12))))
-        self.add('bp2', IndepVarComp('finAngle', np.pi/4.0))
-        self.add('bp3', IndepVarComp('antAngle', 0.0))
+        self.add_subsystem('bp1', IndepVarComp('cellInstd', np.ones((7, 12))))
+        self.add_subsystem('bp2', IndepVarComp('finAngle', np.pi/4.0))
+        self.add_subsystem('bp3', IndepVarComp('antAngle', 0.0))
 
         # CADRE instances go into a Parallel Group
-        para = self.add('parallel', ParallelGroup(), promotes=['*'])
+        para = self.add_subsystem('parallel', ParallelGroup(), promotes=['*'])
 
         # build design points
         names = ['pt%s' % i for i in range(npts)]
@@ -70,21 +70,21 @@ class CADRE_MDP_Group(Group):
             inits['LD'] = float(LDs[i])
             inits['r_e2b_I0'] = r_e2b_I0s[i]
 
-            comp = para.add(name, CADRE(n, m, solar_raw1, solar_raw2,
+            comp = para.add_subsystem(name, CADRE(n, m, solar_raw1, solar_raw2,
                                         comm_raw, power_raw,
-                                        initial_params=inits))
+                                        initial_inputs=inits))
 
-            # Hook up broadcast params
+            # Hook up broadcast inputs
             self.connect('bp1.cellInstd', "%s.cellInstd" % name)
             self.connect('bp2.finAngle', "%s.finAngle" % name)
             self.connect('bp3.antAngle', "%s.antAngle" % name)
 
-            self.add('%s_con5'% name, ExecComp("val = SOCi - SOCf"))
+            self.add_subsystem('%s_con5'% name, ExecComp("val = SOCi - SOCf"))
             self.connect("%s.SOC" % name, '%s_con5.SOCi'% name, src_indices=[0])
             self.connect("%s.SOC" % name, '%s_con5.SOCf'% name, src_indices=[n-1])
 
         obj = ''.join([" - %s_DataTot" % name for name in names])
-        self.add('obj', ExecComp('val='+obj))
+        self.add_subsystem('obj', ExecComp('val='+obj))
         for name in names:
             self.connect("%s.Data" % name, "obj.%s_DataTot" % name, src_indices=[n-1])
 

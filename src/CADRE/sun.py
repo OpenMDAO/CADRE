@@ -25,12 +25,12 @@ class Sun_LOS(Component):
         self.r2 = 6378.137
 
         # Inputs
-        self.add_param('r_e2b_I', np.zeros((6, n), order='F'), units = "unitless",
+        self.add_input('r_e2b_I', np.zeros((6, n), order='F'), units = "unitless",
                        desc="Position and velocity vectors from "
                        "Earth to satellite in Earth-centered "
                        "inertial frame over time.")
 
-        self.add_param('r_e2s_I', np.zeros((3, n), order='F'), units="km",
+        self.add_input('r_e2s_I', np.zeros((3, n), order='F'), units="km",
                        desc="Position vector from Earth to sun in Earth-centered "
                        "inertial frame over time.")
 
@@ -38,12 +38,12 @@ class Sun_LOS(Component):
         self.add_output('LOS', np.zeros((n, ), order='F'), units="unitless",
                         desc="Satellite to sun line of sight over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        r_e2b_I = params['r_e2b_I']
-        r_e2s_I = params['r_e2s_I']
-        LOS = unknowns['LOS']
+        r_e2b_I = inputs['r_e2b_I']
+        r_e2s_I = inputs['r_e2s_I']
+        LOS = outputs['LOS']
 
         for i in range( self.n ):
             r_b = r_e2b_I[:3, i]
@@ -62,11 +62,11 @@ class Sun_LOS(Component):
                 x = ( dist - self.r1 ) / ( self.r2 - self.r1 )
                 LOS[i] = 3*x**2 - 2*x**3
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        r_e2b_I = params['r_e2b_I']
-        r_e2s_I = params['r_e2s_I']
+        r_e2b_I = inputs['r_e2b_I']
+        r_e2s_I = inputs['r_e2s_I']
 
         nj = 3*self.n
 
@@ -134,25 +134,25 @@ class Sun_LOS(Component):
         self.JbT = self.Jb.transpose()
         self.JsT = self.Js.transpose()
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dLOS = dresids['LOS']
 
         if mode == 'fwd':
-            if 'r_e2b_I' in dparams:
-                r_e2b_I = dparams['r_e2b_I'][:].reshape((6*self.n), order='F')
+            if 'r_e2b_I' in dinputs:
+                r_e2b_I = dinputs['r_e2b_I'][:].reshape((6*self.n), order='F')
                 dLOS += self.Jb.dot(r_e2b_I)
 
-            if 'r_e2s_I' in dparams:
-                r_e2s_I = dparams['r_e2s_I'][:].reshape((3*self.n), order='F')
+            if 'r_e2s_I' in dinputs:
+                r_e2s_I = dinputs['r_e2s_I'][:].reshape((3*self.n), order='F')
                 dLOS += self.Js.dot(r_e2s_I)
 
         else:
-            if 'r_e2b_I' in dparams:
-                dparams['r_e2b_I'] += self.JbT.dot(dLOS).reshape((6, self.n), order='F')
-            if 'r_e2s_I' in dparams:
-                dparams['r_e2s_I'] += self.JsT.dot(dLOS).reshape((3, self.n), order='F')
+            if 'r_e2b_I' in dinputs:
+                dinputs['r_e2b_I'] += self.JbT.dot(dLOS).reshape((6, self.n), order='F')
+            if 'r_e2s_I' in dinputs:
+                dinputs['r_e2s_I'] += self.JsT.dot(dLOS).reshape((3, self.n), order='F')
 
 
 def crossMatrix(v):
@@ -173,11 +173,11 @@ class Sun_PositionBody( Component ):
         self.n = n
 
         # Inputs
-        self.add_param('O_BI',np.zeros((3, 3, n), order='F'), units="unitless",
+        self.add_input('O_BI',np.zeros((3, 3, n), order='F'), units="unitless",
                        desc="Rotation matrix from the Earth-centered inertial frame "
                        "to the satellite frame.")
 
-        self.add_param('r_e2s_I', np.zeros((3, n), order='F'), units="km",
+        self.add_input('r_e2s_I', np.zeros((3, n), order='F'), units="km",
                        desc="Position vector from Earth to Sun in Earth-centered "
                        "inertial frame over time.")
 
@@ -186,46 +186,46 @@ class Sun_PositionBody( Component ):
                         desc="Position vector from Earth to Sun in body-fixed "
                         "frame over time." )
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        unknowns['r_e2s_B'] = computepositionrotd(self.n, params['r_e2s_I'],
-                                                  params['O_BI'])
+        outputs['r_e2s_B'] = computepositionrotd(self.n, inputs['r_e2s_I'],
+                                                  inputs['O_BI'])
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        self.J1, self.J2 = computepositionrotdjacobian(self.n, params['r_e2s_I'],
-                                                  params['O_BI'])
+        self.J1, self.J2 = computepositionrotdjacobian(self.n, inputs['r_e2s_I'],
+                                                  inputs['O_BI'])
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dr_e2s_B = dresids['r_e2s_B']
 
         if mode == 'fwd':
-            if 'O_BI' in dparams:
+            if 'O_BI' in dinputs:
                 for k in range(3):
                     for u in range(3):
                         for v in range(3):
-                            dr_e2s_B[k, :] += self.J1[:, k, u, v] * dparams['O_BI'][u, v, :]
+                            dr_e2s_B[k, :] += self.J1[:, k, u, v] * dinputs['O_BI'][u, v, :]
 
-            if 'r_e2s_I' in dparams:
+            if 'r_e2s_I' in dinputs:
                 for k in range(3):
                     for j in range(3):
-                        dr_e2s_B[k,:] += self.J2[:, k, j] * dparams['r_e2s_I'][j, :]
+                        dr_e2s_B[k,:] += self.J2[:, k, j] * dinputs['r_e2s_I'][j, :]
 
         else:
             for k in range(3):
 
-                if 'O_BI' in dparams:
-                    dO_BI = dparams['O_BI']
+                if 'O_BI' in dinputs:
+                    dO_BI = dinputs['O_BI']
                     for u in range(3):
                         for v in range(3):
                             dO_BI[u, v, :] += self.J1[:, k, u, v] * dr_e2s_B[k, :]
 
-                if 'r_e2s_I' in dparams:
-                    dr_e2s_I = dparams['r_e2s_I']
+                if 'r_e2s_I' in dinputs:
+                    dr_e2s_I = dinputs['r_e2s_I']
                     for j in range(3):
                         dr_e2s_I[j, :] += self.J2[:,k, j] * dr_e2s_B[k, :]
 
@@ -244,9 +244,9 @@ class Sun_PositionECI( Component ):
         self.n = n
 
         # Inputs
-        self.add_param('LD', 0.0, units="unitless")
+        self.add_input('LD', 0.0, units="unitless")
 
-        self.add_param('t', np.zeros((n, ), order='F'), units="s", desc="Time")
+        self.add_input('t', np.zeros((n, ), order='F'), units="s", desc="Time")
 
         # Outputs
         self.add_output('r_e2s_I', np.zeros((3, n, ), order='F'), units="km",
@@ -257,12 +257,12 @@ class Sun_PositionECI( Component ):
         self.Ji = np.zeros(3*self.n)
         self.Jj = np.zeros(3*self.n)
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        r_e2s_I = unknowns['r_e2s_I']
+        r_e2s_I = outputs['r_e2s_I']
 
-        T = params['LD'] + params['t'][:]/3600./24.
+        T = inputs['LD'] + inputs['t'][:]/3600./24.
         for i in range(0,self.n):
             L = self.d2r*280.460 + self.d2r*0.9856474*T[i]
             g = self.d2r*357.528 + self.d2r*0.9856003*T[i]
@@ -272,10 +272,10 @@ class Sun_PositionECI( Component ):
             r_e2s_I[1, i] = np.sin(Lambda)*np.cos(eps)
             r_e2s_I[2, i] = np.sin(Lambda)*np.sin(eps)
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        T = params['LD']  + params['t'][:]/3600./24.
+        T = inputs['LD']  + inputs['t'][:]/3600./24.
         dr_dt = np.empty(3)
         for i in range(0, self.n):
             L = self.d2r*280.460 + self.d2r*0.9856474*T[i]
@@ -302,21 +302,21 @@ class Sun_PositionECI( Component ):
                                          shape=(3*self.n, self.n))
         self.JT = self.J.transpose()
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dr_e2s_I = dresids['r_e2s_I']
 
         if mode == 'fwd':
             # TODO - Should split this up so we can hook one up but not the other.
-            dr_e2s_I[:] += self.J.dot( dparams['LD'] + dparams['t']/3600./24. ).reshape((3, self.n), order='F')
+            dr_e2s_I[:] += self.J.dot( dinputs['LD'] + dinputs['t']/3600./24. ).reshape((3, self.n), order='F')
 
         else:
             r_e2s_I = dr_e2s_I[:].reshape((3*self.n),order='F')
-            if 'LD' in dparams:
-                dparams['LD'] += sum(self.JT.dot(r_e2s_I))
-            if 't' in dparams:
-                dparams['t'] += self.JT.dot(r_e2s_I)/3600.0/24.0
+            if 'LD' in dinputs:
+                dinputs['LD'] += sum(self.JT.dot(r_e2s_I))
+            if 't' in dinputs:
+                dinputs['t'] += self.JT.dot(r_e2s_I)/3600.0/24.0
 
 
 class Sun_PositionSpherical(Component):
@@ -328,7 +328,7 @@ class Sun_PositionSpherical(Component):
         self.n = n
 
         # Inputs
-        self.add_param('r_e2s_B', np.zeros((3, n)), units = "km",
+        self.add_input('r_e2s_B', np.zeros((3, n)), units = "km",
                        desc="Position vector from Earth to Sun in body-fixed "
                        "frame over time.")
 
@@ -341,19 +341,19 @@ class Sun_PositionSpherical(Component):
                         desc="Elevation angle of the Sun in the body-fixed frame "
                         "over time.")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        azimuth, elevation = computepositionspherical(self.n, params['r_e2s_B'])
+        azimuth, elevation = computepositionspherical(self.n, inputs['r_e2s_B'])
 
-        unknowns['azimuth'] = azimuth
-        unknowns['elevation'] = elevation
+        outputs['azimuth'] = azimuth
+        outputs['elevation'] = elevation
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.Ja1, self.Ji1, self.Jj1, self.Ja2, self.Ji2, self.Jj2 = \
-                  computepositionsphericaljacobian(self.n, 3*self.n, params['r_e2s_B'])
+                  computepositionsphericaljacobian(self.n, 3*self.n, inputs['r_e2s_B'])
         self.J1 = scipy.sparse.csc_matrix((self.Ja1, (self.Ji1, self.Jj1)),
                                           shape=(self.n, 3*self.n))
         self.J2 = scipy.sparse.csc_matrix((self.Ja2, (self.Ji2, self.Jj2)),
@@ -361,11 +361,11 @@ class Sun_PositionSpherical(Component):
         self.J1T = self.J1.transpose()
         self.J2T = self.J2.transpose()
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         if mode == 'fwd':
-            r_e2s_B = dparams['r_e2s_B'].reshape((3*self.n), order='F')
+            r_e2s_B = dinputs['r_e2s_B'].reshape((3*self.n), order='F')
             if 'azimuth' in dresids:
                 dresids['azimuth'] += self.J1.dot(r_e2s_B)
             if 'elevation' in dresids:
@@ -374,10 +374,10 @@ class Sun_PositionSpherical(Component):
         else:
             if 'azimuth' in dresids:
                 azimuth = dresids['azimuth'][:]
-                dparams['r_e2s_B'] += self.J1T.dot(azimuth).reshape((3, self.n),
+                dinputs['r_e2s_B'] += self.J1T.dot(azimuth).reshape((3, self.n),
                                                                     order='F')
 
             if 'elevation' in dresids:
                 elevation = dresids['elevation'][:]
-                dparams['r_e2s_B'] += self.J2T.dot(elevation).reshape((3, self.n),
+                dinputs['r_e2s_B'] += self.J2T.dot(elevation).reshape((3, self.n),
                                                                       order='F')

@@ -32,7 +32,7 @@ class Orbit_Dynamics(rk4.RK4):
         super(Orbit_Dynamics, self).__init__(n_times, h)
 
         # Inputs
-        self.add_param('r_e2b_I0', np.zeros((6, )), fd_step=1e-2, units="unitless",
+        self.add_input('r_e2b_I0', np.zeros((6, )), fd_step=1e-2, units="unitless",
                        desc="Initial position and velocity vectors from earth to "
                        "satellite in Earth-centered inertial frame")
 
@@ -154,12 +154,12 @@ class Orbit_Initial(Component):
         super(Orbit_Initial, self).__init__()
 
         # Inputs
-        self.add_param('altPerigee', 500.)
-        self.add_param('altApogee', 500.)
-        self.add_param('RAAN', 66.279)
-        self.add_param('Inc', 82.072)
-        self.add_param('argPerigee', 0.0)
-        self.add_param('trueAnomaly', 337.987)
+        self.add_input('altPerigee', 500.)
+        self.add_input('altApogee', 500.)
+        self.add_input('RAAN', 66.279)
+        self.add_input('Inc', 82.072)
+        self.add_input('argPerigee', 0.0)
+        self.add_input('trueAnomaly', 337.987)
 
         #Outputs
         self.add_output('r_e2b_I0', np.ones((6,)), units="unitless",
@@ -206,23 +206,23 @@ class Orbit_Initial(Component):
 
         return r0_ECI, v0_ECI
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        r0_ECI, v0_ECI = self.compute(params['altPerigee'], params['altApogee'],
-                                      params['RAAN'], params['Inc'], params['argPerigee'],
-                                      params['trueAnomaly'])
-        unknowns['r_e2b_I0'][:3] = r0_ECI.real
-        unknowns['r_e2b_I0'][3:] = v0_ECI.real
+        r0_ECI, v0_ECI = self.compute(inputs['altPerigee'], inputs['altApogee'],
+                                      inputs['RAAN'], inputs['Inc'], inputs['argPerigee'],
+                                      inputs['trueAnomaly'])
+        outputs['r_e2b_I0'][:3] = r0_ECI.real
+        outputs['r_e2b_I0'][3:] = v0_ECI.real
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         h = 1e-16
         ih = complex(0, h)
         v = np.zeros(6, complex)
-        v[:] = [params['altPerigee'], params['altApogee'], params['RAAN'],
-                params['Inc'], params['argPerigee'], params['trueAnomaly']]
+        v[:] = [inputs['altPerigee'], inputs['altApogee'], inputs['RAAN'],
+                inputs['Inc'], inputs['argPerigee'], inputs['trueAnomaly']]
         jacs = np.zeros((6,6))
 
         # Find derivatives by complex step.

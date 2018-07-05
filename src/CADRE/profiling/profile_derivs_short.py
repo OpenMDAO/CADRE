@@ -63,13 +63,13 @@ model.run()
 #----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
-params = model.driver.get_desvars().keys()
+inputs = model.driver.get_desvars().keys()
 unks = list(model.driver.get_objectives().keys()) + list(model.driver.get_constraints().keys())
 
 import cProfile
 import pstats
 
-cProfile.run("model.calc_gradient(params, unks, mode='rev', return_format='dict')", 'profout')
+cProfile.run("model.calc_gradient(inputs, unks, mode='rev', return_format='dict')", 'profout')
 
 p = pstats.Stats('profout')
 p.strip_dirs()

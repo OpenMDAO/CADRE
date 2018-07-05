@@ -27,16 +27,16 @@ class Power_CellVoltage(Component):
             dat = np.genfromtxt(fpath + '/data/Power/curve.dat')
 
         # Inputs
-        self.add_param('LOS', np.zeros((n)), units='unitless',
+        self.add_input('LOS', np.zeros((n)), units='unitless',
                        desc="Line of Sight over Time")
 
-        self.add_param('temperature', np.zeros((5, n)), units="degK",
+        self.add_input('temperature', np.zeros((5, n)), units="degK",
                        desc="Temperature of solar cells over time")
 
-        self.add_param('exposedArea', np.zeros((7, 12, n)), units="m**2",
+        self.add_input('exposedArea', np.zeros((7, 12, n)), units="m**2",
                        desc="Exposed area to sun for each solar cell over time")
 
-        self.add_param('Isetpt', np.zeros((12, n)), units="A",
+        self.add_input('Isetpt', np.zeros((12, n)), units="A",
                        desc="Currents of the solar panels")
 
         # Outputs
@@ -61,12 +61,12 @@ class Power_CellVoltage(Component):
         self.dV_dA = np.zeros((self.n, 7, 12), order='F')
         self.dV_dI = np.zeros((self.n, 12), order='F')
 
-    def setx(self, params):
+    def setx(self, inputs):
 
-        temperature = params['temperature']
-        LOS = params['LOS']
-        exposedArea = params['exposedArea']
-        Isetpt = params['Isetpt']
+        temperature = inputs['temperature']
+        LOS = inputs['LOS']
+        exposedArea = inputs['exposedArea']
+        Isetpt = inputs['Isetpt']
 
         for p in range(12):
             i = 4 if p < 4 else (p % 4)
@@ -75,21 +75,21 @@ class Power_CellVoltage(Component):
                 self.xV[:, c, p, 1] = LOS * exposedArea[c, p, :]
                 self.xV[:, c, p, 2] = Isetpt[p, :]
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        self.setx(params)
+        self.setx(inputs)
         self.raw = self.MBI.evaluate(self.x)[:, 0].reshape((self.n, 7, 12),
                                                            order='F')
-        unknowns['V_sol'] = np.zeros((12, self.n))
+        outputs['V_sol'] = np.zeros((12, self.n))
         for c in range(7):
-            unknowns['V_sol'] += self.raw[:, c, :].T
+            outputs['V_sol'] += self.raw[:, c, :].T
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        exposedArea = params['exposedArea']
-        LOS = params['LOS']
+        exposedArea = inputs['exposedArea']
+        LOS = inputs['LOS']
 
         self.raw1 = self.MBI.evaluate(self.x, 1)[:, 0].reshape((self.n, 7,
                                                                 12), order='F')
@@ -110,44 +110,44 @@ class Power_CellVoltage(Component):
                 self.dV_dA[:, c, p] += self.raw2[:, c, p] * LOS
                 self.dV_dI[:, p] += self.raw3[:, c, p]
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dV_sol = dresids['V_sol']
 
         if mode == 'fwd':
 
-            if 'LOS' in dparams:
-                dV_sol += self.dV_dL.T * dparams['LOS']
+            if 'LOS' in dinputs:
+                dV_sol += self.dV_dL.T * dinputs['LOS']
 
-            if 'temperature' in dparams:
+            if 'temperature' in dinputs:
                 for p in range(12):
                     i = 4 if p < 4 else (p % 4)
-                    dV_sol[p, :] += self.dV_dT[:, p, i] * dparams['temperature'][i,:]
+                    dV_sol[p, :] += self.dV_dT[:, p, i] * dinputs['temperature'][i,:]
 
-            if 'Isetpt' in dparams:
-                dV_sol += self.dV_dI.T * dparams['Isetpt']
+            if 'Isetpt' in dinputs:
+                dV_sol += self.dV_dI.T * dinputs['Isetpt']
 
-            if 'exposedArea' in dparams:
+            if 'exposedArea' in dinputs:
                 for p in range(12):
                     dV_sol[p, :] += \
-                        np.sum(self.dV_dA[:,:, p] * dparams['exposedArea'][:, p,:].T, 1)
+                        np.sum(self.dV_dA[:,:, p] * dinputs['exposedArea'][:, p,:].T, 1)
 
         else:
             for p in range(12):
                 i = 4 if p < 4 else (p % 4)
 
-                if 'LOS' in dparams:
-                    dparams['LOS'] += self.dV_dL[:, p] * dV_sol[p,:]
+                if 'LOS' in dinputs:
+                    dinputs['LOS'] += self.dV_dL[:, p] * dV_sol[p,:]
 
-                if 'temperature' in dparams:
-                    dparams['temperature'][i,:] += self.dV_dT[:, p, i] * dV_sol[p,:]
+                if 'temperature' in dinputs:
+                    dinputs['temperature'][i,:] += self.dV_dT[:, p, i] * dV_sol[p,:]
 
-                if 'Isetpt' in dparams:
-                    dparams['Isetpt'][p,:] += self.dV_dI[:, p] * dV_sol[p,:]
+                if 'Isetpt' in dinputs:
+                    dinputs['Isetpt'][p,:] += self.dV_dI[:, p] * dV_sol[p,:]
 
-                if 'exposedArea' in dparams:
-                    dexposedArea = dparams['exposedArea']
+                if 'exposedArea' in dinputs:
+                    dexposedArea = dinputs['exposedArea']
                     for c in range(7):
                         dexposedArea[c, p, :] += self.dV_dA[:, c, p] * dV_sol[p,:]
 
@@ -161,47 +161,47 @@ class Power_SolarPower(Component):
         self.n = n
 
         # Inputs
-        self.add_param('Isetpt', np.zeros((12, n)), units="A",
+        self.add_input('Isetpt', np.zeros((12, n)), units="A",
                        desc="Currents of the solar panels")
 
-        self.add_param('V_sol', np.zeros((12, n)), units="V",
+        self.add_input('V_sol', np.zeros((12, n)), units="V",
                        desc="Output voltage of solar panel over time")
 
         self.add_output('P_sol', np.zeros((n, )), units="W",
                         desc="Solar panels power over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        V_sol = params['V_sol']
-        Isetpt = params['Isetpt']
-        P_sol = unknowns['P_sol']
+        V_sol = inputs['V_sol']
+        Isetpt = inputs['Isetpt']
+        P_sol = outputs['P_sol']
 
         P_sol[:] = np.zeros((self.n, ))
         for p in range(12):
             P_sol += V_sol[p, :] * Isetpt[p, :]
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dP_sol = dresids['P_sol']
 
         if mode == 'fwd':
-            if 'V_sol' in dparams:
+            if 'V_sol' in dinputs:
                 for p in range(12):
-                    dP_sol += dparams['V_sol'][p, :] * params['Isetpt'][p, :]
+                    dP_sol += dinputs['V_sol'][p, :] * inputs['Isetpt'][p, :]
 
-            if 'Isetpt' in dparams:
+            if 'Isetpt' in dinputs:
                 for p in range(12):
-                    dP_sol += dparams['Isetpt'][p, :] * params['V_sol'][p, :]
+                    dP_sol += dinputs['Isetpt'][p, :] * inputs['V_sol'][p, :]
 
         else:
             for p in range(12):
-                if 'V_sol' in dparams:
-                    dparams['V_sol'][p,:] += dP_sol* params['Isetpt'][p, :]
+                if 'V_sol' in dinputs:
+                    dinputs['V_sol'][p,:] += dP_sol* inputs['Isetpt'][p, :]
 
-                if 'Isetpt' in dparams:
-                    dparams['Isetpt'][p,:] += params['V_sol'][p, :] * dP_sol
+                if 'Isetpt' in dinputs:
+                    dinputs['Isetpt'][p,:] += inputs['V_sol'][p, :] * dP_sol
 
 
 class Power_Total(Component):
@@ -217,48 +217,48 @@ class Power_Total(Component):
         self.n = n
 
         # Inputs
-        self.add_param('P_sol', np.zeros((n, ), order='F'), units='W',
+        self.add_input('P_sol', np.zeros((n, ), order='F'), units='W',
                        desc='Solar panels power over time')
 
-        self.add_param('P_comm', np.zeros((n, ), order='F'), units='W',
+        self.add_input('P_comm', np.zeros((n, ), order='F'), units='W',
                        desc='Communication power over time')
 
-        self.add_param('P_RW', np.zeros((3, n, ), order='F'), units='W',
+        self.add_input('P_RW', np.zeros((3, n, ), order='F'), units='W',
                        desc='Power used by reaction wheel over time')
 
         # Outputs
         self.add_output('P_bat', np.zeros((n, ), order='F'), units='W',
                         desc='Battery power over time')
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        unknowns['P_bat'] = params['P_sol'] - 5.0*params['P_comm'] - \
-            np.sum(params['P_RW'], 0) - 2.0
+        outputs['P_bat'] = inputs['P_sol'] - 5.0*inputs['P_comm'] - \
+            np.sum(inputs['P_RW'], 0) - 2.0
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dP_bat = dresids['P_bat']
 
         if mode == 'fwd':
-            if 'P_sol' in dparams:
-                dP_bat += dparams['P_sol']
+            if 'P_sol' in dinputs:
+                dP_bat += dinputs['P_sol']
 
-            if 'P_comm' in dparams:
-                dP_bat -= 5.0 * dparams['P_comm']
+            if 'P_comm' in dinputs:
+                dP_bat -= 5.0 * dinputs['P_comm']
 
-            if 'P_RW' in dparams:
+            if 'P_RW' in dinputs:
                 for k in range(3):
-                    dP_bat -= dparams['P_RW'][k,:]
+                    dP_bat -= dinputs['P_RW'][k,:]
 
         else:
-            if 'P_sol' in dparams:
-                dparams['P_sol'] += dP_bat[:]
+            if 'P_sol' in dinputs:
+                dinputs['P_sol'] += dP_bat[:]
 
-            if 'P_comm' in dparams:
-                dparams['P_comm'] -= 5.0 * dP_bat
+            if 'P_comm' in dinputs:
+                dinputs['P_comm'] -= 5.0 * dP_bat
 
-            if 'P_RW' in dparams:
+            if 'P_RW' in dinputs:
                 for k in range(3):
-                    dparams['P_RW'][k, :] -= dP_bat
+                    dinputs['P_RW'][k, :] -= dP_bat

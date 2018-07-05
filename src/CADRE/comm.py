@@ -27,11 +27,11 @@ class Comm_DataDownloaded(rk4.RK4):
         super(Comm_DataDownloaded, self).__init__(n_times, h)
 
         # Inputs
-        self.add_param('Dr', np.zeros(n_times), units="Gibyte/s",
+        self.add_input('Dr', np.zeros(n_times), units="Gibyte/s",
                        desc="Download rate over time")
 
         # Initial State
-        self.add_param('Data0', np.zeros((1, )), units="Gibyte",
+        self.add_input('Data0', np.zeros((1, )), units="Gibyte",
                        desc="Initial downloaded data state")
 
         # States
@@ -62,7 +62,7 @@ class Comm_AntRotation(Component):
         super(Comm_AntRotation, self).__init__()
 
         # Inputs
-        self.add_param('antAngle', 0.0)
+        self.add_input('antAngle', 0.0)
 
         # Outputs
         self.add_output('q_A', np.zeros((4, n)), units="unitless",
@@ -70,11 +70,11 @@ class Comm_AntRotation(Component):
 
         self.dq_dt = np.zeros(4)
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        antAngle = params['antAngle']
-        q_A = unknowns['q_A']
+        antAngle = inputs['antAngle']
+        q_A = outputs['q_A']
 
         rt2 = np.sqrt(2)
         q_A[0, :] = np.cos(antAngle/2.)
@@ -82,10 +82,10 @@ class Comm_AntRotation(Component):
         q_A[2, :] = - np.sin(antAngle/2.) / rt2
         q_A[3, :] = 0.0
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        antAngle = params['antAngle']
+        antAngle = inputs['antAngle']
 
         rt2 = np.sqrt(2)
         self.dq_dt[0] = - np.sin(antAngle / 2.) / 2.
@@ -93,16 +93,16 @@ class Comm_AntRotation(Component):
         self.dq_dt[2] = - np.cos(antAngle / 2.) / rt2 / 2.
         self.dq_dt[3] = 0.0
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         if mode == 'fwd':
             for k in range(4):
-                dresids['q_A'][k, :] += self.dq_dt[k] * dparams['antAngle']
+                dresids['q_A'][k, :] += self.dq_dt[k] * dinputs['antAngle']
 
         else:
             for k in range(4):
-                dparams['antAngle'] += self.dq_dt[k] * np.sum(dresids['q_A'][k, :])
+                dinputs['antAngle'] += self.dq_dt[k] * np.sum(dresids['q_A'][k, :])
 
 
 class Comm_AntRotationMtx(Component):
@@ -114,7 +114,7 @@ class Comm_AntRotationMtx(Component):
         self.n = n
 
         # Inputs
-        self.add_param('q_A', np.zeros((4, self.n)),
+        self.add_input('q_A', np.zeros((4, self.n)),
                        desc="Quarternion matrix in antenna angle frame over time")
 
         # Outputs
@@ -124,11 +124,11 @@ class Comm_AntRotationMtx(Component):
 
         self.J = np.empty((self.n, 3, 3, 4))
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        q_A = params['q_A']
-        O_AB = unknowns['O_AB']
+        q_A = inputs['q_A']
+        O_AB = outputs['O_AB']
 
         A = np.zeros((4, 3))
         B = np.zeros((4, 3))
@@ -146,10 +146,10 @@ class Comm_AntRotationMtx(Component):
 
             O_AB[:, :, i] = np.dot(A.T, B)
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        q_A = params['q_A']
+        q_A = inputs['q_A']
 
         A = np.zeros((4, 3))
         B = np.zeros((4, 3))
@@ -212,10 +212,10 @@ class Comm_AntRotationMtx(Component):
                 self.J[i, :,:, k] = np.dot(dA_dq[:,:, k].T, B) + \
                     np.dot(A.T, dB_dq[:, :, k])
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
-        dq_A = dparams['q_A']
+        dq_A = dinputs['q_A']
         dO_AB = dresids['O_AB']
 
         if mode == 'fwd':
@@ -252,30 +252,30 @@ class Comm_BitRate(Component):
         self.n = n
 
         # Inputs
-        self.add_param('P_comm', np.zeros(self.n), units="W",
+        self.add_input('P_comm', np.zeros(self.n), units="W",
                        desc="Communication power over time")
 
-        self.add_param('gain', np.zeros(self.n), units="unitless",
+        self.add_input('gain', np.zeros(self.n), units="unitless",
                        desc="Transmitter gain over time")
 
-        self.add_param('GSdist', np.zeros(self.n), units="km",
+        self.add_input('GSdist', np.zeros(self.n), units="km",
                        desc="Distance from ground station to satellite over time")
 
-        self.add_param('CommLOS', np.zeros(self.n), units="unitless",
+        self.add_input('CommLOS', np.zeros(self.n), units="unitless",
                        desc="Satellite to ground station line of sight over time")
 
         # Outputs
         self.add_output('Dr', np.zeros(self.n), units="Gibyte/s",
                         desc="Download rate over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        P_comm = params['P_comm']
-        gain = params['gain']
-        GSdist = params['GSdist']
-        CommLOS = params['CommLOS']
-        Dr = unknowns['Dr']
+        P_comm = inputs['P_comm']
+        gain = inputs['gain']
+        GSdist = inputs['GSdist']
+        CommLOS = inputs['CommLOS']
+        Dr = outputs['Dr']
 
         for i in range(0, self.n):
             if np.abs(GSdist[i]) > 1e-10:
@@ -285,13 +285,13 @@ class Comm_BitRate(Component):
             Dr[i] = self.alpha * P_comm[i] * gain[i] * \
                 CommLOS[i] / S2 ** 2
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        P_comm = params['P_comm']
-        gain = params['gain']
-        GSdist = params['GSdist']
-        CommLOS = params['CommLOS']
+        P_comm = inputs['P_comm']
+        gain = inputs['gain']
+        GSdist = inputs['GSdist']
+        CommLOS = inputs['CommLOS']
 
         S2 = 0.0
         self.dD_dP = np.zeros(self.n)
@@ -315,30 +315,30 @@ class Comm_BitRate(Component):
             self.dD_dLOS[i] = self.alpha * \
                 P_comm[i] * gain[i] / S2 ** 2
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dDr = dresids['Dr']
 
         if mode == 'fwd':
-            if 'P_comm' in dparams:
-                dDr += self.dD_dP * dparams['P_comm']
-            if 'gain' in dparams:
-                dDr += self.dD_dGt * dparams['gain']
-            if 'GSdist' in dparams:
-                dDr += self.dD_dS * dparams['GSdist']
-            if 'CommLOS' in dparams:
-                dDr += self.dD_dLOS * dparams['CommLOS']
+            if 'P_comm' in dinputs:
+                dDr += self.dD_dP * dinputs['P_comm']
+            if 'gain' in dinputs:
+                dDr += self.dD_dGt * dinputs['gain']
+            if 'GSdist' in dinputs:
+                dDr += self.dD_dS * dinputs['GSdist']
+            if 'CommLOS' in dinputs:
+                dDr += self.dD_dLOS * dinputs['CommLOS']
 
         else:
-            if 'P_comm' in dparams:
-                dparams['P_comm'] += self.dD_dP.T * dDr
-            if 'gain' in dparams:
-                dparams['gain'] += self.dD_dGt.T * dDr
-            if 'GSdist' in dparams:
-                dparams['GSdist'] += self.dD_dS.T * dDr
-            if 'CommLOS' in dparams:
-                dparams['CommLOS'] += self.dD_dLOS.T * dDr
+            if 'P_comm' in dinputs:
+                dinputs['P_comm'] += self.dD_dP.T * dDr
+            if 'gain' in dinputs:
+                dinputs['gain'] += self.dD_dGt.T * dDr
+            if 'GSdist' in dinputs:
+                dinputs['GSdist'] += self.dD_dS.T * dDr
+            if 'CommLOS' in dinputs:
+                dinputs['CommLOS'] += self.dD_dLOS.T * dDr
 
 
 class Comm_Distance(Component):
@@ -350,7 +350,7 @@ class Comm_Distance(Component):
         self.n = n
 
         # Inputs
-        self.add_param('r_b2g_A', np.zeros((3, self.n)), units="km",
+        self.add_input('r_b2g_A', np.zeros((3, self.n)), units="km",
                        desc="Position vector from satellite to ground station "
                        "in antenna angle frame over time")
 
@@ -358,19 +358,19 @@ class Comm_Distance(Component):
         self.add_output('GSdist', np.zeros(self.n), units="km",
                         desc="Distance from ground station to satellite over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        r_b2g_A = params['r_b2g_A']
-        GSdist = unknowns['GSdist']
+        r_b2g_A = inputs['r_b2g_A']
+        GSdist = outputs['GSdist']
 
         for i in range(0, self.n):
             GSdist[i] = np.dot(r_b2g_A[:, i], r_b2g_A[:, i])**0.5
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        r_b2g_A = params['r_b2g_A']
+        r_b2g_A = inputs['r_b2g_A']
 
         self.J = np.zeros((self.n, 3))
         for i in range(0, self.n):
@@ -380,16 +380,16 @@ class Comm_Distance(Component):
             else:
                 self.J[i, :] = 0.
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         if mode == 'fwd':
             for k in range(3):
-                dresids['GSdist'] += self.J[:, k] * dparams['r_b2g_A'][k, :]
+                dresids['GSdist'] += self.J[:, k] * dinputs['r_b2g_A'][k, :]
 
         else:
             for k in range(3):
-                dparams['r_b2g_A'][k, :] += self.J[:, k] * dresids['GSdist']
+                dinputs['r_b2g_A'][k, :] += self.J[:, k] * dresids['GSdist']
 
 
 class Comm_EarthsSpin(Component):
@@ -400,18 +400,18 @@ class Comm_EarthsSpin(Component):
         self.n = n
 
         # Inputs
-        self.add_param('t', np.zeros(self.n), units="s",
+        self.add_input('t', np.zeros(self.n), units="s",
                        desc="Time")
 
         # Outputs
         self.add_output('q_E', np.zeros((4, self.n)), units="unitless",
                         desc="Quarternion matrix in Earth-fixed frame over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        t = params['t']
-        q_E = unknowns['q_E']
+        t = inputs['t']
+        q_E = outputs['q_E']
 
         fact = np.pi / 3600.0 / 24.0
         theta = fact * t
@@ -419,10 +419,10 @@ class Comm_EarthsSpin(Component):
         q_E[0, :] = np.cos(theta)
         q_E[3, :] = -np.sin(theta)
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        t = params['t']
+        t = inputs['t']
 
         ntime = self.n
         self.dq_dt = np.zeros((ntime, 4))
@@ -433,16 +433,16 @@ class Comm_EarthsSpin(Component):
         self.dq_dt[:, 0] = -np.sin(theta) * fact
         self.dq_dt[:, 3] = -np.cos(theta) * fact
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         if mode == 'fwd':
             for k in range(4):
-                dresids['q_E'][k, :] += self.dq_dt[:, k] * dparams['t']
+                dresids['q_E'][k, :] += self.dq_dt[:, k] * dinputs['t']
 
         else:
             for k in range(4):
-                dparams['t'] += self.dq_dt[:, k] * dresids['q_E'][k, :]
+                dinputs['t'] += self.dq_dt[:, k] * dresids['q_E'][k, :]
 
 
 class Comm_EarthsSpinMtx(Component):
@@ -454,7 +454,7 @@ class Comm_EarthsSpinMtx(Component):
         self.n = n
 
         # Inputs
-        self.add_param('q_E', np.zeros((4, self.n)), units="unitless",
+        self.add_input('q_E', np.zeros((4, self.n)), units="unitless",
                        desc="Quarternion matrix in Earth-fixed frame over time")
 
         # Outputs
@@ -462,11 +462,11 @@ class Comm_EarthsSpinMtx(Component):
                         desc="Rotation matrix from Earth-centered inertial frame to "
                         "Earth-fixed frame over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        q_E = params['q_E']
-        O_IE = unknowns['O_IE']
+        q_E = inputs['q_E']
+        O_IE = outputs['O_IE']
 
         A = np.zeros((4, 3))
         B = np.zeros((4, 3))
@@ -484,10 +484,10 @@ class Comm_EarthsSpinMtx(Component):
 
             O_IE[:, :, i] = np.dot(A.T, B)
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        q_E = params['q_E']
+        q_E = inputs['q_E']
 
         A = np.zeros((4, 3))
         B = np.zeros((4, 3))
@@ -553,11 +553,11 @@ class Comm_EarthsSpinMtx(Component):
                 self.J[i, :,:, k] = np.dot(dA_dq[:,:, k].T, B) + \
                     np.dot(A.T, dB_dq[:, :, k])
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dO_IE = dresids['O_IE']
-        dq_E = dparams['q_E']
+        dq_E = dinputs['q_E']
 
         if mode == 'fwd':
             for u in range(3):
@@ -588,11 +588,11 @@ class Comm_GainPattern(Component):
             rawG = (10 ** (rawGdata / 10.0)).reshape((361, 361), order='F')
 
         # Inputs
-        self.add_param('azimuthGS', np.zeros(n), units="rad",
+        self.add_input('azimuthGS', np.zeros(n), units="rad",
                        desc="Azimuth angle from satellite to ground station in "
                        "Earth-fixed frame over time")
 
-        self.add_param('elevationGS', np.zeros(n), units="rad",
+        self.add_input('elevationGS', np.zeros(n), units="rad",
                        desc="Elevation angle from satellite to ground station "
                        "in Earth-fixed frame over time")
 
@@ -608,36 +608,36 @@ class Comm_GainPattern(Component):
         self.MBI = MBI(rawG, [az, el], [15, 15], [4, 4])
         self.x = np.zeros((self.n, 2), order='F')
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        result = fixangles(self.n, params['azimuthGS'], params['elevationGS'])
+        result = fixangles(self.n, inputs['azimuthGS'], inputs['elevationGS'])
         self.x[:, 0] = result[0]
         self.x[:, 1] = result[1]
-        unknowns['gain'] = self.MBI.evaluate(self.x)[:, 0]
+        outputs['gain'] = self.MBI.evaluate(self.x)[:, 0]
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.dg_daz = self.MBI.evaluate(self.x, 1)[:, 0]
         self.dg_del = self.MBI.evaluate(self.x, 2)[:, 0]
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dgain = dresids['gain']
 
         if mode == 'fwd':
-            if 'azimuthGS' in dparams:
-                dgain += self.dg_daz * dparams['azimuthGS']
-            if 'elevationGS' in dparams:
-                dgain += self.dg_del * dparams['elevationGS']
+            if 'azimuthGS' in dinputs:
+                dgain += self.dg_daz * dinputs['azimuthGS']
+            if 'elevationGS' in dinputs:
+                dgain += self.dg_del * dinputs['elevationGS']
 
         else:
-            if 'azimuthGS' in dparams:
-                dparams['azimuthGS'] += self.dg_daz * dgain
-            if 'elevationGS' in dparams:
-                dparams['elevationGS'] += self.dg_del * dgain
+            if 'azimuthGS' in dinputs:
+                dinputs['azimuthGS'] += self.dg_daz * dgain
+            if 'elevationGS' in dinputs:
+                dinputs['elevationGS'] += self.dg_del * dgain
 
 
 class Comm_GSposEarth(Component):
@@ -653,11 +653,11 @@ class Comm_GSposEarth(Component):
         self.n = n
 
         # Inputs
-        self.add_param('lon', 0.0, iotype="in", units="rad",
+        self.add_input('lon', 0.0, iotype="in", units="rad",
                        desc="Longitude of ground station in Earth-fixed frame")
-        self.add_param('lat', 0.0, iotype="in", units="rad",
+        self.add_input('lat', 0.0, iotype="in", units="rad",
                        desc="Latitude of ground station in Earth-fixed frame")
-        self.add_param('alt', 0.0, iotype="in", units="rad",
+        self.add_input('alt', 0.0, iotype="in", units="rad",
                        desc="Altitude of ground station in Earth-fixed frame")
 
         # Outputs
@@ -665,13 +665,13 @@ class Comm_GSposEarth(Component):
                         desc="Position vector from earth to ground station in "
                         "Earth-fixed frame over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        lat = params['lat']
-        lon = params['lon']
-        alt = params['alt']
-        r_e2g_E = unknowns['r_e2g_E']
+        lat = inputs['lat']
+        lon = inputs['lon']
+        alt = inputs['alt']
+        r_e2g_E = outputs['r_e2g_E']
 
         cos_lat = np.cos(self.d2r * lat)
         r_GS = (self.Re + alt)
@@ -680,12 +680,12 @@ class Comm_GSposEarth(Component):
         r_e2g_E[1, :] = r_GS * cos_lat * np.sin(self.d2r*lon)
         r_e2g_E[2, :] = r_GS * np.sin(self.d2r*lat)
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        lat = params['lat']
-        lon = params['lon']
-        alt = params['alt']
+        lat = inputs['lat']
+        lon = inputs['lon']
+        alt = inputs['alt']
 
         self.dr_dlon = np.zeros(3)
         self.dr_dlat = np.zeros(3)
@@ -710,30 +710,30 @@ class Comm_GSposEarth(Component):
         self.dr_dlat[2] = self.d2r * r_GS * cos_lat
         self.dr_dalt[2] = sin_lat
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dr_e2g_E = dresids['r_e2g_E']
 
         if mode == 'fwd':
-            if 'lon' in dparams:
+            if 'lon' in dinputs:
                 for k in range(3):
-                    dr_e2g_E[k, :] += self.dr_dlon[k] * dparams['lon']
-            if 'lat' in dparams:
+                    dr_e2g_E[k, :] += self.dr_dlon[k] * dinputs['lon']
+            if 'lat' in dinputs:
                 for k in range(3):
-                    dr_e2g_E[k, :] += self.dr_dlat[k] * dparams['lat']
-            if 'alt' in dparams:
+                    dr_e2g_E[k, :] += self.dr_dlat[k] * dinputs['lat']
+            if 'alt' in dinputs:
                 for k in range(3):
-                    dr_e2g_E[k, :] += self.dr_dalt[k] * dparams['alt']
+                    dr_e2g_E[k, :] += self.dr_dalt[k] * dinputs['alt']
 
         else:
             for k in range(3):
-                if 'lon' in dparams:
-                    dparams['lon'] += self.dr_dlon[k] * np.sum(dr_e2g_E[k, :])
-                if 'lat' in dparams:
-                    dparams['lat'] += self.dr_dlat[k] * np.sum(dr_e2g_E[k, :])
-                if 'alt' in dparams:
-                    dparams['alt'] += self.dr_dalt[k] * np.sum(dr_e2g_E[k, :])
+                if 'lon' in dinputs:
+                    dinputs['lon'] += self.dr_dlon[k] * np.sum(dr_e2g_E[k, :])
+                if 'lat' in dinputs:
+                    dinputs['lat'] += self.dr_dlat[k] * np.sum(dr_e2g_E[k, :])
+                if 'alt' in dinputs:
+                    dinputs['alt'] += self.dr_dalt[k] * np.sum(dr_e2g_E[k, :])
 
 
 class Comm_GSposECI(Component):
@@ -747,11 +747,11 @@ class Comm_GSposECI(Component):
         self.n = n
 
         # Inputs
-        self.add_param('O_IE', np.zeros((3, 3, self.n)), units="unitless",
+        self.add_input('O_IE', np.zeros((3, 3, self.n)), units="unitless",
                        desc="Rotation matrix from Earth-centered inertial "
                        "frame to Earth-fixed frame over time")
 
-        self.add_param('r_e2g_E', np.zeros((3, self.n)), units="km",
+        self.add_input('r_e2g_E', np.zeros((3, self.n)), units="km",
                        desc="Position vector from earth to ground station in "
                        "Earth-fixed frame over time")
 
@@ -760,21 +760,21 @@ class Comm_GSposECI(Component):
                         desc="Position vector from earth to ground station in "
                         "Earth-centered inertial frame over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        O_IE = params['O_IE']
-        r_e2g_E = params['r_e2g_E']
-        r_e2g_I = unknowns['r_e2g_I']
+        O_IE = inputs['O_IE']
+        r_e2g_E = inputs['r_e2g_E']
+        r_e2g_I = outputs['r_e2g_I']
 
         for i in range(0, self.n):
             r_e2g_I[:, i] = np.dot(O_IE[:, :, i], r_e2g_E[:, i])
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        O_IE = params['O_IE']
-        r_e2g_E = params['r_e2g_E']
+        O_IE = inputs['O_IE']
+        r_e2g_E = inputs['r_e2g_E']
 
         self.J1 = np.zeros((self.n, 3, 3, 3))
 
@@ -784,7 +784,7 @@ class Comm_GSposECI(Component):
 
         self.J2 = np.transpose(O_IE, (2, 0, 1))
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dr_e2g_I = dresids['r_e2g_I']
@@ -792,25 +792,25 @@ class Comm_GSposECI(Component):
         if mode == 'fwd':
             for k in range(3):
                 for u in range(3):
-                    if 'O_IE' in dparams:
+                    if 'O_IE' in dinputs:
                         for v in range(3):
                             dr_e2g_I[k, :] += self.J1[:, k, u, v] * \
-                                dparams['O_IE'][u, v, :]
+                                dinputs['O_IE'][u, v, :]
 
-                    if 'r_e2g_E' in dparams:
+                    if 'r_e2g_E' in dinputs:
                         dr_e2g_I[k, :] += self.J2[:, k, u] * \
-                            dparams['r_e2g_E'][u, :]
+                            dinputs['r_e2g_E'][u, :]
 
         else:
             for k in range(3):
-                if 'O_IE' in dparams:
+                if 'O_IE' in dinputs:
                     for u in range(3):
                         for v in range(3):
-                            dparams['O_IE'][u, v, :] += self.J1[:, k, u, v] * \
+                            dinputs['O_IE'][u, v, :] += self.J1[:, k, u, v] * \
                                 dr_e2g_I[k, :]
-                if 'r_e2g_E' in dparams:
+                if 'r_e2g_E' in dinputs:
                     for j in range(3):
-                        dparams['r_e2g_E'][j, :] += self.J2[:, k, j] * \
+                        dinputs['r_e2g_E'][j, :] += self.J2[:, k, j] * \
                             dr_e2g_I[k, :]
 
 
@@ -827,11 +827,11 @@ class Comm_LOS(Component):
         self.n = n
 
         # Inputs
-        self.add_param('r_b2g_I', np.zeros((3, n)), units="km",
+        self.add_input('r_b2g_I', np.zeros((3, n)), units="km",
                        desc="Position vector from satellite to ground station "
                        "in Earth-centered inertial frame over time")
 
-        self.add_param('r_e2g_I', np.zeros((3, n)), units="km",
+        self.add_input('r_e2g_I', np.zeros((3, n)), units="km",
                        desc="Position vector from earth to ground station in "
                        "Earth-centered inertial frame over time")
 
@@ -839,12 +839,12 @@ class Comm_LOS(Component):
         self.add_output('CommLOS', np.zeros(n), units="unitless",
                         desc="Satellite to ground station line of sight over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        r_b2g_I = params['r_b2g_I']
-        r_e2g_I = params['r_e2g_I']
-        CommLOS = unknowns['CommLOS']
+        r_b2g_I = inputs['r_b2g_I']
+        r_e2g_I = inputs['r_e2g_I']
+        CommLOS = outputs['CommLOS']
 
         Rb = 100.0
         for i in range(0, self.n):
@@ -858,11 +858,11 @@ class Comm_LOS(Component):
                 x = (proj - 0) / (-Rb - 0)
                 CommLOS[i] = 3 * x ** 2 - 2 * x ** 3
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        r_b2g_I = params['r_b2g_I']
-        r_e2g_I = params['r_e2g_I']
+        r_b2g_I = inputs['r_b2g_I']
+        r_e2g_I = inputs['r_e2g_I']
 
         self.dLOS_drb = np.zeros((self.n, 3))
         self.dLOS_dre = np.zeros((self.n, 3))
@@ -888,24 +888,24 @@ class Comm_LOS(Component):
                 self.dLOS_drb[i, :] = dLOS_dx * dx_dproj * dproj_drb
                 self.dLOS_dre[i, :] = dLOS_dx * dx_dproj * dproj_dre
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dCommLOS = dresids['CommLOS']
 
         if mode == 'fwd':
             for k in range(3):
-                if 'r_b2g_I' in dparams:
-                    dCommLOS += self.dLOS_drb[:, k] * dparams['r_b2g_I'][k, :]
-                if 'r_e2g_I' in dparams:
-                    dCommLOS += self.dLOS_dre[:, k] * dparams['r_e2g_I'][k, :]
+                if 'r_b2g_I' in dinputs:
+                    dCommLOS += self.dLOS_drb[:, k] * dinputs['r_b2g_I'][k, :]
+                if 'r_e2g_I' in dinputs:
+                    dCommLOS += self.dLOS_dre[:, k] * dinputs['r_e2g_I'][k, :]
 
         else:
             for k in range(3):
-                if 'r_b2g_I' in dparams:
-                    dparams['r_b2g_I'][k, :] += self.dLOS_drb[:, k] * dCommLOS
-                if 'r_e2g_I' in dparams:
-                    dparams['r_e2g_I'][k, :] += self.dLOS_dre[:, k] * dCommLOS
+                if 'r_b2g_I' in dinputs:
+                    dinputs['r_b2g_I'][k, :] += self.dLOS_drb[:, k] * dCommLOS
+                if 'r_e2g_I' in dinputs:
+                    dinputs['r_e2g_I'][k, :] += self.dLOS_dre[:, k] * dCommLOS
 
 
 class Comm_VectorAnt(Component):
@@ -917,11 +917,11 @@ class Comm_VectorAnt(Component):
         self.n = n
 
         # Inputs
-        self.add_param('r_b2g_B', np.zeros((3, n)), units="km",
+        self.add_input('r_b2g_B', np.zeros((3, n)), units="km",
                        desc="Position vector from satellite to ground station "
                        "in body-fixed frame over time")
 
-        self.add_param('O_AB', np.zeros((3, 3, n)), units="unitless",
+        self.add_input('O_AB', np.zeros((3, 3, n)), units="unitless",
                        desc="Rotation matrix from antenna angle to body-fixed "
                        "frame over time")
 
@@ -930,46 +930,46 @@ class Comm_VectorAnt(Component):
                         desc="Position vector from satellite to ground station "
                         "in antenna angle frame over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        unknowns['r_b2g_A'] = computepositionrotd(self.n, params['r_b2g_B'],
-                                                  params['O_AB'])
+        outputs['r_b2g_A'] = computepositionrotd(self.n, inputs['r_b2g_B'],
+                                                  inputs['O_AB'])
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        self.J1, self.J2 = computepositionrotdjacobian(self.n, params['r_b2g_B'],
-                                                       params['O_AB'])
+        self.J1, self.J2 = computepositionrotdjacobian(self.n, inputs['r_b2g_B'],
+                                                       inputs['O_AB'])
 
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dr_b2g_A = dresids['r_b2g_A']
 
         if mode == 'fwd':
             for k in range(3):
-                if 'O_AB' in dparams:
+                if 'O_AB' in dinputs:
                     for u in range(3):
                         for v in range(3):
                             dr_b2g_A[k, :] += self.J1[:, k, u, v] * \
-                                dparams['O_AB'][u, v, :]
-                if 'r_b2g_B' in dparams:
+                                dinputs['O_AB'][u, v, :]
+                if 'r_b2g_B' in dinputs:
                     for j in range(3):
                         dr_b2g_A[k, :] += self.J2[:, k, j] * \
-                            dparams['r_b2g_B'][j, :]
+                            dinputs['r_b2g_B'][j, :]
 
         else:
             for k in range(3):
-                if 'O_AB' in dparams:
+                if 'O_AB' in dinputs:
                     for u in range(3):
                         for v in range(3):
-                            dparams['O_AB'][u, v, :] += self.J1[:, k, u, v] * \
+                            dinputs['O_AB'][u, v, :] += self.J1[:, k, u, v] * \
                                 dr_b2g_A[k, :]
-                if 'r_b2g_B' in dparams:
+                if 'r_b2g_B' in dinputs:
                     for j in range(3):
-                        dparams['r_b2g_B'][j, :] += self.J2[:, k, j] * \
+                        dinputs['r_b2g_B'][j, :] += self.J2[:, k, j] * \
                             dr_b2g_A[k, :]
 
 
@@ -982,11 +982,11 @@ class Comm_VectorBody(Component):
         self.n = n
 
         # Inputs
-        self.add_param('r_b2g_I', np.zeros((3, n)), units="km",
+        self.add_input('r_b2g_I', np.zeros((3, n)), units="km",
                        desc="Position vector from satellite to ground station "
                        "in Earth-centered inertial frame over time")
 
-        self.add_param('O_BI', np.zeros((3, 3, n)), units="unitless",
+        self.add_input('O_BI', np.zeros((3, 3, n)), units="unitless",
                        desc="Rotation matrix from body-fixed frame to Earth-centered"
                        "inertial frame over time")
 
@@ -995,21 +995,21 @@ class Comm_VectorBody(Component):
                         desc="Position vector from satellite to ground station "
                         "in body-fixed frame over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        r_b2g_I = params['r_b2g_I']
-        O_BI = params['O_BI']
-        r_b2g_B = unknowns['r_b2g_B']
+        r_b2g_I = inputs['r_b2g_I']
+        O_BI = inputs['O_BI']
+        r_b2g_B = outputs['r_b2g_B']
 
         for i in range(0, self.n):
             r_b2g_B[:, i] = np.dot(O_BI[:, :, i], r_b2g_I[:, i])
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        r_b2g_I = params['r_b2g_I']
-        O_BI = params['O_BI']
+        r_b2g_I = inputs['r_b2g_I']
+        O_BI = inputs['O_BI']
 
         self.J1 = np.zeros((self.n, 3, 3, 3))
 
@@ -1019,33 +1019,33 @@ class Comm_VectorBody(Component):
 
         self.J2 = np.transpose(O_BI, (2, 0, 1))
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dr_b2g_B = dresids['r_b2g_B']
 
         if mode == 'fwd':
             for k in range(3):
-                if 'O_BI' in dparams:
+                if 'O_BI' in dinputs:
                     for u in range(3):
                         for v in range(3):
                             dr_b2g_B[k, :] += self.J1[:, k, u, v] * \
-                                dparams['O_BI'][u, v, :]
-                if 'r_b2g_I' in dparams:
+                                dinputs['O_BI'][u, v, :]
+                if 'r_b2g_I' in dinputs:
                     for j in range(3):
                         dr_b2g_B[k, :] += self.J2[:, k, j] * \
-                            dparams['r_b2g_I'][j, :]
+                            dinputs['r_b2g_I'][j, :]
 
         else:
             for k in range(3):
-                if 'O_BI' in dparams:
+                if 'O_BI' in dinputs:
                     for u in range(3):
                         for v in range(3):
-                            dparams['O_BI'][u, v, :] += self.J1[:, k, u, v] * \
+                            dinputs['O_BI'][u, v, :] += self.J1[:, k, u, v] * \
                                 dr_b2g_B[k, :]
-                if 'r_b2g_I' in dparams:
+                if 'r_b2g_I' in dinputs:
                     for j in range(3):
-                        dparams['r_b2g_I'][j, :] += self.J2[:, k, j] * \
+                        dinputs['r_b2g_I'][j, :] += self.J2[:, k, j] * \
                             dr_b2g_B[k, :]
 
 
@@ -1058,11 +1058,11 @@ class Comm_VectorECI(Component):
         self.n = n
 
         # Inputs
-        self.add_param('r_e2g_I', np.zeros((3, n)), units="km",
+        self.add_input('r_e2g_I', np.zeros((3, n)), units="km",
                        desc="Position vector from earth to ground station in "
                        "Earth-centered inertial frame over time")
 
-        self.add_param('r_e2b_I', np.zeros((6, n)), units="unitless",
+        self.add_input('r_e2b_I', np.zeros((6, n)), units="unitless",
                        desc="Position and velocity vector from earth to satellite "
                        "in Earth-centered inertial frame over time")
 
@@ -1071,29 +1071,29 @@ class Comm_VectorECI(Component):
                         desc="Position vector from satellite to ground station "
                         "in Earth-centered inertial frame over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        unknowns['r_b2g_I'] = params['r_e2g_I'] - params['r_e2b_I'][:3, :]
+        outputs['r_b2g_I'] = inputs['r_e2g_I'] - inputs['r_e2b_I'][:3, :]
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dr_b2g_I = dresids['r_b2g_I']
 
         if mode == 'fwd':
-            if 'r_e2g_I' in dparams:
-                dr_b2g_I += dparams['r_e2g_I']
-            if 'r_e2b_I' in dparams:
-                dr_b2g_I += -dparams['r_e2b_I'][:3, :]
+            if 'r_e2g_I' in dinputs:
+                dr_b2g_I += dinputs['r_e2g_I']
+            if 'r_e2b_I' in dinputs:
+                dr_b2g_I += -dinputs['r_e2b_I'][:3, :]
 
         else:
-            if 'r_e2g_I' in dparams:
-                dparams['r_e2g_I'] += dr_b2g_I
-            if 'r_e2b_I' in dparams:
-                dr_e2b_I = np.zeros(dparams['r_e2b_I'].shape)
+            if 'r_e2g_I' in dinputs:
+                dinputs['r_e2g_I'] += dr_b2g_I
+            if 'r_e2b_I' in dinputs:
+                dr_e2b_I = np.zeros(dinputs['r_e2b_I'].shape)
                 dr_e2b_I[:3, :] += -dr_b2g_I
-                dparams['r_e2b_I'] += dr_e2b_I
+                dinputs['r_e2b_I'] += dr_e2b_I
 
 
 class Comm_VectorSpherical(Component):
@@ -1105,7 +1105,7 @@ class Comm_VectorSpherical(Component):
         self.n = n
 
         # Inputs
-        self.add_param('r_b2g_A', np.zeros((3, n)), units="km",
+        self.add_input('r_b2g_A', np.zeros((3, n)), units="km",
                        desc="Position vector from satellite to ground station "
                        "in antenna angle frame over time")
 
@@ -1118,18 +1118,18 @@ class Comm_VectorSpherical(Component):
                         desc="Elevation angle from satellite to ground station "
                         "in Earth-fixed frame over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        azimuthGS, elevationGS = computepositionspherical(self.n, params['r_b2g_A'])
-        unknowns['azimuthGS'] = azimuthGS
-        unknowns['elevationGS'] = elevationGS
+        azimuthGS, elevationGS = computepositionspherical(self.n, inputs['r_b2g_A'])
+        outputs['azimuthGS'] = azimuthGS
+        outputs['elevationGS'] = elevationGS
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.Ja1, self.Ji1, self.Jj1, self.Ja2, self.Ji2, self.Jj2 = \
-            computepositionsphericaljacobian(self.n, 3 * self.n, params['r_b2g_A'])
+            computepositionsphericaljacobian(self.n, 3 * self.n, inputs['r_b2g_A'])
 
         self.J1 = scipy.sparse.csc_matrix((self.Ja1, (self.Ji1, self.Jj1)),
                                           shape=(self.n, 3 * self.n))
@@ -1138,11 +1138,11 @@ class Comm_VectorSpherical(Component):
         self.J1T = self.J1.transpose()
         self.J2T = self.J2.transpose()
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         if mode == 'fwd':
-            r_b2g_A = dparams['r_b2g_A'].reshape((3 * self.n), order='F')
+            r_b2g_A = dinputs['r_b2g_A'].reshape((3 * self.n), order='F')
             if 'azimuthGS' in dresids:
                 dresids['azimuthGS'] += self.J1.dot(r_b2g_A)
             if 'elevationGS' in dresids:
@@ -1151,9 +1151,9 @@ class Comm_VectorSpherical(Component):
         else:
             if 'azimuthGS' in dresids:
                 az_GS = dresids['azimuthGS']
-                dparams['r_b2g_A'] += (self.J1T.dot(az_GS)).reshape((3, self.n),
+                dinputs['r_b2g_A'] += (self.J1T.dot(az_GS)).reshape((3, self.n),
                                                                     order='F')
             if 'elevationGS' in dresids:
                 el_GS = dresids['elevationGS']
-                dparams['r_b2g_A'] += (self.J2T.dot(el_GS)).reshape((3, self.n),
+                dinputs['r_b2g_A'] += (self.J2T.dot(el_GS)).reshape((3, self.n),
                                                                     order='F')

@@ -40,14 +40,14 @@ class Solar_ExposedArea(Component):
         self.np = 12
 
         # Inputs
-        self.add_param('finAngle', 0.0, units="rad",
+        self.add_input('finAngle', 0.0, units="rad",
                        desc="Fin angle of solar panel")
 
-        self.add_param('azimuth', np.zeros((n, )), units='rad',
+        self.add_input('azimuth', np.zeros((n, )), units='rad',
                        desc="Azimuth angle of the sun in the body-fixed frame "
                        "over time")
 
-        self.add_param('elevation', np.zeros((n, )), units='rad',
+        self.add_input('elevation', np.zeros((n, )), units='rad',
                        desc='Elevation angle of the sun in the body-fixed '
                        'frame over time')
 
@@ -104,22 +104,22 @@ class Solar_ExposedArea(Component):
         self.Jaz = None
         self.Jel = None
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        self.setx(params)
+        self.setx(inputs)
         P = self.MBI.evaluate(self.x).T
-        unknowns['exposedArea'] = P.reshape(7, 12, self.n, order='F')
+        outputs['exposedArea'] = P.reshape(7, 12, self.n, order='F')
 
-    def setx(self, params):
+    def setx(self, inputs):
         """ Sets our state array"""
 
-        result = fixangles(self.n, params['azimuth'], params['elevation'])
-        self.x[:, 0] = params['finAngle']
+        result = fixangles(self.n, inputs['azimuth'], inputs['elevation'])
+        self.x[:, 0] = inputs['finAngle']
         self.x[:, 1] = result[0]
         self.x[:, 2] = result[1]
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.Jfin = self.MBI.evaluate(self.x, 1).reshape(self.n, 7, 12,
@@ -129,7 +129,7 @@ class Solar_ExposedArea(Component):
         self.Jel = self.MBI.evaluate(self.x, 3).reshape(self.n, 7, 12,
                                                         order='F')
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         deA = dresids['exposedArea']
@@ -137,17 +137,17 @@ class Solar_ExposedArea(Component):
         if mode == 'fwd':
             for c in range(7):
 
-                if 'finAngle' in dparams:
+                if 'finAngle' in dinputs:
                     deA[c, :, :] += \
-                        self.Jfin[:, c, :].T * dparams['finAngle']
+                        self.Jfin[:, c, :].T * dinputs['finAngle']
 
-                if 'azimuth' in dparams:
+                if 'azimuth' in dinputs:
                     deA[c, :, :] += \
-                        self.Jaz[:, c, :].T * dparams['azimuth']
+                        self.Jaz[:, c, :].T * dinputs['azimuth']
 
-                if 'elevation' in dparams:
+                if 'elevation' in dinputs:
                     deA[c, :, :] += \
-                        self.Jel[:, c, :].T * dparams['elevation']
+                        self.Jel[:, c, :].T * dinputs['elevation']
 
         else:
             for c in range(7):
@@ -156,17 +156,17 @@ class Solar_ExposedArea(Component):
                 if len(np.nonzero(dresids['exposedArea'][c, :, :])[0]) == 0:
                     continue
 
-                if 'finAngle' in dparams:
-                    dparams['finAngle'] += \
+                if 'finAngle' in dinputs:
+                    dinputs['finAngle'] += \
                         np.sum(
                             self.Jfin[:, c, :].T * deA[c, :, :])
 
-                if 'azimuth' in dparams:
-                    dparams['azimuth'] += \
+                if 'azimuth' in dinputs:
+                    dinputs['azimuth'] += \
                         np.sum(
                             self.Jaz[:, c, :].T * deA[c, :, :], 0)
 
-                if 'elevation' in dparams:
-                    dparams['elevation'] += \
+                if 'elevation' in dinputs:
+                    dinputs['elevation'] += \
                         np.sum(
                             self.Jel[:, c, :].T * deA[c, :, :], 0)

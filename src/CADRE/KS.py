@@ -3,7 +3,7 @@
 import numpy as np
 
 from openmdao.core.component import Component
-from openmdao.util.options import OptionsDictionary
+from openmdao.utils.options_dictionary import OptionsDictionary
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103
@@ -48,7 +48,7 @@ class KSComp(Component):
         self.n = n
 
         # Inputs
-        self.add_param('g', np.zeros((n, )),
+        self.add_input('g', np.zeros((n, )),
                        desc="Array of function values to be aggregated")
 
         # Outputs
@@ -61,12 +61,12 @@ class KSComp(Component):
 
         self._ks = KSfunction()
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        unknowns['KS'] = self._ks.compute(params['g'], self.options['rho'])
+        outputs['KS'] = self._ks.compute(inputs['g'], self.options['rho'])
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         #use g_max, exponsnte, summation from last executed point

@@ -22,26 +22,26 @@ class ReactionWheel_Motor(Component):
         self.J_RW = 2.8e-5
 
         # Inputs
-        self.add_param('T_RW', np.zeros((3, n)), units="N*m",
+        self.add_input('T_RW', np.zeros((3, n)), units="N*m",
                        desc="Torque vector of reaction wheel over time")
 
-        self.add_param('w_B', np.zeros((3, n)), units="1/s",
+        self.add_input('w_B', np.zeros((3, n)), units="1/s",
                        desc="Angular velocity vector in body-fixed frame over time")
 
-        self.add_param('w_RW', np.zeros((3, n)), units="1/s",
+        self.add_input('w_RW', np.zeros((3, n)), units="1/s",
                        desc="Angular velocity vector of reaction wheel over time")
 
         # Outputs
         self.add_output('T_m', np.ones((3, n)), units="N*m",
                         desc="Torque vector of motor over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        T_RW = params['T_RW']
-        w_B = params['w_B']
-        w_RW = params['w_RW']
-        T_m = unknowns['T_m']
+        T_RW = inputs['T_RW']
+        w_B = inputs['w_B']
+        w_RW = inputs['w_RW']
+        T_m = outputs['T_m']
 
         w_Bx = np.zeros((3, 3))
         h_RW = self.J_RW * w_RW[:]
@@ -52,12 +52,12 @@ class ReactionWheel_Motor(Component):
 
             T_m[:,i] = -T_RW[:,i] - np.dot(w_Bx , h_RW[:,i])
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        T_RW = params['T_RW']
-        w_B = params['w_B']
-        w_RW = params['w_RW']
+        T_RW = inputs['T_RW']
+        w_B = inputs['w_B']
+        w_RW = inputs['w_RW']
 
         w_Bx = np.zeros((3, 3))
         self.dT_dTm = np.zeros((self.n, 3, 3))
@@ -88,7 +88,7 @@ class ReactionWheel_Motor(Component):
                 self.dT_dwb[i, :, k] = -np.dot(dwx_dwb[:, :, k] , h_RW[:, i])
             self.dT_dh[i, :, :] = -w_Bx
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dT_m = dresids['T_m']
@@ -96,25 +96,25 @@ class ReactionWheel_Motor(Component):
         if mode == 'fwd':
             for k in range(3):
                 for j in range(3):
-                    if 'T_RW' in dparams:
-                        dT_m[k, :] += self.dT_dTm[:, k, j] * dparams['T_RW'][j, :]
-                    if 'w_B' in dparams:
-                        dT_m[k, :] += self.dT_dwb[:, k, j] * dparams['w_B'][j, :]
-                    if 'w_RW' in dparams:
-                        dT_m[k, :] += self.dT_dh[:, k, j] * dparams['w_RW'][j, :] * self.J_RW
+                    if 'T_RW' in dinputs:
+                        dT_m[k, :] += self.dT_dTm[:, k, j] * dinputs['T_RW'][j, :]
+                    if 'w_B' in dinputs:
+                        dT_m[k, :] += self.dT_dwb[:, k, j] * dinputs['w_B'][j, :]
+                    if 'w_RW' in dinputs:
+                        dT_m[k, :] += self.dT_dh[:, k, j] * dinputs['w_RW'][j, :] * self.J_RW
 
 
         else:
             for k in range(3):
                 for j in range(3):
-                    if 'T_RW' in dparams:
-                        dparams['T_RW'][j, :] += self.dT_dTm[:, k, j] * dT_m[k, :]
+                    if 'T_RW' in dinputs:
+                        dinputs['T_RW'][j, :] += self.dT_dTm[:, k, j] * dT_m[k, :]
 
-                    if 'w_B' in dparams:
-                        dparams['w_B'][j, :] += self.dT_dwb[:, k, j] * dT_m[k, :]
+                    if 'w_B' in dinputs:
+                        dinputs['w_B'][j, :] += self.dT_dwb[:, k, j] * dT_m[k, :]
 
-                    if 'w_RW' in dparams:
-                        dparams['w_RW'][j, :] += self.dT_dh[:, k, j] * dT_m[k, :] * self.J_RW
+                    if 'w_RW' in dinputs:
+                        dinputs['w_RW'][j, :] += self.dT_dh[:, k, j] * dT_m[k, :] * self.J_RW
 
 
 class ReactionWheel_Power(Component):
@@ -132,32 +132,32 @@ class ReactionWheel_Power(Component):
         self.n = n
 
         # Inputs
-        self.add_param('w_RW', np.zeros((3,n)), units="1/s",
+        self.add_input('w_RW', np.zeros((3,n)), units="1/s",
                        desc="Angular velocity vector of reaction wheel over time")
 
-        self.add_param('T_RW', np.zeros((3,n)), units="N*m",
+        self.add_input('T_RW', np.zeros((3,n)), units="N*m",
                        desc="Torque vector of reaction wheel over time")
 
         # Outputs
         self.add_output('P_RW', np.ones((3,n)), units='W',
                         desc='Reaction wheel power over time')
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        w_RW = params['w_RW']
-        T_RW = params['T_RW']
-        P_RW = unknowns['P_RW']
+        w_RW = inputs['w_RW']
+        T_RW = inputs['T_RW']
+        P_RW = outputs['P_RW']
 
         for i in range(self.n):
             for k in range(3):
                 P_RW[k, i] = self.V * (self.a * w_RW[k, i] + self.b * T_RW[k, i])**2 + self.V * self.I0
 
-    def linearize(self, params, unknowns, resids):
+    def linearize(self, inputs, outputs, resids):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
-        w_RW = params['w_RW']
-        T_RW = params['T_RW']
+        w_RW = inputs['w_RW']
+        T_RW = inputs['T_RW']
 
         self.dP_dw = np.zeros((self.n, 3))
         self.dP_dT = np.zeros((self.n, 3))
@@ -167,25 +167,25 @@ class ReactionWheel_Power(Component):
                 self.dP_dw[i, k] = self.a * prod
                 self.dP_dT[i, k] = self.b * prod
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         dP_RW = dresids['P_RW']
 
         if mode == 'fwd':
             for k in range(3):
-                if 'w_RW' in dparams:
-                    dP_RW[k, :] += self.dP_dw[:, k] * dparams['w_RW'][k, :]
-                if 'T_RW' in dparams:
-                    dP_RW[k, :] += self.dP_dT[:, k] * dparams['T_RW'][k, :]
+                if 'w_RW' in dinputs:
+                    dP_RW[k, :] += self.dP_dw[:, k] * dinputs['w_RW'][k, :]
+                if 'T_RW' in dinputs:
+                    dP_RW[k, :] += self.dP_dT[:, k] * dinputs['T_RW'][k, :]
 
         else:
             for k in range(3):
-                if 'w_RW' in dparams:
-                    dparams['w_RW'][k, :] += self.dP_dw[:, k] * dP_RW[k, :]
+                if 'w_RW' in dinputs:
+                    dinputs['w_RW'][k, :] += self.dP_dw[:, k] * dP_RW[k, :]
 
-                if 'T_RW' in dparams:
-                    dparams['T_RW'][k, :] += self.dP_dT[:, k] * dP_RW[k, :]
+                if 'T_RW' in dinputs:
+                    dinputs['T_RW'][k, :] += self.dP_dT[:, k] * dP_RW[k, :]
 
 
 class ReactionWheel_Torque(Component):
@@ -197,25 +197,25 @@ class ReactionWheel_Torque(Component):
         self.n = n
 
         # Inputs
-        self.add_param('T_tot', np.zeros((3, n)), units='N*m',
+        self.add_input('T_tot', np.zeros((3, n)), units='N*m',
                        desc='Total reaction wheel torque over time')
 
         # Outputs
         self.add_output('T_RW', np.zeros((3, n)), units="N*m",
                         desc="Torque vector of reaction wheel over time")
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        unknowns['T_RW'][:] = params['T_tot'][:]
+        outputs['T_RW'][:] = inputs['T_tot'][:]
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         if mode == 'fwd':
-            dresids['T_RW'][:] += dparams['T_tot'][:]
+            dresids['T_RW'][:] += dinputs['T_tot'][:]
         else:
-            dparams['T_tot'] += dresids['T_RW'][:]
+            dinputs['T_tot'] += dresids['T_RW'][:]
 
 
 class ReactionWheel_Dynamics(rk4.RK4):
@@ -225,13 +225,13 @@ class ReactionWheel_Dynamics(rk4.RK4):
         super(ReactionWheel_Dynamics, self).__init__(n_times, h)
 
         # Inputs
-        self.add_param('w_B', np.zeros((3, n_times)), units="1/s",
+        self.add_input('w_B', np.zeros((3, n_times)), units="1/s",
                        desc="Angular velocity vector in body-fixed frame over time")
 
-        self.add_param('T_RW', np.zeros((3, n_times)), units="N*m",
+        self.add_input('T_RW', np.zeros((3, n_times)), units="N*m",
                        desc="Torque vector of reaction wheel over time")
 
-        self.add_param('w_RW0', np.zeros((3,)), units="1/s",
+        self.add_input('w_RW0', np.zeros((3,)), units="1/s",
                        desc="Initial angular velocity vector of reaction wheel")
 
         # Outputs

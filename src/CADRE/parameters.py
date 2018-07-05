@@ -20,17 +20,17 @@ class BsplineParameters(Component):
         self.m = m
 
         # Inputs
-        self.add_param('t1', 0., units='s', desc='Start time')
+        self.add_input('t1', 0., units='s', desc='Start time')
 
-        self.add_param('t2', 43200., units='s', desc='End time')
+        self.add_input('t2', 43200., units='s', desc='End time')
 
-        self.add_param('CP_P_comm', np.zeros((self.m, )), units='W',
+        self.add_input('CP_P_comm', np.zeros((self.m, )), units='W',
                        desc='Communication power at the control points')
 
-        self.add_param('CP_gamma', np.zeros((self.m, )), units='rad',
+        self.add_input('CP_gamma', np.zeros((self.m, )), units='rad',
                        desc='Satellite roll angle at control points')
 
-        self.add_param('CP_Isetpt', np.zeros((12,self.m)), units='A',
+        self.add_input('CP_Isetpt', np.zeros((12,self.m)), units='A',
                        desc='Currents of the solar panels at the control points')
 
         # Outputs
@@ -45,14 +45,14 @@ class BsplineParameters(Component):
 
         self.deriv_cached = False
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
         # Only need to do this once.
         if self.deriv_cached == False:
 
-            t1 = params['t1']
-            t2 = params['t2']
+            t1 = inputs['t1']
+            t2 = inputs['t2']
             n = self.n
 
             self.B = MBI(np.zeros(n), [np.linspace(t1, t2, n)],
@@ -66,32 +66,32 @@ class BsplineParameters(Component):
 
             self.deriv_cached = True
 
-        unknowns['P_comm'] = self.B.dot(params['CP_P_comm'])
-        unknowns['Gamma'] = self.B.dot(params['CP_gamma'])
+        outputs['P_comm'] = self.B.dot(inputs['CP_P_comm'])
+        outputs['Gamma'] = self.B.dot(inputs['CP_gamma'])
         for k in range(12):
-            unknowns['Isetpt'][k, :] = self.B.dot(params['CP_Isetpt'][k, :])
+            outputs['Isetpt'][k, :] = self.B.dot(inputs['CP_Isetpt'][k, :])
 
-    def apply_linear(self, params, unknowns, dparams, dunknowns, dresids, mode):
+    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
         """ Matrix-vector product with the Jacobian. """
 
         if mode == 'fwd':
-            if 'P_comm' in dresids and 'CP_P_comm' in dparams:
-                dresids['P_comm'] += self.B.dot(dparams['CP_P_comm'])
+            if 'P_comm' in dresids and 'CP_P_comm' in dinputs:
+                dresids['P_comm'] += self.B.dot(dinputs['CP_P_comm'])
 
-            if 'Gamma' in dresids and 'CP_gamma' in dparams:
-                dresids['Gamma'] += self.B.dot(dparams['CP_gamma'])
+            if 'Gamma' in dresids and 'CP_gamma' in dinputs:
+                dresids['Gamma'] += self.B.dot(dinputs['CP_gamma'])
 
-            if 'Isetpt' in dresids and 'CP_Isetpt' in dparams:
+            if 'Isetpt' in dresids and 'CP_Isetpt' in dinputs:
                 for k in range(12):
-                    dresids['Isetpt'][k, :] += self.B.dot(dparams['CP_Isetpt'][k, :])
+                    dresids['Isetpt'][k, :] += self.B.dot(dinputs['CP_Isetpt'][k, :])
 
         else:
-            if 'P_comm' in dresids and 'CP_P_comm' in dparams:
-                dparams['CP_P_comm'] += self.BT.dot(dresids['P_comm'])
+            if 'P_comm' in dresids and 'CP_P_comm' in dinputs:
+                dinputs['CP_P_comm'] += self.BT.dot(dresids['P_comm'])
 
-            if 'Gamma' in dresids and 'CP_gamma' in dparams:
-                dparams['CP_gamma'] += self.BT.dot(dresids['Gamma'])
+            if 'Gamma' in dresids and 'CP_gamma' in dinputs:
+                dinputs['CP_gamma'] += self.BT.dot(dresids['Gamma'])
 
-            if 'Isetpt' in dresids and 'CP_Isetpt' in dparams:
+            if 'Isetpt' in dresids and 'CP_Isetpt' in dinputs:
                 for k in range(12):
-                    dparams['CP_Isetpt'][k, :] += self.BT.dot(dresids['Isetpt'][k, :])
+                    dinputs['CP_Isetpt'][k, :] += self.BT.dot(dresids['Isetpt'][k, :])

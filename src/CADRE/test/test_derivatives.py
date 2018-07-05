@@ -11,7 +11,7 @@ import numpy as np
 from openmdao.components.param_comp import IndepVarComp
 from openmdao.core.group import Group
 from openmdao.core.problem import Problem
-from openmdao.test.util import assert_rel_error
+from openmdao.utils.assert_utils import assert_rel_error
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
      Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
@@ -56,21 +56,21 @@ class Testcase_CADRE(unittest.TestCase):
     def setup(self, compname, inputs, state0):
 
         try:
-            self.model.root.add('comp', eval('%s(NTIME)' % compname), promotes=['*'])
+            self.model.root.add_subsystem('comp', eval('%s(NTIME)' % compname), promotes=['*'])
         except TypeError:
             # At least one comp has no args.
             try:
-                self.model.root.add('comp', eval('%s()' % compname), promotes=['*'])
+                self.model.root.add_subsystem('comp', eval('%s()' % compname), promotes=['*'])
             except TypeError:
-                self.model.root.add('comp', eval('%s(NTIME, 300)' % compname), promotes=['*'])
+                self.model.root.add_subsystem('comp', eval('%s(NTIME, 300)' % compname), promotes=['*'])
 
         for item in inputs + state0:
-            pshape = self.model.root.comp._init_params_dict[item]['shape']
+            pshape = self.model.root.comp._init_inputs_dict[item]['shape']
             if pshape == 1:
                 initval = 0.0
             else:
                 initval = np.zeros((pshape))
-            self.model.root.add('p_%s' % item, IndepVarComp(item, initval),
+            self.model.root.add_subsystem('p_%s' % item, IndepVarComp(item, initval),
                                 promotes=['*'])
 
         self.model.setup(check=False)
@@ -86,7 +86,7 @@ class Testcase_CADRE(unittest.TestCase):
     def run_model(self):
 
         # Some components have a time step as a non-differentiable input.
-        if 'h' in self.model.root.comp._init_params_dict:
+        if 'h' in self.model.root.comp._init_inputs_dict:
             self.model['h'] = 0.01
         self.model.run()
 
@@ -292,9 +292,9 @@ class Testcase_CADRE(unittest.TestCase):
         self.setup(compname, inputs, state0)
 
         # These need to be a certain magnitude so it doesn't blow up
-        shape = self.model.root.comp._init_params_dict['P_comm']['shape']
+        shape = self.model.root.comp._init_inputs_dict['P_comm']['shape']
         self.model['P_comm'] = np.ones(shape)
-        shape = self.model.root.comp._init_params_dict['GSdist']['shape']
+        shape = self.model.root.comp._init_inputs_dict['GSdist']['shape']
         self.model['GSdist'] = np.random.random(shape) * 1e3
 
         self.run_model()
@@ -431,7 +431,7 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs, state0)
         self.model.root.comp.h = 0.01
-        shape = self.model.root.comp._init_params_dict['r_e2b_I0']['shape']
+        shape = self.model.root.comp._init_inputs_dict['r_e2b_I0']['shape']
         self.model['r_e2b_I0'][:3] = np.random.random((3)) * 1e6
         self.model['r_e2b_I0'][3:] = np.random.random((3)) * 1e5
         self.run_model()
@@ -456,21 +456,21 @@ class Testcase_CADRE(unittest.TestCase):
         outputs = ['P_comm', 'Gamma', 'Isetpt']
         state0 = []
 
-        self.model.root.add('comp', BsplineParameters(NTIME, 5), promotes=['*'])
+        self.model.root.add_subsystem('comp', BsplineParameters(NTIME, 5), promotes=['*'])
 
         for item in inputs:
-            pshape = self.model.root.comp._init_params_dict[item]['shape']
+            pshape = self.model.root.comp._init_inputs_dict[item]['shape']
             if pshape == 1:
                 initval = 0.0
             else:
                 initval = np.zeros((pshape))
-            self.model.root.add('p_%s' % item, IndepVarComp(item, initval),
+            self.model.root.add_subsystem('p_%s' % item, IndepVarComp(item, initval),
                                 promotes=['*'])
 
         self.model.setup(check=False)
 
         for item in inputs:
-            shape = self.model.root.comp._init_params_dict[item]['shape']
+            shape = self.model.root.comp._init_inputs_dict[item]['shape']
             self.model[item] = np.random.random(shape)
 
         self.run_model()
@@ -485,13 +485,13 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs, state0)
 
-        shape = self.model.root.comp._init_params_dict['temperature']['shape']
+        shape = self.model.root.comp._init_inputs_dict['temperature']['shape']
         self.model['temperature'] = np.random.random(shape) * 40 + 240
 
-        shape = self.model.root.comp._init_params_dict['exposedArea']['shape']
+        shape = self.model.root.comp._init_inputs_dict['exposedArea']['shape']
         self.model['exposedArea'] = np.random.random(shape) * 1e-4
 
-        shape = self.model.root.comp._init_params_dict['Isetpt']['shape']
+        shape = self.model.root.comp._init_inputs_dict['Isetpt']['shape']
         self.model['Isetpt'] = np.random.random(shape) * 1e-2
 
         self.run_model()
@@ -540,9 +540,9 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs, state0)
 
-        shape = self.model.root.comp._init_params_dict['T_RW']['shape']
+        shape = self.model.root.comp._init_inputs_dict['T_RW']['shape']
         self.model['T_RW'] = np.random.random(shape) * 1e-1
-        shape = self.model.root.comp._init_params_dict['w_RW']['shape']
+        shape = self.model.root.comp._init_inputs_dict['w_RW']['shape']
         self.model['w_RW'] = np.random.random(shape) * 1e-1
         self.model.root.comp.deriv_options['step_calc'] = 'relative'
 
@@ -572,9 +572,9 @@ class Testcase_CADRE(unittest.TestCase):
         self.setup(compname, inputs, state0)
         self.model.root.comp.h = 0.01
 
-        shape = self.model.root.comp._init_params_dict['w_B']['shape']
+        shape = self.model.root.comp._init_inputs_dict['w_B']['shape']
         self.model['w_B'] = np.random.random(shape) * 1e-4
-        shape = self.model.root.comp._init_params_dict['T_RW']['shape']
+        shape = self.model.root.comp._init_inputs_dict['T_RW']['shape']
         self.model['T_RW'] = np.random.random(shape) * 1e-9
 
         self.run_model()

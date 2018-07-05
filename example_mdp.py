@@ -107,7 +107,7 @@ print("Memory Usage:", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000.0
 # Below this line, code I was using for verifying and profiling.
 #----------------------------------------------------------------
 #profile = False
-#params = list(model.driver.get_desvars().keys())
+#inputs = list(model.driver.get_desvars().keys())
 #unks = list(model.driver.get_objectives().keys()) + list(model.driver.get_constraints().keys())
 #if profile is True:
 #    import cProfile
@@ -115,7 +115,7 @@ print("Memory Usage:", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000.0
 #    def zzz():
 #        for j in range(1):
 #            model.run()
-#    cProfile.run("model.calc_gradient(params, unks, mode='rev', return_format='dict')", 'profout')
+#    cProfile.run("model.calc_gradient(inputs, unks, mode='rev', return_format='dict')", 'profout')
 #    #cProfile.run("zzz()", 'profout')
 #    p = pstats.Stats('profout')
 #    p.strip_dirs()
@@ -127,15 +127,15 @@ print("Memory Usage:", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000.0
 #    p.print_callees()
 #else:
 #    #model.check_total_derivatives()
-#    Ja = model.calc_gradient(params, unks, mode='rev', return_format='dict')
+#    Ja = model.calc_gradient(inputs, unks, mode='rev', return_format='dict')
 #    for key1, value in sorted(Ja.items()):
 #        for key2 in sorted(value.keys()):
 #            print(key1, key2)
 #            print(value[key2])
 #    #print(Ja)
-#    #Jf = model.calc_gradient(params, unks, mode='fwd', return_format='dict')
+#    #Jf = model.calc_gradient(inputs, unks, mode='fwd', return_format='dict')
 #    #print(Jf)
-#    #Jf = model.calc_gradient(params, unks, mode='fd', return_format='dict')
+#    #Jf = model.calc_gradient(inputs, unks, mode='fd', return_format='dict')
 #    #print(Jf)
 #    import pickle
 #    pickle.dump(Ja, open( "mdp_derivs.p", "wb" ))

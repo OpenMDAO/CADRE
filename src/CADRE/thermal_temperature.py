@@ -31,20 +31,20 @@ class ThermalTemperature(RK4):
         super(ThermalTemperature, self).__init__(n_times, h)
 
         # Inputs
-        self.add_param("T0", 273.*np.ones((5, )), units="degK",
+        self.add_input("T0", 273.*np.ones((5, )), units="degK",
                        desc="Initial temperatures for the 4 fins and body")
 
-        self.add_param("exposedArea", np.zeros((7, 12, n_times)), units="m**2",
+        self.add_input("exposedArea", np.zeros((7, 12, n_times)), units="m**2",
                        desc="Exposed area to the sun for each solar cell over time")
 
-        self.add_param("cellInstd", np.ones((7, 12)), units='unitless',
+        self.add_input("cellInstd", np.ones((7, 12)), units='unitless',
                        desc="Cell/Radiator indication", lower=0, upper=1)
 
-        self.add_param("LOS", np.zeros((n_times, )), units='unitless',
+        self.add_input("LOS", np.zeros((n_times, )), units='unitless',
                        desc="Satellite to Sun line of sight over time",
                        lower=0, upper=1)
 
-        self.add_param("P_comm", np.ones((n_times, )), units='W',
+        self.add_input("P_comm", np.ones((n_times, )), units='W',
                        desc="Communication power over time", lower=0, upper=1)
 
         # Outputs
@@ -59,19 +59,19 @@ class ThermalTemperature(RK4):
 
         self.n_times = n_times
 
-    def solve_nonlinear(self, params, unknowns, resids):
+    def solve_nonlinear(self, inputs, outputs, resids):
         """ Calculate output. """
 
-        temperature = unknowns['temperature']
+        temperature = outputs['temperature']
 
         # implementation of fixTemps from Thermal_Temperature.f90
-        for i in range (0, self.n_times):
-            for k in range (0, 5):
-                temperature[k, i] = params['T0'][k]
+        for i in range(0, self.n_times):
+            for k in range(0, 5):
+                temperature[k, i] = inputs['T0'][k]
                 if temperature[k, i] < 0:
                     temperature[k, i] = 0.
 
-        super(ThermalTemperature, self).solve_nonlinear(params, unknowns,
+        super(ThermalTemperature, self).solve_nonlinear(inputs, outputs,
                                                         resids)
 
     def f_dot(self, external, state):
@@ -101,7 +101,7 @@ class ThermalTemperature(RK4):
 
             # Fin
             else:
-                f_i = (p+1)%4
+                f_i = (p+1) % 4
                 m = m_f
                 cp = cp_f
 
@@ -111,7 +111,6 @@ class ThermalTemperature(RK4):
         f[4] += 4.0 * P_comm / m_b / cp_b
 
         return f
-
 
     def df_dy(self, external, state):
 
@@ -132,7 +131,7 @@ class ThermalTemperature(RK4):
 
             # Fin
             else:
-                f_i = (p+1)%4
+                f_i = (p+1) % 4
                 m = m_f
                 cp = cp_f
 
@@ -167,7 +166,7 @@ class ThermalTemperature(RK4):
 
             # Fin
             else:
-                f_i = (p+1)%4
+                f_i = (p+1) % 4
                 m = m_f
                 cp = cp_f
 
