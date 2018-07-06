@@ -4,50 +4,53 @@ from six import iteritems
 from six.moves import range
 
 import numpy as np
-import scipy.sparse
-import scipy.sparse.linalg
 
-from openmdao.core.component import Component
-from openmdao.utils.options_dictionary import OptionsDictionary
+from openmdao.core.explicitcomponent import ExplicitComponent
 
 # Allow non-standard variable names for scientific calc
 # pylint: disable-msg=C0103
 
 
-class RK4(Component):
-    """Inherit from this component to use.
+class RK4(ExplicitComponent):
+    """
+    Inherit from this component to use.
 
     State variable dimension: (num_states, num_time_points)
     External input dimension: (input width, num_time_points)
     """
 
-    def __init__(self, n=2, h=.01):
+    def __init__(self, h=.01):
         super(RK4, self).__init__()
 
         self.h = h
 
-        # Inputs
-        # All inputs are defined in subclasses.
+    def _declare_options(self):
+        """
+        Declare options before kwargs are processed in the init method.
+        """
+        opts = self.options
+        opts.declare('state_var', '',
+                     desc="Name of the variable to be used for time integration")
+        opts.declare('init_state_var', '',
+                     desc="Name of the variable to be used for initial conditions")
+        opts.declare('external_vars', [],
+                     desc="List of names of variables that are external to the system "
+                          "but DO vary with time.")
+        opts.declare('fixed_external_vars', [],
+                     desc="List of names of variables that are external to the system "
+                          "but DO NOT vary with time.")
 
-        # Options
-        self.options = opt = OptionsDictionary()
-        opt.add_option('state_var', '',
-                       desc="Name of the variable to be used for time "
-                       "integration")
-        opt.add_option('init_state_var', '',
-                       desc="Name of the variable to be used for initial "
-                       "conditions")
-        opt.add_option('external_vars', [],
-                       desc="List of names of variables that are external "
-                       "to the system but DO vary with time.")
-        opt.add_option('fixed_external_vars', [],
-                       desc="List of names of variables that are "
-                       "external to the system but DO NOT "
-                       "vary with time.")
+    def _init_data(self, inputs, outputs):
+        """
+        Set up dimensions and other data structures.
 
-    def initialize(self, inputs, outputs):
-        """Set up dimensions and other data structures."""
-
+        Parameters
+        ----------
+        inputs : Vector
+            unscaled, dimensional input variables read via inputs[key]
+        outputs : Vector
+            unscaled, dimensional output variables read via outputs[key]
+        """
         state_var = self.options['state_var']
         init_state_var = self.options['init_state_var']
         external_vars = self.options['external_vars']
@@ -55,7 +58,6 @@ class RK4(Component):
 
         self.y = outputs[state_var]
         self.y0 = inputs[init_state_var]
-
 
         self.n_states, self.n = self.y.shape
         self.ny = self.n_states*self.n
@@ -67,27 +69,25 @@ class RK4(Component):
             var = inputs[name]
             self.ext_index_map[name] = len(ext)
 
-            #TODO: Check that shape[-1]==self.n
+            # TODO: Check that shape[-1]==self.n
             ext.extend(var.reshape(-1, self.n))
-
 
         for name in fixed_external_vars:
             var = inputs[name]
             self.ext_index_map[name] = len(ext)
 
             flat_var = var.flatten()
-            #create n copies of the var
+            # create n copies of the var
             ext.extend(np.tile(flat_var, (self.n, 1)).T)
 
         self.external = np.array(ext)
 
-        #TODO
-        #check that len(y0) = self.n_states
+        # TODO: check that len(y0) = self.n_states
 
         self.n_external = len(ext)
         self.reverse_name_map = {
-            state_var:'y',
-            init_state_var:'y0'
+            state_var: 'y',
+            init_state_var: 'y0'
         }
         e_vars = np.hstack((external_vars, fixed_external_vars))
         for i, var in enumerate(e_vars):
@@ -96,19 +96,20 @@ class RK4(Component):
         self.name_map = dict([(v, k) for k, v in
                               self.reverse_name_map.items()])
 
-        #TODO
+        # TODO
         #  check that all ext arrays of of shape (self.n, )
 
-        #TODO
-        #check that length of state var and external
-        # vars are the same length
+        # TODO
+        # check that length of state var and external vars are the same length
 
     def f_dot(self, external, state):
-        """Time rate of change of state variables. This must be overridden in
-        derived classes.
+        """
+        Time rate of change of state variables.
 
-        Args
-        ----
+        This must be overridden in derived classes.
+
+        Parameters
+        ----------
         external: ndarray
             array of external variables for a single time step
 
@@ -118,11 +119,13 @@ class RK4(Component):
         raise NotImplementedError
 
     def df_dy(self, external, state):
-        """Derivatives of states with respect to states. This must be
-        overridden in derived classes.
+        """
+        Derivatives of states with respect to states.
 
-        Args
-        ----
+        This must be overridden in derived classes.
+
+        Parameters
+        ----------
         external: ndarray
             array or external variables for a single time step
 
@@ -133,13 +136,13 @@ class RK4(Component):
         raise NotImplementedError
 
     def df_dx(self, external, state):
-        """derivatives of states with respect to external vars external:
-        array or external variables for a single time step state: array of
-        state variables for a single time step. This must be overridden in
-        derived classes.
+        """
+        Derivatives of states with respect to external vars.
 
-        Args
-        ----
+        This must be overridden in derived classes.
+
+        Parameters
+        ----------
         external: ndarray
             array or external variables for a single time step
 
@@ -148,10 +151,11 @@ class RK4(Component):
         """
         raise NotImplementedError
 
-    def solve_nonlinear(self, inputs, outputs, resids):
-        """ Calculate output. """
-
-        self.initialize(inputs, outputs)
+    def compute(self, inputs, outputs):
+        """
+        Calculate output.
+        """
+        self._init_data(inputs, outputs)
 
         n_state = self.n_states
         n_time = self.n
@@ -173,7 +177,7 @@ class RK4(Component):
             k2 = (k+1)*n_state
 
             # Next state a function of current input
-            ex = self.external[:, k] if self.external.shape[0]  else np.array([])
+            ex = self.external[:, k] if self.external.shape[0] else np.array([])
 
             # Next state a function of previous state
             y = self.y[k1:k2]
@@ -189,7 +193,7 @@ class RK4(Component):
         state_var_name = self.name_map['y']
         outputs[state_var_name][:] = self.y.T.reshape((n_time, n_state)).T
 
-    def linearize(self, inputs, outputs, resids):
+    def compute_partials(self, inputs, partials):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         n_state = self.n_states
@@ -245,25 +249,25 @@ class RK4(Component):
             # No Jacobian with respect to previous time points.
             self.Jx[k+1, :, :] = h/6*(da_dx + 2*(db_dx + dc_dx) + dd_dx).T
 
-    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
+    def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
         """ Matrix-vector product with the Jacobian. """
 
         if mode == 'fwd':
-            result_ext = self._applyJext(dinputs, dresids)
+            result_ext = self._applyJext(d_inputs, d_outputs)
 
             svar = self.options['state_var']
-            dresids[svar] += result_ext
+            d_outputs[svar] += result_ext
 
         else:
-            r2 = self._applyJextT_limited(dinputs, dresids)
+            r2 = self._applyJextT_limited(d_inputs, d_outputs)
 
             for k, v in iteritems(r2):
-                dinputs[k] += v
+                d_inputs[k] += v
 
-    def _applyJext(self, dinputs, dresids):
+    def _applyJext(self, d_inputs, d_outputs):
         """Apply derivatives with respect to inputs"""
 
-        #Jx --> (n_times, n_external, n_states)
+        # Jx --> (n_times, n_external, n_states)
         n_state = self.n_states
         n_time = self.n
         result = np.zeros((n_state, n_time))
@@ -271,11 +275,11 @@ class RK4(Component):
         # Time-varying inputs
         for name in self.options['external_vars']:
 
-            if name not in dinputs:
+            if name not in d_inputs:
                 continue
 
             # Take advantage of fact that arg is often pretty sparse
-            dvar = dinputs[name]
+            dvar = d_inputs[name]
             if len(np.nonzero(dvar)[0]) == 0:
                 continue
 
@@ -293,11 +297,11 @@ class RK4(Component):
         # Time-invariant inputs
         for name in self.options['fixed_external_vars']:
 
-            if name not in dinputs:
+            if name not in d_inputs:
                 continue
 
             # Take advantage of fact that arg is often pretty sparse
-            dvar = dinputs[name]
+            dvar = d_inputs[name]
             if len(np.nonzero(dvar)[0]) == 0:
                 continue
 
@@ -312,10 +316,10 @@ class RK4(Component):
 
         # Initial State
         name = self.options['init_state_var']
-        if name in dinputs:
+        if name in d_inputs:
 
             # Take advantage of fact that arg is often pretty sparse
-            dvar = dinputs[name]
+            dvar = d_inputs[name]
             if len(np.nonzero(dvar)[0]) > 0:
                 fact = np.eye(self.n_states)
                 result[:, 0] = dvar
@@ -325,14 +329,14 @@ class RK4(Component):
 
         return result
 
-    def _applyJextT_limited(self, dinputs, dresids):
+    def _applyJextT_limited(self, d_inputs, d_outputs):
         """Apply derivatives with respect to inputs"""
 
         # Jx --> (n_times, n_external, n_states)
         n_time = self.n
         result = {}
 
-        argsv = dresids[self.options['state_var']].T
+        argsv = d_outputs[self.options['state_var']].T
         argsum = np.zeros(argsv.shape)
 
         # Calculate these once, and use for every output
@@ -345,12 +349,12 @@ class RK4(Component):
         # Time-varying inputs
         for name in self.options['external_vars']:
 
-            if name not in dinputs:
+            if name not in d_inputs:
                 continue
 
-            dext_var = dinputs[name]
+            dext_var = d_inputs[name]
             i_ext = self.ext_index_map[name]
-            ext_length = np.prod(dext_var.shape) / n_time
+            ext_length = np.prod(dext_var.shape) // n_time
             result[name] = np.zeros((ext_length, n_time))
 
             i_ext_end = i_ext + ext_length
@@ -361,10 +365,10 @@ class RK4(Component):
         # Time-invariant inputs
         for name in self.options['fixed_external_vars']:
 
-            if name not in dinputs:
+            if name not in d_inputs:
                 continue
 
-            di_ext_var = dinputs[name]
+            di_ext_var = d_inputs[name]
             i_ext = self.ext_index_map[name]
             ext_length = np.prod(di_ext_var.shape)
             result[name] = np.zeros((ext_length))
@@ -376,7 +380,7 @@ class RK4(Component):
 
         # Initial State
         name = self.options['init_state_var']
-        if name in dinputs:
+        if name in d_inputs:
             fact = -self.Jy[0, :, :].T
             result[name] = argsv[0, :] + fact.dot(argsv[1, :])
             for k in range(1, n_time-1):
@@ -384,7 +388,7 @@ class RK4(Component):
                 result[name] += fact.dot(argsv[k+1, :])
 
         for name, val in iteritems(result):
-            dvar = dinputs[name]
+            dvar = d_inputs[name]
             result[name] = val.reshape(dvar.shape)
 
         return result
