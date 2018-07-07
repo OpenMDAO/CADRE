@@ -1,10 +1,10 @@
-''' Solar discipline for CADRE '''
+""" Solar discipline for CADRE """
 
 import os
 from six.moves import range
 import numpy as np
 
-from openmdao.core.component import Component
+from openmdao.core.explicitcomponent import ExplicitComponent
 
 from CADRE.kinematics import fixangles
 from MBI import MBI
@@ -13,8 +13,9 @@ from MBI import MBI
 # pylint: disable-msg=C0103
 
 
-class Solar_ExposedArea(Component):
-    """Exposed area calculation for a given solar cell
+class Solar_ExposedArea(ExplicitComponent):
+    """
+    Exposed area calculation for a given solar cell
 
     p: panel ID [0,11]
     c: cell ID [0,6]
@@ -24,7 +25,6 @@ class Solar_ExposedArea(Component):
     LOS: line of sight with the sun [0,1]
     """
 
-
     def __init__(self, n, raw1=None, raw2=None):
         super(Solar_ExposedArea, self).__init__()
 
@@ -33,27 +33,27 @@ class Solar_ExposedArea(Component):
             raw1 = np.genfromtxt(fpath + '/data/Solar/Area10.txt')
         if raw2 is None:
             fpath = os.path.dirname(os.path.realpath(__file__))
-            raw2 = np.loadtxt(fpath + "/data/Solar/Area_all.txt")
+            raw2 = np.loadtxt(fpath + '/data/Solar/Area_all.txt')
 
         self.n = n
         self.nc = 7
         self.np = 12
 
         # Inputs
-        self.add_input('finAngle', 0.0, units="rad",
-                       desc="Fin angle of solar panel")
+        self.add_input('finAngle', 0.0, units='rad',
+                       desc='Fin angle of solar panel')
 
         self.add_input('azimuth', np.zeros((n, )), units='rad',
-                       desc="Azimuth angle of the sun in the body-fixed frame "
-                       "over time")
+                       desc='Azimuth angle of the sun in the body-fixed frame '
+                            'over time')
 
         self.add_input('elevation', np.zeros((n, )), units='rad',
                        desc='Elevation angle of the sun in the body-fixed '
-                       'frame over time')
+                            'frame over time')
 
         # Outputs
         self.add_output('exposedArea', np.zeros((self.nc, self.np, self.n)),
-                        desc="Exposed area to sun for each solar cell over time",
+                        desc='Exposed area to sun for each solar cell over time',
                         units='m**2', lower=-5e-3, upper=1.834e-1)
 
         self.na = 10
@@ -104,8 +104,8 @@ class Solar_ExposedArea(Component):
         self.Jaz = None
         self.Jel = None
 
-    def solve_nonlinear(self, inputs, outputs, resids):
-        """ Calculate output. """
+    def compute(self, inputs, outputs):
+        """ Calculate outputs. """
 
         self.setx(inputs)
         P = self.MBI.evaluate(self.x).T
@@ -119,7 +119,7 @@ class Solar_ExposedArea(Component):
         self.x[:, 1] = result[0]
         self.x[:, 2] = result[1]
 
-    def linearize(self, inputs, outputs, resids):
+    def compute_partials(self, inputs, partials):
         """ Calculate and save derivatives. (i.e., Jacobian) """
 
         self.Jfin = self.MBI.evaluate(self.x, 1).reshape(self.n, 7, 12,
@@ -129,44 +129,44 @@ class Solar_ExposedArea(Component):
         self.Jel = self.MBI.evaluate(self.x, 3).reshape(self.n, 7, 12,
                                                         order='F')
 
-    def apply_linear(self, inputs, outputs, dinputs, doutputs, dresids, mode):
+    def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
         """ Matrix-vector product with the Jacobian. """
 
-        deA = dresids['exposedArea']
+        deA = d_outputs['exposedArea']
 
         if mode == 'fwd':
             for c in range(7):
 
-                if 'finAngle' in dinputs:
+                if 'finAngle' in d_inputs:
                     deA[c, :, :] += \
-                        self.Jfin[:, c, :].T * dinputs['finAngle']
+                        self.Jfin[:, c, :].T * d_inputs['finAngle']
 
-                if 'azimuth' in dinputs:
+                if 'azimuth' in d_inputs:
                     deA[c, :, :] += \
-                        self.Jaz[:, c, :].T * dinputs['azimuth']
+                        self.Jaz[:, c, :].T * d_inputs['azimuth']
 
-                if 'elevation' in dinputs:
+                if 'elevation' in d_inputs:
                     deA[c, :, :] += \
-                        self.Jel[:, c, :].T * dinputs['elevation']
+                        self.Jel[:, c, :].T * d_inputs['elevation']
 
         else:
             for c in range(7):
 
                 # incoming arg is often sparse, so check it first
-                if len(np.nonzero(dresids['exposedArea'][c, :, :])[0]) == 0:
+                if len(np.nonzero(d_outputs['exposedArea'][c, :, :])[0]) == 0:
                     continue
 
-                if 'finAngle' in dinputs:
-                    dinputs['finAngle'] += \
+                if 'finAngle' in d_inputs:
+                    d_inputs['finAngle'] += \
                         np.sum(
                             self.Jfin[:, c, :].T * deA[c, :, :])
 
-                if 'azimuth' in dinputs:
-                    dinputs['azimuth'] += \
+                if 'azimuth' in d_inputs:
+                    d_inputs['azimuth'] += \
                         np.sum(
                             self.Jaz[:, c, :].T * deA[c, :, :], 0)
 
-                if 'elevation' in dinputs:
-                    dinputs['elevation'] += \
+                if 'elevation' in d_inputs:
+                    d_inputs['elevation'] += \
                         np.sum(
                             self.Jel[:, c, :].T * deA[c, :, :], 0)

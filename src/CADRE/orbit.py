@@ -1,11 +1,11 @@
-''' Orbit discipline for CADRE '''
+""" Orbit discipline for CADRE """
 
 from math import sqrt
 
 from six.moves import range
 import numpy as np
 
-from openmdao.core.component import Component
+from openmdao.core.explicitcomponent import ExplicitComponent
 
 from CADRE import rk4
 
@@ -26,24 +26,26 @@ C4 = 1.875*mu*J4*Re**4
 
 
 class Orbit_Dynamics(rk4.RK4):
-    """Computes the Earth to body position vector in Earth-centered intertial frame."""
+    """
+    Computes the Earth to body position vector in Earth-centered intertial frame.
+    """
 
     def __init__(self, n_times, h):
         super(Orbit_Dynamics, self).__init__(n_times, h)
 
-        # Inputs
-        self.add_input('r_e2b_I0', np.zeros((6, )), fd_step=1e-2, units="unitless",
-                       desc="Initial position and velocity vectors from earth to "
-                       "satellite in Earth-centered inertial frame")
+        self.n_times = n_times
 
-        # Outputs
-        self.add_output('r_e2b_I', 1000.0*np.ones((6, n_times)), units="unitless",
-                        desc="Position and velocity vectors from earth to satellite "
-                        "in Earth-centered inertial frame over time")
+        self.options['state_var'] = 'r_e2b_I'
+        self.options['init_state_var'] = 'r_e2b_I0'
 
+    def setup(self):
+        self.add_input('r_e2b_I0', np.zeros((6, )), units=None,  # fd_step=1e-2,
+                       desc='Initial position and velocity vectors from earth to '
+                       'satellite in Earth-centered inertial frame')
 
-        self.options['state_var'] = "r_e2b_I"
-        self.options['init_state_var'] = "r_e2b_I0"
+        self.add_output('r_e2b_I', 1000.0*np.ones((6, self.n_times)), units=None,
+                        desc='Position and velocity vectors from earth to satellite '
+                        'in Earth-centered inertial frame over time')
 
         self.dfdx = np.zeros((6, 1))
 
@@ -138,7 +140,7 @@ class Orbit_Dynamics(rk4.RK4):
         dfdy[5, :3] += z*(C3/r7*dT3z + C4/r7*dT4z)
         dfdy[5, 2] += (C2/r5*2 + C3/r7*T3z + C4/r7*T4z)
 
-        #print dfdy
+        # print dfdy
         return dfdy
 
     def df_dx(self, external, state):
@@ -146,13 +148,12 @@ class Orbit_Dynamics(rk4.RK4):
         return self.dfdx
 
 
-class Orbit_Initial(Component):
-    """Computes initial position and velocity vectors of Earth to body position"""
+class Orbit_Initial(ExplicitComponent):
+    """
+    Computes initial position and velocity vectors of Earth to body position
+    """
 
-
-    def __init__(self):
-        super(Orbit_Initial, self).__init__()
-
+    def setup(self):
         # Inputs
         self.add_input('altPerigee', 500.)
         self.add_input('altApogee', 500.)
@@ -161,26 +162,27 @@ class Orbit_Initial(Component):
         self.add_input('argPerigee', 0.0)
         self.add_input('trueAnomaly', 337.987)
 
-        #Outputs
-        self.add_output('r_e2b_I0', np.ones((6,)), units="unitless",
-                        desc="Initial position and velocity vectors from Earth "
-                        "to satellite in Earth-centered inertial frame")
+        # Outputs
+        self.add_output('r_e2b_I0', np.ones((6,)), units=None,
+                        desc='Initial position and velocity vectors from Earth '
+                             'to satellite in Earth-centered inertial frame')
 
-    def compute(self, altPerigee, altApogee, RAAN, Inc, argPerigee, trueAnomaly):
-        ''' Compute position and velocity from orbital elements '''
-
+    def compute_rv(self, altPerigee, altApogee, RAAN, Inc, argPerigee, trueAnomaly):
+        """
+        Compute position and velocity from orbital elements
+        """
         Re = 6378.137
         mu = 398600.44
 
         def S(v):
-            S = np.zeros((3,3),complex)
-            S[0,:] = [0, -v[2], v[1]]
-            S[1,:] = [v[2], 0, -v[0]]
-            S[2,:] = [-v[1], v[0], 0]
+            S = np.zeros((3, 3), complex)
+            S[0, :] = [0, -v[2], v[1]]
+            S[1, :] = [v[2], 0, -v[0]]
+            S[2, :] = [-v[1], v[0], 0]
             return S
 
         def getRotation(axis, angle):
-            R = np.eye(3,dtype=complex) + S(axis)*np.sin(angle) + \
+            R = np.eye(3, dtype=complex) + S(axis)*np.sin(angle) + \
                 (1 - np.cos(angle)) * (np.outer(axis, axis) - np.eye(3, dtype=complex))
             return R
 
@@ -190,11 +192,15 @@ class Orbit_Initial(Component):
         e = (r_apogee-r_perigee)/(r_apogee+r_perigee)
         a = (r_perigee+r_apogee)/2
         p = a*(1-e**2)
-        h = np.sqrt(p*mu)
+        # h = np.sqrt(p*mu)
 
         rmag0 = p/(1+e*np.cos(d2r*trueAnomaly))
-        r0_P = np.array([rmag0*np.cos(d2r*trueAnomaly), rmag0*np.sin(d2r*trueAnomaly), 0], complex)
-        v0_P = np.array([-np.sqrt(mu/p)*np.sin(d2r*trueAnomaly), np.sqrt(mu/p)*(e+np.cos(d2r*trueAnomaly)), 0], complex)
+        r0_P = np.array([rmag0*np.cos(d2r*trueAnomaly),
+                         rmag0*np.sin(d2r*trueAnomaly),
+                         0], complex)
+        v0_P = np.array([-np.sqrt(mu/p)*np.sin(d2r*trueAnomaly),
+                         np.sqrt(mu/p)*(e+np.cos(d2r*trueAnomaly)),
+                         0], complex)
 
         O_IP = np.eye(3, dtype=complex)
         O_IP = np.dot(O_IP, getRotation(np.array([0, 0, 1]), RAAN*d2r))
@@ -206,39 +212,38 @@ class Orbit_Initial(Component):
 
         return r0_ECI, v0_ECI
 
-    def solve_nonlinear(self, inputs, outputs, resids):
-        """ Calculate output. """
-
-        r0_ECI, v0_ECI = self.compute(inputs['altPerigee'], inputs['altApogee'],
-                                      inputs['RAAN'], inputs['Inc'], inputs['argPerigee'],
-                                      inputs['trueAnomaly'])
+    def compute(self, inputs, outputs):
+        """
+        Calculate outputs.
+        """
+        r0_ECI, v0_ECI = self.compute_rv(inputs['altPerigee'], inputs['altApogee'],
+                                         inputs['RAAN'], inputs['Inc'], inputs['argPerigee'],
+                                         inputs['trueAnomaly'])
         outputs['r_e2b_I0'][:3] = r0_ECI.real
         outputs['r_e2b_I0'][3:] = v0_ECI.real
 
-    def linearize(self, inputs, outputs, resids):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+    def compute_partials(self, inputs, J):
+        """
+        Calculate and save derivatives. (i.e., Jacobian).
+        """
         h = 1e-16
         ih = complex(0, h)
         v = np.zeros(6, complex)
         v[:] = [inputs['altPerigee'], inputs['altApogee'], inputs['RAAN'],
                 inputs['Inc'], inputs['argPerigee'], inputs['trueAnomaly']]
-        jacs = np.zeros((6,6))
+        jacs = np.zeros((6, 6))
 
         # Find derivatives by complex step.
         for i in range(6):
             v[i] += ih
-            r0_ECI, v0_ECI = self.compute(v[0], v[1], v[2], v[3], v[4], v[5])
+            r0_ECI, v0_ECI = self.compute_rv(v[0], v[1], v[2], v[3], v[4], v[5])
             v[i] -= ih
-            jacs[:3,i] = r0_ECI.imag/h
-            jacs[3:,i] = v0_ECI.imag/h
+            jacs[:3, i] = r0_ECI.imag/h
+            jacs[3:, i] = v0_ECI.imag/h
 
-        J = {}
         J['r_e2b_I0', 'altPerigee'] = jacs[:, 0]
         J['r_e2b_I0', 'altApogee'] = jacs[:, 1]
         J['r_e2b_I0', 'RAAN'] = jacs[:, 2]
         J['r_e2b_I0', 'Inc'] = jacs[:, 3]
         J['r_e2b_I0', 'argPerigee'] = jacs[:, 4]
         J['r_e2b_I0', 'trueAnomaly'] = jacs[:, 5]
-
-        return J

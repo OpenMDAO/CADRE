@@ -19,7 +19,7 @@ class RK4(ExplicitComponent):
     External input dimension: (input width, num_time_points)
     """
 
-    def __init__(self, h=.01):
+    def __init__(self, n=2, h=.01):
         super(RK4, self).__init__()
 
         self.h = h
@@ -153,7 +153,7 @@ class RK4(ExplicitComponent):
 
     def compute(self, inputs, outputs):
         """
-        Calculate output.
+        Calculate outputs.
         """
         self._init_data(inputs, outputs)
 
@@ -194,8 +194,9 @@ class RK4(ExplicitComponent):
         outputs[state_var_name][:] = self.y.T.reshape((n_time, n_state)).T
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         n_state = self.n_states
         n_time = self.n
         h = self.h
@@ -250,8 +251,9 @@ class RK4(ExplicitComponent):
             self.Jx[k+1, :, :] = h/6*(da_dx + 2*(db_dx + dc_dx) + dd_dx).T
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         if mode == 'fwd':
             result_ext = self._applyJext(d_inputs, d_outputs)
 
@@ -265,8 +267,9 @@ class RK4(ExplicitComponent):
                 d_inputs[k] += v
 
     def _applyJext(self, d_inputs, d_outputs):
-        """Apply derivatives with respect to inputs"""
-
+        """
+        Apply derivatives with respect to inputs
+        """
         # Jx --> (n_times, n_external, n_states)
         n_state = self.n_states
         n_time = self.n
@@ -330,8 +333,9 @@ class RK4(ExplicitComponent):
         return result
 
     def _applyJextT_limited(self, d_inputs, d_outputs):
-        """Apply derivatives with respect to inputs"""
-
+        """
+        Apply derivatives with respect to inputs
+        """
         # Jx --> (n_times, n_external, n_states)
         n_time = self.n
         result = {}

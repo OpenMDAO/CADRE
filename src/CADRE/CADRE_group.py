@@ -2,21 +2,19 @@
 
 import numpy as np
 
-from openmdao.components.indep_var_comp import IndepVarComp
+from openmdao.core.indepvarcomp import IndepVarComp
 from openmdao.core.group import Group
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, Attitude_Attitude, \
-     Attitude_Roll, Attitude_RotationMtx, \
-     Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque
+    Attitude_Roll, Attitude_RotationMtx, Attitude_RotationMtxRates, Attitude_Torque
 from CADRE.battery import BatteryConstraints, BatteryPower, BatterySOC
 from CADRE.parameters import BsplineParameters
 from CADRE.comm import Comm_AntRotation, Comm_AntRotationMtx, Comm_BitRate, \
-     Comm_DataDownloaded, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, \
-     Comm_GainPattern, Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, \
-     Comm_VectorBody, Comm_VectorECI, Comm_VectorSpherical
-from CADRE.orbit import Orbit_Initial, Orbit_Dynamics
-from CADRE.reactionwheel import ReactionWheel_Motor, ReactionWheel_Power, \
-     ReactionWheel_Torque, ReactionWheel_Dynamics
+    Comm_DataDownloaded, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, \
+    Comm_GainPattern, Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, \
+    Comm_VectorBody, Comm_VectorECI, Comm_VectorSpherical
+from CADRE.orbit import Orbit_Dynamics
+from CADRE.reactionwheel import ReactionWheel_Power, ReactionWheel_Torque, ReactionWheel_Dynamics
 from CADRE.solar import Solar_ExposedArea
 from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, Sun_PositionSpherical
 from CADRE.thermal_temperature import ThermalTemperature
@@ -27,10 +25,11 @@ from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 
 
 class CADRE(Group):
-    """ OpenMDAO implementation of the CADRE model.
+    """
+    OpenMDAO implementation of the CADRE model.
 
-    Args
-    ----
+    Parameters
+    ----------
     n : int
         Number of time integration points.
 
@@ -59,8 +58,6 @@ class CADRE(Group):
                  power_raw=None, initial_inputs=None):
 
         super(CADRE, self).__init__()
-
-        self.ln_solver.options['mode'] = 'auto'
 
         # Analysis parameters
         self.n = n
@@ -108,35 +105,27 @@ class CADRE(Group):
         self.add_subsystem('p_t', IndepVarComp('t', initial_inputs['t']), promotes=['*'])
 
         # Design parameters
-        self.add_subsystem('p_CP_Isetpt', IndepVarComp('CP_Isetpt',
-                                          initial_inputs['CP_Isetpt']),
-                 promotes=['*'])
-        self.add_subsystem('p_CP_gamma', IndepVarComp('CP_gamma',
-                                         initial_inputs['CP_gamma']),
-                 promotes=['*'])
-        self.add_subsystem('p_CP_P_comm', IndepVarComp('CP_P_comm',
-                                          initial_inputs['CP_P_comm']),
-                 promotes=['*'])
+        self.add_subsystem('p_CP_Isetpt', IndepVarComp('CP_Isetpt', initial_inputs['CP_Isetpt']),
+                           promotes=['*'])
+        self.add_subsystem('p_CP_gamma', IndepVarComp('CP_gamma', initial_inputs['CP_gamma']),
+                           promotes=['*'])
+        self.add_subsystem('p_CP_P_comm', IndepVarComp('CP_P_comm', initial_inputs['CP_P_comm']),
+                           promotes=['*'])
         self.add_subsystem('p_iSOC', IndepVarComp('iSOC', initial_inputs['iSOC']),
-                 promotes=['*'])
+                           promotes=['*'])
 
         # These are broadcast inputs in the MDP.
-        #self.add_subsystem('p_cellInstd', IndepVarComp('cellInstd', np.ones((7, 12))),
-        #         promotes=['*'])
-        #self.add_subsystem('p_finAngle', IndepVarComp('finAngle', np.pi / 4.), promotes=['*'])
-        #self.add_subsystem('p_antAngle', IndepVarComp('antAngle', 0.0), promotes=['*'])
+        # self.add_subsystem('p_cellInstd', IndepVarComp('cellInstd', np.ones((7, 12))),
+        #                    promotes=['*'])
+        # self.add_subsystem('p_finAngle', IndepVarComp('finAngle', np.pi / 4.), promotes=['*'])
+        # self.add_subsystem('p_antAngle', IndepVarComp('antAngle', 0.0), promotes=['*'])
 
-        self.add_subsystem('param_LD', IndepVarComp('LD', initial_inputs['LD']),
-                 promotes=['*'])
-        self.add_subsystem('param_lat', IndepVarComp('lat', initial_inputs['lat']),
-                 promotes=['*'])
-        self.add_subsystem('param_lon', IndepVarComp('lon', initial_inputs['lon']),
-                 promotes=['*'])
-        self.add_subsystem('param_alt', IndepVarComp('alt', initial_inputs['alt']),
-                 promotes=['*'])
-        self.add_subsystem('param_r_e2b_I0', IndepVarComp('r_e2b_I0',
-                                             initial_inputs['r_e2b_I0']),
-                 promotes=['*'])
+        self.add_subsystem('param_LD', IndepVarComp('LD', initial_inputs['LD']), promotes=['*'])
+        self.add_subsystem('param_lat', IndepVarComp('lat', initial_inputs['lat']), promotes=['*'])
+        self.add_subsystem('param_lon', IndepVarComp('lon', initial_inputs['lon']), promotes=['*'])
+        self.add_subsystem('param_alt', IndepVarComp('alt', initial_inputs['alt']), promotes=['*'])
+        self.add_subsystem('param_r_e2b_I0', IndepVarComp('r_e2b_I0', initial_inputs['r_e2b_I0']),
+                           promotes=['*'])
 
         # Add Component Models
         self.add_subsystem("BsplineParameters", BsplineParameters(n, m), promotes=['*'])
@@ -146,10 +135,10 @@ class CADRE(Group):
         self.add_subsystem("Attitude_Roll", Attitude_Roll(n), promotes=['*'])
         self.add_subsystem("Attitude_RotationMtx", Attitude_RotationMtx(n), promotes=['*'])
         self.add_subsystem("Attitude_RotationMtxRates", Attitude_RotationMtxRates(n, h),
-                 promotes=['*'])
+                           promotes=['*'])
 
         # Not needed?
-        #self.add_subsystem("Attitude_Sideslip", Attitude_Sideslip(n))
+        # self.add_subsystem("Attitude_Sideslip", Attitude_Sideslip(n))
 
         self.add_subsystem("Attitude_Torque", Attitude_Torque(n), promotes=['*'])
         self.add_subsystem("BatteryConstraints", BatteryConstraints(n), promotes=['*'])
@@ -172,27 +161,24 @@ class CADRE(Group):
         self.add_subsystem("Comm_VectorSpherical", Comm_VectorSpherical(n), promotes=['*'])
 
         # Not needed?
-        #self.add_subsystem("Orbit_Initial", Orbit_Initial())
+        # self.add_subsystem("Orbit_Initial", Orbit_Initial())
 
         self.add_subsystem("Orbit_Dynamics", Orbit_Dynamics(n, h), promotes=['*'])
         self.add_subsystem("Power_CellVoltage", Power_CellVoltage(n, power_raw),
-                 promotes=['*'])
+                           promotes=['*'])
         self.add_subsystem("Power_SolarPower", Power_SolarPower(n), promotes=['*'])
         self.add_subsystem("Power_Total", Power_Total(n), promotes=['*'])
 
         # Not needed?
-        #self.add_subsystem("ReactionWheel_Motor", ReactionWheel_Motor(n))
+        # self.add_subsystem("ReactionWheel_Motor", ReactionWheel_Motor(n))
 
         self.add_subsystem("ReactionWheel_Power", ReactionWheel_Power(n), promotes=['*'])
         self.add_subsystem("ReactionWheel_Torque", ReactionWheel_Torque(n), promotes=['*'])
         self.add_subsystem("ReactionWheel_Dynamics", ReactionWheel_Dynamics(n, h), promotes=['*'])
-        self.add_subsystem("Solar_ExposedArea", Solar_ExposedArea(n, solar_raw1,
-                                                        solar_raw2), promotes=['*'])
+        self.add_subsystem("Solar_ExposedArea", Solar_ExposedArea(n, solar_raw1, solar_raw2),
+                           promotes=['*'])
         self.add_subsystem("Sun_LOS", Sun_LOS(n), promotes=['*'])
         self.add_subsystem("Sun_PositionBody", Sun_PositionBody(n), promotes=['*'])
         self.add_subsystem("Sun_PositionECI", Sun_PositionECI(n), promotes=['*'])
         self.add_subsystem("Sun_PositionSpherical", Sun_PositionSpherical(n), promotes=['*'])
         self.add_subsystem("ThermalTemperature", ThermalTemperature(n, h), promotes=['*'])
-
-
-

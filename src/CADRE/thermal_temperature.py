@@ -1,14 +1,11 @@
-''' Thermal discipline for CADRE '''
+""" Thermal discipline for CADRE """
 
 from six.moves import range
 import numpy as np
 
 from CADRE.rk4 import RK4
 
-# Allow non-standard variable names for scientific calc
-# pylint: disable-msg=C0103
-
-#constants
+# constants
 m_f = 0.4
 m_b = 2.0
 cp_f = 0.6e3
@@ -25,10 +22,16 @@ K = 5.67051e-8
 
 
 class ThermalTemperature(RK4):
-    """ Calculates the temperature distribution on the solar panels."""
-
+    """
+    Calculates the temperature distribution on the solar panels.
+    """
     def __init__(self, n_times, h):
         super(ThermalTemperature, self).__init__(n_times, h)
+
+        self.n_times = n_times
+
+    def setup(self):
+        n_times = self.n_times
 
         # Inputs
         self.add_input("T0", 273.*np.ones((5, )), units="degK",
@@ -37,15 +40,14 @@ class ThermalTemperature(RK4):
         self.add_input("exposedArea", np.zeros((7, 12, n_times)), units="m**2",
                        desc="Exposed area to the sun for each solar cell over time")
 
-        self.add_input("cellInstd", np.ones((7, 12)), units='unitless',
-                       desc="Cell/Radiator indication", lower=0, upper=1)
+        self.add_input("cellInstd", np.ones((7, 12)), units=None,
+                       desc="Cell/Radiator indication")  # , lower=0, upper=1)
 
-        self.add_input("LOS", np.zeros((n_times, )), units='unitless',
-                       desc="Satellite to Sun line of sight over time",
-                       lower=0, upper=1)
+        self.add_input("LOS", np.zeros((n_times, )), units=None,
+                       desc="Satellite to Sun line of sight over time")  # , lower=0, upper=1)
 
         self.add_input("P_comm", np.ones((n_times, )), units='W',
-                       desc="Communication power over time", lower=0, upper=1)
+                       desc="Communication power over time")  # , lower=0, upper=1)
 
         # Outputs
         self.add_output("temperature", np.zeros((5, n_times)), units="degK",
@@ -57,10 +59,8 @@ class ThermalTemperature(RK4):
         self.options['external_vars'] = ["exposedArea", "LOS", "P_comm"]
         self.options['fixed_external_vars'] = ["cellInstd"]
 
-        self.n_times = n_times
-
-    def solve_nonlinear(self, inputs, outputs, resids):
-        """ Calculate output. """
+    def compute(self, inputs, outputs):
+        """ Calculate outputs. """
 
         temperature = outputs['temperature']
 
@@ -71,8 +71,7 @@ class ThermalTemperature(RK4):
                 if temperature[k, i] < 0:
                     temperature[k, i] = 0.
 
-        super(ThermalTemperature, self).solve_nonlinear(inputs, outputs,
-                                                        resids)
+        super(ThermalTemperature, self).compute(inputs, outputs)
 
     def f_dot(self, external, state):
 
@@ -113,7 +112,6 @@ class ThermalTemperature(RK4):
         return f
 
     def df_dy(self, external, state):
-
         # revised implementation from ThermalTemperature.f90
         cellInstd = external[86:].reshape(7, 12)
         sum_eps = 4.0*K*A_T*np.sum(eps_c*cellInstd + eps_r - eps_r*cellInstd)
@@ -142,7 +140,6 @@ class ThermalTemperature(RK4):
         return dfdy
 
     def df_dx(self, external, state):
-
         # revised implementation from ThermalTemperature.f90
         exposedArea = external[:84].reshape(7, 12)
         LOS = external[84]

@@ -1,38 +1,16 @@
 """ Test derivatives by comparing analytic to finite difference."""
 
-import os
-import pickle
-import random
 import unittest
 import warnings
 
 import numpy as np
 
-from openmdao.components.param_comp import IndepVarComp
-from openmdao.core.group import Group
 from openmdao.core.problem import Problem
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.components.param_comp import IndepVarComp
+from openmdao.utils.assert_utils import assert_check_partials
 
-from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
-     Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
-     Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque
-from CADRE.battery import BatterySOC, BatteryPower, BatteryConstraints
-from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMtx, \
-     Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern, \
-     Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, Comm_VectorBody, \
-     Comm_VectorECI, Comm_VectorSpherical
-from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
+from CADRE.rk4 import RK4
 from CADRE.parameters import BsplineParameters
-from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
-from CADRE.reactionwheel import ReactionWheel_Motor, ReactionWheel_Power, \
-     ReactionWheel_Torque, ReactionWheel_Dynamics
-from CADRE.solar import Solar_ExposedArea
-from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, \
-    Sun_PositionSpherical
-from CADRE.thermal_temperature import ThermalTemperature
-
-
-import os
 
 NTIME = 5
 
@@ -42,88 +20,59 @@ warnings.simplefilter("ignore")
 
 class Testcase_CADRE(unittest.TestCase):
 
-    """ Test run/step/stop aspects of a simple workflow. """
+    """ Test run/step/sprob aspects of a simple workflow. """
 
     def setUp(self):
         """ Called before each test. """
-        self.model = Problem()
-        self.model.root = Group()
+        self.prob = Problem()
 
     def tearDown(self):
         """ Called after each test. """
-        self.model = None
+        self.prob = None
 
     def setup(self, compname, inputs, state0):
-
         try:
-            self.model.root.add_subsystem('comp', eval('%s(NTIME)' % compname), promotes=['*'])
+            comp = eval('%s(NTIME)' % compname)
         except TypeError:
             # At least one comp has no args.
             try:
-                self.model.root.add_subsystem('comp', eval('%s()' % compname), promotes=['*'])
+                comp = eval('%s()' % compname)
             except TypeError:
-                self.model.root.add_subsystem('comp', eval('%s(NTIME, 300)' % compname), promotes=['*'])
+                comp = eval('%s(NTIME, 300)' % compname)
+
+        self.assertTrue(isinstance(comp, RK4),
+                        'Unable to instantiate %s.' % compname)
+
+        self.prob.model.add_subsystem('comp', comp, promotes=['*'])
 
         for item in inputs + state0:
-            pshape = self.model.root.comp._init_inputs_dict[item]['shape']
+            pshape = self.prob.model.comp._init_inputs_dict[item]['shape']
             if pshape == 1:
                 initval = 0.0
             else:
                 initval = np.zeros((pshape))
-            self.model.root.add_subsystem('p_%s' % item, IndepVarComp(item, initval),
-                                promotes=['*'])
+            self.prob.model.add_subsystem('p_%s' % item, IndepVarComp(item, initval),
+                                          promotes=['*'])
 
-        self.model.setup(check=False)
+        self.prob.setup(check=False)
 
         for item in inputs + state0:
-            val = self.model['%s' % item]
+            val = self.prob['%s' % item]
             if hasattr(val, 'shape'):
                 shape1 = val.shape
-                self.model['%s' % item] = np.random.random(shape1)
+                self.prob['%s' % item] = np.random.random(shape1)
             else:
-                self.model['%s' % item] = np.random.random()
+                self.prob['%s' % item] = np.random.random()
 
-    def run_model(self):
-
+    def run_prob(self):
         # Some components have a time step as a non-differentiable input.
-        if 'h' in self.model.root.comp._init_inputs_dict:
-            self.model['h'] = 0.01
-        self.model.run()
+        if 'h' in self.prob.model.comp._init_inputs_dict:
+            self.prob['h'] = 0.01
+        self.prob.run()
 
     def compare_derivatives(self, var_in, var_out, rel_error=False):
-
-        model = self.model
-
-        # Numeric
-        Jn = model.calc_gradient(var_in, var_out, mode="fd",
-                                 return_format='array')
-        #print 'finite diff', Jn
-
-        # Analytic forward
-        Jf = model.calc_gradient(var_in, var_out, mode='fwd',
-                                 return_format='array')
-
-        #print 'forward', Jf
-
-        if rel_error:
-            diff = np.nan_to_num(abs(Jf - Jn) / Jn)
-        else:
-            diff = abs(Jf - Jn)
-
-        assert_rel_error(self, diff.max(), 0.0, 1e-3)
-
-        # Analytic adjoint
-        Ja = model.calc_gradient(var_in, var_out, mode='rev',
-                                 return_format='array')
-
-        # print Ja
-
-        if rel_error:
-            diff = np.nan_to_num(abs(Ja - Jn) / Jn)
-        else:
-            diff = abs(Ja - Jn)
-
-        assert_rel_error(self, diff.max(), 0.0, 1e-3)
+        partials = self.prob.check_partials(out_stream=None)
+        assert_check_partials(partials, atol=1e-3, rtol=1e-3)
 
     def test_Attitude_Angular(self):
 
@@ -133,7 +82,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Attitude_AngularRates(self):
@@ -144,8 +93,8 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.model.root.comp.h = 0.01
-        self.run_model()
+        self.prob.model.comp.h = 0.01
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Attitude_Attitude(self):
@@ -156,7 +105,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Attitude_Roll(self):
@@ -167,7 +116,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Attitude_RotationMtx(self):
@@ -178,7 +127,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Attitude_RotationMtxRates(self):
@@ -189,8 +138,8 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.model.root.comp.h = 0.01
-        self.run_model()
+        self.prob.model.comp.h = 0.01
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Attitude_Sideslip(self):
@@ -201,7 +150,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Attitude_Torque(self):
@@ -212,7 +161,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_BatterySOC(self):
@@ -223,8 +172,8 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = ['iSOC']
 
         self.setup(compname, inputs, state0)
-        self.model.root.comp.h = 0.01
-        self.run_model()
+        self.prob.model.comp.h = 0.01
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_BatteryPower(self):
@@ -235,7 +184,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_BatteryConstraints(self):
@@ -246,7 +195,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_DataDownloaded(self):
@@ -257,7 +206,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = ['Data0']
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_AntRotation(self):
@@ -268,7 +217,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_AntRotationMtx(self):
@@ -279,7 +228,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_BitRate(self):
@@ -292,12 +241,12 @@ class Testcase_CADRE(unittest.TestCase):
         self.setup(compname, inputs, state0)
 
         # These need to be a certain magnitude so it doesn't blow up
-        shape = self.model.root.comp._init_inputs_dict['P_comm']['shape']
-        self.model['P_comm'] = np.ones(shape)
-        shape = self.model.root.comp._init_inputs_dict['GSdist']['shape']
-        self.model['GSdist'] = np.random.random(shape) * 1e3
+        shape = self.prob.model.comp._init_inputs_dict['P_comm']['shape']
+        self.prob['P_comm'] = np.ones(shape)
+        shape = self.prob.model.comp._init_inputs_dict['GSdist']['shape']
+        self.prob['GSdist'] = np.random.random(shape) * 1e3
 
-        self.run_model()
+        self.run_prob()
 
         self.compare_derivatives(inputs+state0, outputs)
 
@@ -309,7 +258,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_EarthsSpin(self):
@@ -320,7 +269,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_EarthsSpinMtx(self):
@@ -331,7 +280,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_GainPattern(self):
@@ -342,7 +291,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_GSposEarth(self):
@@ -353,7 +302,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_GSposECI(self):
@@ -364,7 +313,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_LOS(self):
@@ -375,7 +324,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_VectorAnt(self):
@@ -386,7 +335,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_VectorBody(self):
@@ -397,7 +346,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_VectorECI(self):
@@ -408,7 +357,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Comm_VectorSpherical(self):
@@ -419,7 +368,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Orbit_Dynamics(self):
@@ -430,50 +379,47 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.model.root.comp.h = 0.01
-        shape = self.model.root.comp._init_inputs_dict['r_e2b_I0']['shape']
-        self.model['r_e2b_I0'][:3] = np.random.random((3)) * 1e6
-        self.model['r_e2b_I0'][3:] = np.random.random((3)) * 1e5
-        self.run_model()
+        self.prob.model.comp.h = 0.01
+        self.prob['r_e2b_I0'][:3] = np.random.random((3)) * 1e6
+        self.prob['r_e2b_I0'][3:] = np.random.random((3)) * 1e5
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Orbit_Initial(self):
 
         compname = 'Orbit_Initial'
-        inputs = ['altPerigee', 'altApogee', 'RAAN', 'Inc', 'argPerigee',
-        'trueAnomaly']
+        inputs = ['altPerigee', 'altApogee', 'RAAN', 'Inc', 'argPerigee', 'trueAnomaly']
         outputs = ['r_e2b_I0']
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_bspline_parameters(self):
 
-        compname = 'BsplineParameters'
         inputs = ['CP_P_comm', 'CP_gamma', 'CP_Isetpt']
         outputs = ['P_comm', 'Gamma', 'Isetpt']
         state0 = []
 
-        self.model.root.add_subsystem('comp', BsplineParameters(NTIME, 5), promotes=['*'])
+        self.prob.model.add_subsystem('comp', BsplineParameters(NTIME, 5), promotes=['*'])
 
         for item in inputs:
-            pshape = self.model.root.comp._init_inputs_dict[item]['shape']
+            pshape = self.prob.model.comp._init_inputs_dict[item]['shape']
             if pshape == 1:
                 initval = 0.0
             else:
                 initval = np.zeros((pshape))
-            self.model.root.add_subsystem('p_%s' % item, IndepVarComp(item, initval),
-                                promotes=['*'])
+            self.prob.model.add_subsystem('p_%s' % item, IndepVarComp(item, initval),
+                                          promotes=['*'])
 
-        self.model.setup(check=False)
+        self.prob.setup(check=False)
 
         for item in inputs:
-            shape = self.model.root.comp._init_inputs_dict[item]['shape']
-            self.model[item] = np.random.random(shape)
+            shape = self.prob.model.comp._init_inputs_dict[item]['shape']
+            self.prob[item] = np.random.random(shape)
 
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Power_CellVoltage(self):
@@ -485,16 +431,16 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs, state0)
 
-        shape = self.model.root.comp._init_inputs_dict['temperature']['shape']
-        self.model['temperature'] = np.random.random(shape) * 40 + 240
+        shape = self.prob.model.comp._init_inputs_dict['temperature']['shape']
+        self.prob['temperature'] = np.random.random(shape) * 40 + 240
 
-        shape = self.model.root.comp._init_inputs_dict['exposedArea']['shape']
-        self.model['exposedArea'] = np.random.random(shape) * 1e-4
+        shape = self.prob.model.comp._init_inputs_dict['exposedArea']['shape']
+        self.prob['exposedArea'] = np.random.random(shape) * 1e-4
 
-        shape = self.model.root.comp._init_inputs_dict['Isetpt']['shape']
-        self.model['Isetpt'] = np.random.random(shape) * 1e-2
+        shape = self.prob.model.comp._init_inputs_dict['Isetpt']['shape']
+        self.prob['Isetpt'] = np.random.random(shape) * 1e-2
 
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs, outputs, rel_error=True)
 
     def test_Power_SolarPower(self):
@@ -505,7 +451,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Power_Total(self):
@@ -516,7 +462,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_ReactionWheel_Motor(self):
@@ -527,7 +473,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_ReactionWheel_Power(self):
@@ -540,13 +486,13 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs, state0)
 
-        shape = self.model.root.comp._init_inputs_dict['T_RW']['shape']
-        self.model['T_RW'] = np.random.random(shape) * 1e-1
-        shape = self.model.root.comp._init_inputs_dict['w_RW']['shape']
-        self.model['w_RW'] = np.random.random(shape) * 1e-1
-        self.model.root.comp.deriv_options['step_calc'] = 'relative'
+        shape = self.prob.model.comp._init_inputs_dict['T_RW']['shape']
+        self.prob['T_RW'] = np.random.random(shape) * 1e-1
+        shape = self.prob.model.comp._init_inputs_dict['w_RW']['shape']
+        self.prob['w_RW'] = np.random.random(shape) * 1e-1
+        self.prob.model.comp.deriv_options['step_calc'] = 'relative'
 
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs, outputs, rel_error=True)
 
     def test_ReactionWheel_Torque(self):
@@ -557,7 +503,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_ReactionWheel_Dynamics(self):
@@ -570,14 +516,14 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []  # ['w_RW0']
 
         self.setup(compname, inputs, state0)
-        self.model.root.comp.h = 0.01
+        self.prob.model.comp.h = 0.01
 
-        shape = self.model.root.comp._init_inputs_dict['w_B']['shape']
-        self.model['w_B'] = np.random.random(shape) * 1e-4
-        shape = self.model.root.comp._init_inputs_dict['T_RW']['shape']
-        self.model['T_RW'] = np.random.random(shape) * 1e-9
+        shape = self.prob.model.comp._init_inputs_dict['w_B']['shape']
+        self.prob['w_B'] = np.random.random(shape) * 1e-4
+        shape = self.prob.model.comp._init_inputs_dict['T_RW']['shape']
+        self.prob['T_RW'] = np.random.random(shape) * 1e-9
 
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Solar_ExposedArea(self):
@@ -588,7 +534,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Sun_LOS(self):
@@ -599,7 +545,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Sun_PositionBody(self):
@@ -610,7 +556,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Sun_PositionECI(self):
@@ -621,7 +567,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_Sun_PositionSpherical(self):
@@ -632,7 +578,7 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = []
 
         self.setup(compname, inputs, state0)
-        self.run_model()
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
     def test_ThermalTemperature(self):
@@ -643,10 +589,10 @@ class Testcase_CADRE(unittest.TestCase):
         state0 = ['T0']
 
         self.setup(compname, inputs, state0)
-        self.model.root.comp.h = 0.01
-        self.run_model()
+        self.prob.model.comp.h = 0.01
+        self.run_prob()
         self.compare_derivatives(inputs+state0, outputs)
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     unittest.main()

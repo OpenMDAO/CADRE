@@ -1,12 +1,17 @@
 """ Optimization of the CADRE MDP."""
-from __future__ import print_function
+
+import unittest
 
 import sys
 import os
 import pickle
 import numpy as np
 
-from openmdao.components.indep_var_comp import IndepVarComp
+import CADRE
+from CADRE.power import Power_SolarPower, Power_CellVoltage
+from CADRE.parameters import BsplineParameters
+
+from openmdao.components.indepvarcomp import IndepVarComp
 from openmdao.core.component import Component
 from openmdao.core.group import Group
 from openmdao.core.problem import Problem
@@ -14,39 +19,22 @@ from openmdao.core.parallel_group import ParallelGroup
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 from openmdao.utils.assert_utils import assert_rel_error
 
-try:
-    from openmdao.core.petsc_impl import PetscImpl as impl
-except ImportError:
-    impl = None
-
-from openmdao.core.mpi_wrap import MPI
-from openmdao.test.mpi_util import MPITestCase
-
-if MPI:
-    from openmdao.core.petsc_impl import PetscImpl as impl
-else:
-    from openmdao.core.basic_impl import BasicImpl as impl
-
-import CADRE
-from CADRE.power import Power_SolarPower, Power_CellVoltage
-from CADRE.parameters import BsplineParameters
-
 
 class Perf(Component):
 
     def __init__(self, n):
         super(Perf, self).__init__()
         self.add_input('P_sol1', np.zeros((n, )), units="W",
-                            desc="Solar panels power over time")
+                       desc="Solar panels power over time")
         self.add_input('P_sol2', np.zeros((n, )), units="W",
-                            desc="Solar panels power over time")
+                       desc="Solar panels power over time")
 
         self.add_output("result", 0.0)
 
         self.J = -np.ones((1, n))
 
     def solve_nonlinear(self, p, u, r):
-        u['result'] = -np.sum(p['P_sol1']) -np.sum(p['P_sol2'])
+        u['result'] = -np.sum(p['P_sol1']) - np.sum(p['P_sol2'])
 
     def linearize(self, p, u, r):
         return {("result", "P_sol1"): self.J,
@@ -69,7 +57,7 @@ class MPPT(Group):
         self.add_subsystem("bspline", BsplineParameters(n, m))
         self.add_subsystem("voltage", Power_CellVoltage(n))
         self.add_subsystem("power", Power_SolarPower(n))
-        #self.add_subsystem("perf", Perf(n))
+        # self.add_subsystem("perf", Perf(n))
 
         self.connect("param.LOS", "voltage.LOS")
         self.connect("param.temperature", "voltage.temperature")
@@ -81,7 +69,7 @@ class MPPT(Group):
         self.connect("bspline.Isetpt", "power.Isetpt")
         self.connect("voltage.V_sol", "power.V_sol")
 
-        #self.connect("power.P_sol", "perf.P_sol")
+        # self.connect("power.P_sol", "perf.P_sol")
 
 
 class MPPT_MDP(Group):
@@ -92,21 +80,21 @@ class MPPT_MDP(Group):
         m = 300
         cadre_path = os.path.dirname(os.path.realpath(CADRE.__file__))
         if sys.version_info.major == 2:
-           data = pickle.load(open(cadre_path + "/test/data1346_py2.pkl", 'rb'))
+            data = pickle.load(open(cadre_path + "/test/data1346_py2.pkl", 'rb'))
         else:
-           data = pickle.load(open(cadre_path + "/test/data1346.pkl", 'rb'))
+            data = pickle.load(open(cadre_path + "/test/data1346.pkl", 'rb'))
 
         # CADRE instances go into a Parallel Group
         para = self.add_subsystem('parallel', ParallelGroup(), promotes=['*'])
 
         para.add_subsystem("pt0", MPPT(data['0:LOS'],
-                             data['0:temperature'],
-                             data['0:exposedArea'],
-                             m, n))
+                           data['0:temperature'],
+                           data['0:exposedArea'],
+                           m, n))
         para.add_subsystem("pt1", MPPT(data['1:LOS'],
-                             data['1:temperature'],
-                             data['1:exposedArea'],
-                             m, n))
+                           data['1:temperature'],
+                           data['1:exposedArea'],
+                           m, n))
 
         self.add_subsystem("perf", Perf(1500))
 
@@ -114,11 +102,12 @@ class MPPT_MDP(Group):
         self.connect("pt1.power.P_sol", "perf.P_sol2")
 
 
-class BenchmarkMPPT(MPITestCase):
-    N_PROCS=2
+class BenchmarkMPPT(unittest.TestCase):
+
+    N_PROCS = 2
 
     def benchmark_mppt(self):
-        model = Problem(impl=impl)
+        model = Problem()
         model.root = MPPT_MDP()
 
         # add optimizer

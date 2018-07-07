@@ -126,7 +126,7 @@ class Testcase_RK_deriv(unittest.TestCase):
         prob.setup()
         prob.run_model()
 
-        partials = prob.check_partials(out_stream=None)
+        partials = prob.check_partials()  # out_stream=None)
 
         assert_check_partials(partials, atol=6e-5, rtol=6e-5)
 

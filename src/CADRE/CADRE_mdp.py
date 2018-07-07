@@ -6,7 +6,7 @@ import os.path
 import numpy as np
 
 from openmdao.components.exec_comp import ExecComp
-from openmdao.components.indep_var_comp import IndepVarComp
+from openmdao.components.indepvarcomp import IndepVarComp
 from openmdao.core.group import Group
 from openmdao.core.parallel_group import ParallelGroup
 
@@ -18,10 +18,11 @@ from CADRE.CADRE_group import CADRE
 
 
 class CADRE_MDP_Group(Group):
-    """ CADRE MDP Problem. Can be run in Parallel.
+    """
+    CADRE MDP Problem. Can be run in Parallel.
 
-    Args
-    ----
+    Parameters
+    ----------
     n : int
         Number of time integration points.
 
@@ -70,18 +71,17 @@ class CADRE_MDP_Group(Group):
             inits['LD'] = float(LDs[i])
             inits['r_e2b_I0'] = r_e2b_I0s[i]
 
-            comp = para.add_subsystem(name, CADRE(n, m, solar_raw1, solar_raw2,
-                                        comm_raw, power_raw,
-                                        initial_inputs=inits))
+            para.add_subsystem(name, CADRE(n, m, solar_raw1, solar_raw2,
+                               comm_raw, power_raw, initial_inputs=inits))
 
             # Hook up broadcast inputs
             self.connect('bp1.cellInstd', "%s.cellInstd" % name)
             self.connect('bp2.finAngle', "%s.finAngle" % name)
             self.connect('bp3.antAngle', "%s.antAngle" % name)
 
-            self.add_subsystem('%s_con5'% name, ExecComp("val = SOCi - SOCf"))
-            self.connect("%s.SOC" % name, '%s_con5.SOCi'% name, src_indices=[0])
-            self.connect("%s.SOC" % name, '%s_con5.SOCf'% name, src_indices=[n-1])
+            self.add_subsystem('%s_con5' % name, ExecComp("val = SOCi - SOCf"))
+            self.connect("%s.SOC" % name, '%s_con5.SOCi' % name, src_indices=[0])
+            self.connect("%s.SOC" % name, '%s_con5.SOCf' % name, src_indices=[n-1])
 
         obj = ''.join([" - %s_DataTot" % name for name in names])
         self.add_subsystem('obj', ExecComp('val='+obj))
@@ -91,4 +91,3 @@ class CADRE_MDP_Group(Group):
         # Set our groups to auto
         self.ln_solver.options['mode'] = 'auto'
         para.ln_solver.options['mode'] = 'auto'
-
