@@ -100,32 +100,37 @@ class CADRE(Group):
             initial_inputs['r_e2b_I0'] = np.zeros((6, ))
 
         # Some initial setup.
-        self.add_subsystem('p_t1', IndepVarComp('t1', initial_inputs['t1']), promotes=['*'])
-        self.add_subsystem('p_t2', IndepVarComp('t2', initial_inputs['t2']), promotes=['*'])
-        self.add_subsystem('p_t', IndepVarComp('t', initial_inputs['t']), promotes=['*'])
+        indeps = IndepVarComp()
+        indeps.add_output('t1', initial_inputs['t1'], units="s")
+        indeps.add_output('t2', initial_inputs['t2'], units="s")
+        indeps.add_output('t', initial_inputs['t'], units="s")
 
         # Design parameters
-        self.add_subsystem('p_CP_Isetpt', IndepVarComp('CP_Isetpt', initial_inputs['CP_Isetpt']),
-                           promotes=['*'])
-        self.add_subsystem('p_CP_gamma', IndepVarComp('CP_gamma', initial_inputs['CP_gamma']),
-                           promotes=['*'])
-        self.add_subsystem('p_CP_P_comm', IndepVarComp('CP_P_comm', initial_inputs['CP_P_comm']),
-                           promotes=['*'])
-        self.add_subsystem('p_iSOC', IndepVarComp('iSOC', initial_inputs['iSOC']),
-                           promotes=['*'])
+        design = IndepVarComp()
+        design.add_output('CP_Isetpt', initial_inputs['CP_Isetpt'], units='A')
+        design.add_output('CP_gamma', initial_inputs['CP_gamma'], units='rad')
+        design.add_output('CP_P_comm', initial_inputs['CP_P_comm'], units='W')
+        design.add_output('iSOC', initial_inputs['iSOC'])
 
         # These are broadcast inputs in the MDP.
-        # self.add_subsystem('p_cellInstd', IndepVarComp('cellInstd', np.ones((7, 12))),
-        #                    promotes=['*'])
-        # self.add_subsystem('p_finAngle', IndepVarComp('finAngle', np.pi / 4.), promotes=['*'])
-        # self.add_subsystem('p_antAngle', IndepVarComp('antAngle', 0.0), promotes=['*'])
+        # mdp_in = IndepVarComp()
+        # mdp_in.add_output('lat', 'cellInstd', np.ones((7, 12)))
+        # mdp_in.add_output('lon', 'finAngle', np.pi / 4.)
+        # mdp_in.add_output('alt', 'antAngle', 0.0)
+        # self.add_subsystem('mdp_in', mdp_in, promotes=['*'])
 
-        self.add_subsystem('param_LD', IndepVarComp('LD', initial_inputs['LD']), promotes=['*'])
-        self.add_subsystem('param_lat', IndepVarComp('lat', initial_inputs['lat']), promotes=['*'])
-        self.add_subsystem('param_lon', IndepVarComp('lon', initial_inputs['lon']), promotes=['*'])
-        self.add_subsystem('param_alt', IndepVarComp('alt', initial_inputs['alt']), promotes=['*'])
-        self.add_subsystem('param_r_e2b_I0', IndepVarComp('r_e2b_I0', initial_inputs['r_e2b_I0']),
-                           promotes=['*'])
+        # params
+        params = IndepVarComp()
+        params.add_output('LD', initial_inputs['LD'])
+        params.add_output('lat', initial_inputs['lat'], units="rad")
+        params.add_output('lon', initial_inputs['lon'], units="rad")
+        params.add_output('alt', initial_inputs['alt'], units="km")
+        params.add_output('r_e2b_I0', initial_inputs['r_e2b_I0'])
+
+        # add independent vars
+        self.add_subsystem('indeps', indeps, promotes=['*'])
+        self.add_subsystem('design', design, promotes=['*'])
+        self.add_subsystem('params', params, promotes=['*'])
 
         # Add Component Models
         self.add_subsystem("BsplineParameters", BsplineParameters(n, m), promotes=['*'])

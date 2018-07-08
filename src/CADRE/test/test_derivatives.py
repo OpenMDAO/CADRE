@@ -3,24 +3,123 @@
 import unittest
 import warnings
 
+from parameterized import parameterized
+
 import numpy as np
 
 from openmdao.core.problem import Problem
-from openmdao.components.param_comp import IndepVarComp
+from openmdao.core.indepvarcomp import IndepVarComp
 from openmdao.utils.assert_utils import assert_check_partials
 
-from CADRE.rk4 import RK4
-from CADRE.parameters import BsplineParameters
+from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
+    Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
+    Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque
 
-NTIME = 5
+from CADRE.battery import BatterySOC, BatteryPower, BatteryConstraints
+from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMtx, \
+    Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern, \
+    Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, Comm_VectorBody, \
+    Comm_VectorECI, Comm_VectorSpherical
+from CADRE.orbit import Orbit_Dynamics  # , Orbit_Initial
+from CADRE.parameters import BsplineParameters
+from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
+from CADRE.reactionwheel import ReactionWheel_Motor, ReactionWheel_Power, \
+    ReactionWheel_Torque, ReactionWheel_Dynamics
+from CADRE.solar import Solar_ExposedArea
+from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, Sun_PositionSpherical
+from CADRE.thermal_temperature import ThermalTemperature
 
 # Ignore the numerical warnings from performing the rel error calc.
 warnings.simplefilter("ignore")
 
 
-class Testcase_CADRE(unittest.TestCase):
+#
+# component types to test
+#
+component_types = [
+    # from CADRE.attitude
+    Attitude_Angular, Attitude_AngularRates,
+    Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx,
+    Attitude_RotationMtxRates, Attitude_Sideslip, Attitude_Torque,
+    # from CADRE.battery
+    BatterySOC, BatteryPower, BatteryConstraints,
+    # from CADRE.comm
+    Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMtx,
+    Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern,
+    Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, Comm_VectorBody,
+    Comm_VectorECI, Comm_VectorSpherical,
+    # from CADRE.orbit
+    Orbit_Dynamics,   # Orbit_Initial was not recorded in John's pickle.
+    # from CADRE.parameters
+    BsplineParameters,
+    # from CADRE.power
+    Power_CellVoltage, Power_SolarPower, Power_Total,
+    # from CADRE.reactionwheel
+    ReactionWheel_Motor, ReactionWheel_Power,
+    ReactionWheel_Torque, ReactionWheel_Dynamics,
+    # from CADRE.solar
+    Solar_ExposedArea,
+    # from CADRE.sun
+    Sun_LOS, Sun_PositionBody, Sun_PositionECI, Sun_PositionSpherical,
+    # from CADRE.thermal_temperature
+    ThermalTemperature
+]
 
-    """ Test run/step/sprob aspects of a simple workflow. """
+
+NTIME = 5
+
+
+class TestDerivatives(unittest.TestCase):
+    @parameterized.expand([(_class.__name__, _class) for _class in component_types],
+                          testcase_func_name=lambda f, n, p: 'test_' + p.args[0])
+    def test_component(self, name, comp_class):
+        # create instance of component type
+        try:
+            comp = comp_class(NTIME)
+        except TypeError:
+            try:
+                comp = comp_class()
+            except TypeError:
+                comp = comp_class(NTIME, 300)
+
+        self.assertTrue(isinstance(comp, comp_class),
+                        'Could not create instance of %s' % comp_class.__name__)
+
+        # add to problem
+        prob = Problem()
+        prob.model.add_subsystem(name, comp, promotes=['*'])
+
+        # do initial setup to get inputs
+        prob.setup()
+        prob.final_setup()
+        inputs = prob.model.list_inputs(out_stream=None)
+
+        # create IndepVarComp and add corresponding outputs
+        indep = IndepVarComp()
+        prob.model.add_subsystem('indep', indep, promotes=['*'])
+        for var, meta in inputs:
+            var_name = var.split('.')[-1]
+            rand_val = np.random.random(meta['value'].shape)
+            indep.add_output(var_name, rand_val)
+
+        # redo the setup
+        prob.setup()
+        prob.final_setup()
+
+        # Some components have a time step as a non-differentiable input.
+        input_names = [var for var, meta in inputs]
+        if 'h' in input_names:
+            prob['h'] = 0.01
+
+        # run and check partials
+        prob.run_model()
+
+        partials = prob.check_partials(out_stream=None)
+        assert_check_partials(partials, atol=1e-3, rtol=1e-3)
+
+
+@unittest.skip('deprecated.')
+class Testcase_CADRE(unittest.TestCase):
 
     def setUp(self):
         """ Called before each test. """
@@ -39,9 +138,6 @@ class Testcase_CADRE(unittest.TestCase):
                 comp = eval('%s()' % compname)
             except TypeError:
                 comp = eval('%s(NTIME, 300)' % compname)
-
-        self.assertTrue(isinstance(comp, RK4),
-                        'Unable to instantiate %s.' % compname)
 
         self.prob.model.add_subsystem('comp', comp, promotes=['*'])
 

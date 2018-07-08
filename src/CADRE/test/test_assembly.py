@@ -1,73 +1,85 @@
-""" Run the CADRE model and make sure the value compare to the saved pickle."""
+"""
+Run the CADRE model and make sure the value compare to the saved pickle.
+"""
 
 from __future__ import print_function
 
-import sys
-import os
-import pickle
 import unittest
-import warnings
 
 import numpy as np
 
 from openmdao.core.problem import Problem
 
 from CADRE.CADRE_group import CADRE
-
-# Ignore the numerical warnings from performing the rel error calc.
-warnings.simplefilter("ignore")
+from CADRE.test.util import load_validation_data
 
 
-idx = '0'
+class TestCADRE(unittest.TestCase):
 
-setd = {}
-fpath = os.path.dirname(os.path.realpath(__file__))
-if sys.version_info.major == 2:
-    data = pickle.load(open(fpath + "/data1346_py2.pkl", 'rb'))
-else:
-    data = pickle.load(open(fpath + "/data1346_py2.pkl", 'rb'))
+    def test_CADRE(self):
+        n, m, h, setd = load_validation_data(idx='0')
 
-for key in data.keys():
-    if key[0] == idx or not key[0].isdigit():
-        if not key[0].isdigit():
-            shortkey = key
-        else:
-            shortkey = key[2:]
-        # set floats correctly
-        if data[key].shape == (1,) and shortkey != "iSOC":
-            setd[shortkey] = data[key][0]
-        else:
-            setd[shortkey] = data[key]
+        prob = Problem(CADRE(n, m))
+        prob.setup(check=False)
+        prob.final_setup()
 
-n = setd['P_comm'].size
-m = setd['CP_P_comm'].size
+        prob['CP_P_comm'] = setd['CP_P_comm']
+        prob['LD'] = setd['LD']
+        prob['cellInstd'] = setd['cellInstd']
+        prob['CP_gamma'] = setd['CP_gamma']
+        prob['finAngle'] = setd['finAngle']
+        prob['lon'] = setd['lon']
+        prob['CP_Isetpt'] = setd['CP_Isetpt']
+        prob['antAngle'] = setd['antAngle']
+        prob['t'] = setd['t']
+        prob['r_e2b_I0'] = setd['r_e2b_I0']
+        prob['lat'] = setd['lat']
+        prob['alt'] = setd['alt']
+        prob['iSOC'] = setd['iSOC']
 
-assembly = Problem(root=CADRE(n, m))
-#assembly.setup()
-assembly.setup(check=False)
+        prob.run_model()
 
-setd['r_e2b_I0'] = np.zeros(6)
-setd['r_e2b_I0'][:3] = data[idx + ":r_e2b_I0"]
-setd['r_e2b_I0'][3:] = data[idx + ":v_e2b_I0"]
-setd['Gamma'] = data[idx + ":gamma"]
+        inputs = prob.model.list_inputs()    # out_stream=None)
+        outputs = prob.model.list_outputs()  # out_stream=None)
 
-assembly['CP_P_comm'] = setd['CP_P_comm']
-assembly['LD'] = setd['LD']
-assembly['cellInstd'] = setd['cellInstd']
-assembly['CP_gamma'] = setd['CP_gamma']
-assembly['finAngle'] = setd['finAngle']
-assembly['lon'] = setd['lon']
-assembly['CP_Isetpt'] = setd['CP_Isetpt']
-assembly['antAngle'] = setd['antAngle']
-assembly['t'] = setd['t']
-assembly['r_e2b_I0'] = setd['r_e2b_I0']
-assembly['lat'] = setd['lat']
-assembly['alt'] = setd['alt']
-assembly['iSOC'] = setd['iSOC']
+        good = []
+        fail = []
 
-assembly.run()
+        for varpath, meta in inputs + outputs:
+            var = varpath.split('.')[-1]
+            if var in setd:
+                actual = setd[var]
+                computed = prob[var]
+
+                if isinstance(computed, np.ndarray):
+                    rel = np.linalg.norm(actual - computed) / np.linalg.norm(actual)
+                else:
+                    rel = np.abs(actual - computed) / np.abs(actual)
+
+                if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
+                    if rel > 1e-3:
+                        print()
+                        print(varpath, 'fails:')
+                        print(computed)
+                        print('---')
+                        print(actual)
+                        print()
+                        fail.append(varpath)
+                else:
+                    print(varpath, 'is good.')
+                    good.append(varpath)
+            else:
+                print(var, 'not in data.')
+
+        fails = len(fail)
+        total = fails + len(good)
+
+        self.assertEqual(fails, 0,
+                         '%d (of %d) mismatches with validation data:\n%s'
+                         % (fails, total, '\n'.join(sorted(fail))))
 
 
+@unittest.skip('deprecated.')
 class Testcase_CADRE_assembly(unittest.TestCase):
 
     """ Tests the CADRE assembly. """
@@ -81,10 +93,11 @@ class Testcase_CADRE_assembly(unittest.TestCase):
                     actual - computed) / np.linalg.norm(actual)
             else:
                 rel = np.abs(actual - computed) / np.abs(actual)
+
             if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
-                #print(var)
-                #print(computed)
-                #print(actual)
+                # print(var)
+                # print(computed)
+                # print(actual)
                 assert rel <= 1e-3
 
     def test_Comm_DataDownloaded(self):
@@ -388,6 +401,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
 
         self.compare(compname, inputs, outputs)
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     unittest.main()

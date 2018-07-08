@@ -682,7 +682,7 @@ class Comm_GSposEarth(ExplicitComponent):
                        desc="Longitude of ground station in Earth-fixed frame")
         self.add_input('lat', 0.0, units="rad",
                        desc="Latitude of ground station in Earth-fixed frame")
-        self.add_input('alt', 0.0, units="rad",
+        self.add_input('alt', 0.0, units="km",
                        desc="Altitude of ground station in Earth-fixed frame")
 
         # Outputs

@@ -44,7 +44,7 @@ class BsplineParameters(ExplicitComponent):
                         desc='Communication power over time')
 
         self.add_output('Gamma', 0.1*np.ones((n,)), units='rad',
-                        desc='Satellite roll ang le over time')
+                        desc='Satellite roll angle over time')
 
         self.add_output('Isetpt', 0.2*np.ones((12, n)), units="A",
                         desc="Currents of the solar panels over time")
