@@ -194,12 +194,14 @@ class Attitude_Attitude(ExplicitComponent):
         # Inputs
         self.add_input('r_e2b_I', np.zeros((6, n)), units=None,
                        desc='Position and velocity vector from earth to satellite in '
-                       'Earth-centered inertial frame over time')
+                            'Earth-centered inertial frame over time')
 
         # Outputs
         self.add_output('O_RI', np.zeros((3, 3, n)), units=None,
                         desc='Rotation matrix from rolled body-fixed frame to '
-                        'Earth-centered inertial frame over time')
+                             'Earth-centered inertial frame over time')
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -300,6 +302,8 @@ class Attitude_Attitude(ExplicitComponent):
                                              dv_dv)
 
             self.dO_dr[i, 2, :, 3:] = -dv_dv
+
+            # print('dO_dr: %s\n' % str(self.dO_dr.shape), self.dO_dr)
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
         """ Matrix-vector product with the Jacobian. """

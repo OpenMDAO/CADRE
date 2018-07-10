@@ -2,6 +2,7 @@
 
 import unittest
 import warnings
+from pprint import pprint
 
 from parameterized import parameterized
 
@@ -9,7 +10,7 @@ import numpy as np
 
 from openmdao.core.problem import Problem
 from openmdao.core.indepvarcomp import IndepVarComp
-from openmdao.utils.assert_utils import assert_check_partials
+from openmdao.utils.assert_utils import assert_rel_error,assert_check_partials
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
     Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
@@ -20,7 +21,7 @@ from CADRE.comm import Comm_DataDownloaded, Comm_AntRotation, Comm_AntRotationMt
     Comm_BitRate, Comm_Distance, Comm_EarthsSpin, Comm_EarthsSpinMtx, Comm_GainPattern, \
     Comm_GSposEarth, Comm_GSposECI, Comm_LOS, Comm_VectorAnt, Comm_VectorBody, \
     Comm_VectorECI, Comm_VectorSpherical
-from CADRE.orbit import Orbit_Dynamics  # , Orbit_Initial
+from CADRE.orbit import Orbit_Dynamics, Orbit_Initial
 from CADRE.parameters import BsplineParameters
 from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 from CADRE.reactionwheel import ReactionWheel_Motor, ReactionWheel_Power, \
@@ -85,47 +86,66 @@ class TestDerivatives(unittest.TestCase):
         self.assertTrue(isinstance(comp, comp_class),
                         'Could not create instance of %s' % comp_class.__name__)
 
-        # add to problem
+        # add component to problem
         prob = Problem()
         prob.model.add_subsystem(name, comp, promotes=['*'])
 
-        # do initial setup to get inputs
+        # do initial setup to get component inputs and outputs
         prob.setup()
         prob.final_setup()
-        inputs = prob.model.list_inputs(out_stream=None)
+
+        inputs = [name.split('.')[-1]  # promoted name
+                  for name, meta in prob.model.list_inputs(out_stream=None)]
+        outputs = [(name.split('.')[-1])  # promoted name
+                   for name, meta in prob.model.list_outputs(out_stream=None)]
+        print('inputs:', inputs)
+        print('outputs:', outputs)
 
         # create IndepVarComp and add corresponding outputs
         indep = IndepVarComp()
+        for var in inputs:
+            indep.add_output(var, shape=prob[var].shape)
         prob.model.add_subsystem('indep', indep, promotes=['*'])
-        for var, meta in inputs:
-            var_name = var.split('.')[-1]
-            rand_val = np.random.random(meta['value'].shape)
-            indep.add_output(var_name, rand_val)
 
         # redo the setup
         prob.setup()
         prob.final_setup()
 
+        # set random input values
+        np.random.seed(1001)
+        for var in inputs:
+            prob[var] = np.random.random(prob[var].shape)*1e-1
+
+        # shape = self.inputs_dict['T_RW']['value'].shape
+        # self.prob['T_RW'] = np.random.random(shape) * 1e-1
+        # shape = self.inputs_dict['w_RW']['value'].shape
+        # self.prob['w_RW'] = np.random.random(shape) * 1e-1
+        # self.prob.model.comp.deriv_options['step_calc'] = 'relative'
+
         # Some components have a time step as a non-differentiable input.
-        input_names = [var.split('.')[-1] for var, meta in inputs]
-        if 'h' in input_names:
+        if 'h' in inputs:
             prob['h'] = 0.01
 
         # run and check partials
         prob.run_model()
 
-        outputs = prob.model.list_outputs(out_stream=None)
-        output_names = [var.split('.')[-1] for var, meta in outputs]
+        np.set_printoptions(precision=3, linewidth=256)
 
-        prob.check_totals(of=output_names, wrt=input_names)
+        # J = prob.compute_totals(outputs, inputs, return_format='array')
+        # pprint(J)
+        # J = prob.compute_totals(outputs, inputs, return_format='dict')  #, debug_print=True)
+        # assert_rel_error(self, J['temperature']['LOS'][0][0], -6.0, 1e-6)
+        # for outp in outputs:
+        #     for inp in inputs:
+        #         print('\n=================================\n%s wrt %s: %s\n' % (outp, inp, str(J[outp][inp].shape)))
+        #         print(J[outp][inp])
+        # prob.check_totals(of=outputs, wrt=inputs)
 
-        # partials = prob.check_partials(out_stream=None)
-        # from pprint import pprint
-        # pprint(partials['J_fd'])
-        # assert_check_partials(partials, atol=1e-3, rtol=1e-3)
+        partials = prob.check_partials(out_stream=None)
+        assert_check_partials(partials, atol=1e-3, rtol=1e-3)
 
 
-@unittest.skip('deprecated.')
+# @unittest.skip('deprecated.')
 class Testcase_CADRE(unittest.TestCase):
 
     def setUp(self):
@@ -148,8 +168,15 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.prob.model.add_subsystem('comp', comp, promotes=['*'])
 
+        # do initial setup to get component inputs
+        self.prob.setup()
+        self.prob.final_setup()
+        self.inputs_dict = {}
+        for name, meta in self.prob.model.list_inputs(out_stream=None):
+            self.inputs_dict[name.split('.')[-1]] = meta
+
         for item in inputs + state0:
-            pshape = self.prob.model.comp._init_inputs_dict[item]['shape']
+            pshape = self.inputs_dict[item]['value'].shape
             if pshape == 1:
                 initval = 0.0
             else:
@@ -169,12 +196,12 @@ class Testcase_CADRE(unittest.TestCase):
 
     def run_prob(self):
         # Some components have a time step as a non-differentiable input.
-        if 'h' in self.prob.model.comp._init_inputs_dict:
+        if 'h' in self.inputs_dict:
             self.prob['h'] = 0.01
-        self.prob.run()
+        self.prob.run_model()
 
     def compare_derivatives(self, var_in, var_out, rel_error=False):
-        partials = self.prob.check_partials(out_stream=None)
+        partials = self.prob.check_partials()  # compact_print=True)  # out_stream=None)
         assert_check_partials(partials, atol=1e-3, rtol=1e-3)
 
     def test_Attitude_Angular(self):
@@ -344,9 +371,9 @@ class Testcase_CADRE(unittest.TestCase):
         self.setup(compname, inputs, state0)
 
         # These need to be a certain magnitude so it doesn't blow up
-        shape = self.prob.model.comp._init_inputs_dict['P_comm']['shape']
+        shape = self.inputs_dict['P_comm']['value'].shape
         self.prob['P_comm'] = np.ones(shape)
-        shape = self.prob.model.comp._init_inputs_dict['GSdist']['shape']
+        shape = self.inputs_dict['GSdist']['value'].shape
         self.prob['GSdist'] = np.random.random(shape) * 1e3
 
         self.run_prob()
@@ -507,8 +534,15 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.prob.model.add_subsystem('comp', BsplineParameters(NTIME, 5), promotes=['*'])
 
+        # do initial setup to get component inputs
+        self.prob.setup()
+        self.prob.final_setup()
+        self.inputs_dict = {}
+        for name, meta in self.prob.model.comp.list_inputs(out_stream=None):
+            self.inputs_dict[name.split('.')[-1]] = meta
+
         for item in inputs:
-            pshape = self.prob.model.comp._init_inputs_dict[item]['shape']
+            pshape = self.inputs_dict[item]['value'].shape
             if pshape == 1:
                 initval = 0.0
             else:
@@ -519,7 +553,7 @@ class Testcase_CADRE(unittest.TestCase):
         self.prob.setup(check=False)
 
         for item in inputs:
-            shape = self.prob.model.comp._init_inputs_dict[item]['shape']
+            shape = self.inputs_dict[item]['value'].shape
             self.prob[item] = np.random.random(shape)
 
         self.run_prob()
@@ -534,13 +568,13 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs, state0)
 
-        shape = self.prob.model.comp._init_inputs_dict['temperature']['shape']
+        shape = self.inputs_dict['temperature']['value'].shape
         self.prob['temperature'] = np.random.random(shape) * 40 + 240
 
-        shape = self.prob.model.comp._init_inputs_dict['exposedArea']['shape']
+        shape = self.inputs_dict['exposedArea']['value'].shape
         self.prob['exposedArea'] = np.random.random(shape) * 1e-4
 
-        shape = self.prob.model.comp._init_inputs_dict['Isetpt']['shape']
+        shape = self.inputs_dict['Isetpt']['value'].shape
         self.prob['Isetpt'] = np.random.random(shape) * 1e-2
 
         self.run_prob()
@@ -589,11 +623,11 @@ class Testcase_CADRE(unittest.TestCase):
 
         self.setup(compname, inputs, state0)
 
-        shape = self.prob.model.comp._init_inputs_dict['T_RW']['shape']
+        shape = self.inputs_dict['T_RW']['value'].shape
         self.prob['T_RW'] = np.random.random(shape) * 1e-1
-        shape = self.prob.model.comp._init_inputs_dict['w_RW']['shape']
+        shape = self.inputs_dict['w_RW']['value'].shape
         self.prob['w_RW'] = np.random.random(shape) * 1e-1
-        self.prob.model.comp.deriv_options['step_calc'] = 'relative'
+        # self.prob.model.comp.deriv_options['step_calc'] = 'relative'
 
         self.run_prob()
         self.compare_derivatives(inputs, outputs, rel_error=True)
@@ -621,9 +655,9 @@ class Testcase_CADRE(unittest.TestCase):
         self.setup(compname, inputs, state0)
         self.prob.model.comp.h = 0.01
 
-        shape = self.prob.model.comp._init_inputs_dict['w_B']['shape']
+        shape = self.inputs_dict['w_B']['value'].shape
         self.prob['w_B'] = np.random.random(shape) * 1e-4
-        shape = self.prob.model.comp._init_inputs_dict['T_RW']['shape']
+        shape = self.inputs_dict['T_RW']['value'].shape
         self.prob['T_RW'] = np.random.random(shape) * 1e-9
 
         self.run_prob()

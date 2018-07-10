@@ -35,6 +35,11 @@ class BatterySOC(rk4.RK4):
     def __init__(self, n_times, h):
         super(BatterySOC, self).__init__(n_times, h)
 
+        self.n_times = n_times
+
+    def setup(self):
+        n_times = self.n_times
+
         # Inputs
         self.add_input('iSOC', np.zeros((1, )), units=None,
                        desc='Initial state of charge')
@@ -49,6 +54,8 @@ class BatterySOC(rk4.RK4):
         self.add_output('SOC', np.zeros((1, n_times)), units=None,
                         desc='Battery state of charge over time')
 
+        self.declare_partials('*', '*')
+
         self.options['state_var'] = 'SOC'
         self.options['init_state_var'] = 'iSOC'
         self.options['external_vars'] = ['P_bat', 'temperature']
@@ -57,7 +64,6 @@ class BatterySOC(rk4.RK4):
         """
         Rate of change of SOC
         """
-
         SOC = state[0]
         P = external[0]
         T = external[5]
@@ -69,13 +75,13 @@ class BatterySOC(rk4.RK4):
         I = P/V
 
         soc_dot = -sigma/24*SOC + eta/Cp*I
+
         return soc_dot
 
     def df_dy(self, external, state):
         """
         State derivative
         """
-
         SOC = state[0]
         P = external[0]
         T = external[5]
@@ -96,9 +102,8 @@ class BatterySOC(rk4.RK4):
 
     def df_dx(self, external, state):
         """
-        Output deriative
+        Output derivative
         """
-
         SOC = state[0]
         P = external[0]
         T = external[1]
@@ -122,11 +127,13 @@ class BatteryPower(ExplicitComponent):
     """
     Power supplied by the battery
     """
-
     def __init__(self, n=2):
         super(BatteryPower, self).__init__()
 
         self.n = n
+
+    def setup(self):
+        n = self.n
 
         # Inputs
         self.add_input('SOC', np.zeros((1, n)), units=None,
@@ -142,9 +149,12 @@ class BatteryPower(ExplicitComponent):
         self.add_output('I_bat', np.zeros((n, )), units='A',
                         desc='Battery Current over time')
 
-    def compute(self, inputs, outputs):
-        """ Calculate outputs. """
+        self.declare_partials('*', '*')
 
+    def compute(self, inputs, outputs):
+        """
+        Calculate outputs.
+        """
         SOC = inputs['SOC']
         temperature = inputs['temperature']
         P_bat = inputs['P_bat']
@@ -152,12 +162,16 @@ class BatteryPower(ExplicitComponent):
         self.exponential = (2.0 - np.exp(alpha*(temperature[4, :]-T0)/T0))
         self.voc = 3.0 + np.expm1(SOC[0, :]) / (np.e-1)
         self.V = IR * self.voc * self.exponential
-        outputs['I_bat'] = P_bat/self.V
+
+        outputs['I_bat'] = P_bat / self.V
 
     def compute_partials(self, inputs, partials):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
+        np.set_printoptions(precision=3, linewidth=256)
+        from pprint import pprint
+        pprint(partials._subjacs_info)
 
         SOC = inputs['SOC']
         temperature = inputs['temperature']
@@ -165,8 +179,7 @@ class BatteryPower(ExplicitComponent):
 
         # dI_dP
         dV_dvoc = IR * self.exponential
-        dV_dT = - IR * self.voc * np.exp(alpha*(temperature[4, :] -
-                                                T0)/T0) * alpha / T0
+        dV_dT = - IR * self.voc * np.exp(alpha*(temperature[4, :] - T0)/T0) * alpha / T0
         dVoc_dSOC = np.exp(SOC[0, :]) / (np.e-1)
 
         self.dI_dP = 1.0 / self.V
@@ -174,13 +187,27 @@ class BatteryPower(ExplicitComponent):
         self.dI_dT = tmp * dV_dT
         self.dI_dSOC = tmp * dV_dvoc * dVoc_dSOC
 
+        print('self.dI_dT:', self.dI_dT.shape, self.dI_dT)
+
+        partials['I_bat', 'SOC'] = self.dI_dSOC * np.eye(self.n)
+        partials['I_bat', 'temperature'][:, 4*self.n:] = self.dI_dT * np.eye(self.n)[:]
+        partials['I_bat', 'P_bat'] = self.dI_dP * np.eye(self.n)
+
+        print("partials['I_bat', 'SOC']")
+        print(partials['I_bat', 'SOC'])
+        print("partials['I_bat', 'temperature']")
+        print(partials['I_bat', 'temperature'])
+        print("partials['I_bat', 'P_bat']")
+        print(partials['I_bat', 'P_bat'])
+
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
+        """
+        Matrix-vector product with the Jacobian.
+        """
 
         dI_bat = d_outputs['I_bat']
 
         if mode == 'fwd':
-
             if 'P_bat' in d_inputs:
                 dI_bat += self.dI_dP * d_inputs['P_bat']
 
@@ -189,9 +216,7 @@ class BatteryPower(ExplicitComponent):
 
             if 'SOC' in d_inputs:
                 dI_bat += self.dI_dSOC * d_inputs['SOC'][0, :]
-
         else:
-
             if 'P_bat' in d_inputs:
                 d_inputs['P_bat'] += self.dI_dP * dI_bat
 

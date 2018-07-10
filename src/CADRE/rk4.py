@@ -29,6 +29,7 @@ class RK4(ExplicitComponent):
         Declare options before kwargs are processed in the init method.
         """
         opts = self.options
+
         opts.declare('state_var', '',
                      desc="Name of the variable to be used for time integration")
         opts.declare('init_state_var', '',
@@ -249,6 +250,9 @@ class RK4(ExplicitComponent):
             # Input-State Jacobian at each time point.
             # No Jacobian with respect to previous time points.
             self.Jx[k+1, :, :] = h/6*(da_dx + 2*(db_dx + dc_dx) + dd_dx).T
+            # print(self, 'compute_partials()')
+            # print('Jx: %s\n' % str(self.Jx.shape), self.Jx)
+            # print('Jy: %s\n' % str(self.Jy.shape), self.Jy)
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
         """

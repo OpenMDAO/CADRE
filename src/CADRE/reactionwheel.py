@@ -1,5 +1,7 @@
 """ Reaction wheel discipline for CADRE """
 
+from __future__ import print_function
+
 from six.moves import range
 import numpy as np
 
@@ -129,6 +131,9 @@ class ReactionWheel_Power(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('w_RW', np.zeros((3, n)), units='1/s',
                        desc='Angular velocity vector of reaction wheel over time')
@@ -139,6 +144,8 @@ class ReactionWheel_Power(ExplicitComponent):
         # Outputs
         self.add_output('P_RW', np.ones((3, n)), units='W',
                         desc='Reaction wheel power over time')
+
+        self.declare_partials('*', '*', method='fd')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """
@@ -152,6 +159,9 @@ class ReactionWheel_Power(ExplicitComponent):
                 P_RW[k, i] = (self.V * (self.a * w_RW[k, i] +
                               self.b * T_RW[k, i])**2 +
                               self.V * self.I0)
+        # print('w_RW: %s\n' % str(w_RW.shape), w_RW)
+        # print('T_RW: %s\n' % str(T_RW.shape), T_RW)
+        # print('P_RW: %s\n' % str(P_RW.shape), P_RW)
 
     def compute_partials(self, inputs, partials):
         """ Calculate and save derivatives. (i.e., Jacobian) """
@@ -166,6 +176,11 @@ class ReactionWheel_Power(ExplicitComponent):
                 prod = 2 * self.V * (self.a * w_RW[k, i] + self.b * T_RW[k, i])
                 self.dP_dw[i, k] = self.a * prod
                 self.dP_dT[i, k] = self.b * prod
+
+        # print('dP_dw: %s\n' % str(self.dP_dw.shape), self.dP_dw)
+        # print('dP_dT: %s\n' % str(self.dP_dT.shape), self.dP_dT)
+        # partials['P_RW', 'w_RW'] = self.dP_dw
+        # partials['P_RW', 'T_RW'] = self.dP_dT
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
         """ Matrix-vector product with the Jacobian. """

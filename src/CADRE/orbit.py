@@ -167,6 +167,8 @@ class Orbit_Initial(ExplicitComponent):
                         desc='Initial position and velocity vectors from Earth '
                              'to satellite in Earth-centered inertial frame')
 
+        self.declare_partials('*', '*')
+
     def compute_rv(self, altPerigee, altApogee, RAAN, Inc, argPerigee, trueAnomaly):
         """
         Compute position and velocity from orbital elements

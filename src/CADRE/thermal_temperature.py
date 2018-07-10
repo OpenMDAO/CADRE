@@ -59,6 +59,8 @@ class ThermalTemperature(RK4):
         self.options['external_vars'] = ["exposedArea", "LOS", "P_comm"]
         self.options['fixed_external_vars'] = ["cellInstd"]
 
+        self.declare_partials('*', '*')
+
     def compute(self, inputs, outputs):
         """ Calculate outputs. """
 
