@@ -2,7 +2,7 @@
 
 import unittest
 import warnings
-from pprint import pprint
+# from pprint import pprint
 
 from parameterized import parameterized
 
@@ -10,7 +10,7 @@ import numpy as np
 
 from openmdao.core.problem import Problem
 from openmdao.core.indepvarcomp import IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error,assert_check_partials
+from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
     Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
@@ -88,16 +88,16 @@ class TestDerivatives(unittest.TestCase):
 
         # add component to problem
         prob = Problem()
-        prob.model.add_subsystem(name, comp, promotes=['*'])
+        prob.model.add_subsystem('comp', comp, promotes=['*'])
 
         # do initial setup to get component inputs and outputs
         prob.setup()
         prob.final_setup()
 
-        inputs = [name.split('.')[-1]  # promoted name
-                  for name, meta in prob.model.list_inputs(out_stream=None)]
-        outputs = [(name.split('.')[-1])  # promoted name
-                   for name, meta in prob.model.list_outputs(out_stream=None)]
+        inputs = [var.split('.')[-1]  # promoted name
+                  for var, meta in prob.model.list_inputs(out_stream=None)]
+        outputs = [(var.split('.')[-1])  # promoted name
+                   for var, meta in prob.model.list_outputs(out_stream=None)]
         print('inputs:', inputs)
         print('outputs:', outputs)
 
@@ -111,10 +111,21 @@ class TestDerivatives(unittest.TestCase):
         prob.setup()
         prob.final_setup()
 
+        prob['P_bat'] = [0.30623218, 0.26506357, 0.19606006, 0.43052148, 0.02311355]
+        prob['temperature'] = [
+            [0.19578192, 0.35280529, 0.22324202, 0.61352186, 0.58045711],
+            [0.85356768, 0.04113054, 0.48817444, 0.92082616, 0.10910188],
+            [0.41105662, 0.47012682, 0.12729655, 0.982355,   0.02031597],
+            [0.70548605, 0.96550914, 0.35274539, 0.60589476, 0.21738034],
+            [0.99196955, 0.66917956, 0.69303974, 0.17547093, 0.83044881]
+        ]
+        prob['iSOC'] = [0.24618777]
+
         # set random input values
         np.random.seed(1001)
         for var in inputs:
-            prob[var] = np.random.random(prob[var].shape)*1e-1
+            # prob[var] = np.random.random(prob[var].shape)*1e-1
+            print var, '=', prob[var]
 
         # shape = self.inputs_dict['T_RW']['value'].shape
         # self.prob['T_RW'] = np.random.random(shape) * 1e-1
@@ -123,13 +134,12 @@ class TestDerivatives(unittest.TestCase):
         # self.prob.model.comp.deriv_options['step_calc'] = 'relative'
 
         # Some components have a time step as a non-differentiable input.
-        if 'h' in inputs:
-            prob['h'] = 0.01
+        comp.h = 0.01
 
         # run and check partials
-        prob.run_model()
+        prob.run_driver()
 
-        np.set_printoptions(precision=3, linewidth=256)
+        # np.set_printoptions(precision=3, linewidth=256)
 
         # J = prob.compute_totals(outputs, inputs, return_format='array')
         # pprint(J)
@@ -137,11 +147,12 @@ class TestDerivatives(unittest.TestCase):
         # assert_rel_error(self, J['temperature']['LOS'][0][0], -6.0, 1e-6)
         # for outp in outputs:
         #     for inp in inputs:
-        #         print('\n=================================\n%s wrt %s: %s\n' % (outp, inp, str(J[outp][inp].shape)))
+        #         print('\n=================================\n%s wrt %s: %s\n' \
+        #               % (outp, inp, str(J[outp][inp].shape)))
         #         print(J[outp][inp])
         # prob.check_totals(of=outputs, wrt=inputs)
 
-        partials = prob.check_partials(out_stream=None)
+        partials = prob.check_partials()  # out_stream=None)
         assert_check_partials(partials, atol=1e-3, rtol=1e-3)
 
 
@@ -196,13 +207,37 @@ class Testcase_CADRE(unittest.TestCase):
 
     def run_prob(self):
         # Some components have a time step as a non-differentiable input.
-        if 'h' in self.inputs_dict:
-            self.prob['h'] = 0.01
+        self.prob.model.comp.h = 0.01
+
         self.prob.run_model()
 
     def compare_derivatives(self, var_in, var_out, rel_error=False):
+        np.set_printoptions(linewidth=111)
+
         partials = self.prob.check_partials()  # compact_print=True)  # out_stream=None)
-        assert_check_partials(partials, atol=1e-3, rtol=1e-3)
+        # assert_check_partials(partials, atol=1e-3, rtol=1e-3)
+
+        J = self.prob.check_totals(of=var_out, wrt=var_in)
+        # print(J)
+
+        for outp in var_out:
+            for inp in var_in:
+                Jn = J[outp, inp]['J_fd']
+                Jf = J[outp, inp]['J_fwd']
+                if rel_error:
+                    diff = np.nan_to_num(abs(Jf - Jn) / Jn)
+                else:
+                    diff = abs(Jf - Jn)
+                if outp == 'SOC' and inp == 'iSOC':
+                    print('========', outp, 'wrt', inp, '===========')
+                    print('FD:')
+                    print(Jn)
+                    print('Fwd:')
+                    print(Jf)
+                    print('diff:')
+                    print(diff)
+                    print('diff.max():', diff.max())
+                assert_rel_error(self, diff.max(), 0.0, 1e-3)
 
     def test_Attitude_Angular(self):
 
