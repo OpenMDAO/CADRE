@@ -243,6 +243,14 @@ class BatteryConstraints(ExplicitComponent):
         self.SOC0 = 0.2
         self.SOC1 = 1.0
 
+        self.KS_ch = KSfunction()
+        self.KS_ds = KSfunction()
+        self.KS_s0 = KSfunction()
+        self.KS_s1 = KSfunction()
+
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('I_bat', np.zeros((n, )), units='A',
                        desc='Battery current over time')
@@ -263,10 +271,7 @@ class BatteryConstraints(ExplicitComponent):
         self.add_output('ConS1', 0.0, units=None,
                         desc='Constraint on maximum state of charge')
 
-        self.KS_ch = KSfunction()
-        self.KS_ds = KSfunction()
-        self.KS_s0 = KSfunction()
-        self.KS_s1 = KSfunction()
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """

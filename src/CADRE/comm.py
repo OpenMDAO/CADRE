@@ -28,6 +28,11 @@ class Comm_DataDownloaded(rk4.RK4):
     def __init__(self, n_times, h):
         super(Comm_DataDownloaded, self).__init__(n_times, h)
 
+        self.n_times = n_times
+
+    def setup(self):
+        n_times = self.n_times
+
         # Inputs
         self.add_input('Dr', np.zeros(n_times), units="Gibyte/s",
                        desc="Download rate over time")
@@ -43,6 +48,8 @@ class Comm_DataDownloaded(rk4.RK4):
         self.options['state_var'] = "Data"
         self.options['init_state_var'] = "Data0"
         self.options['external_vars'] = ["Dr"]
+
+        self.declare_partials('*', '*')
 
         self.dfdy = np.array([[0.]])
         self.dfdx = np.array([[1.]])
@@ -65,12 +72,19 @@ class Comm_AntRotation(ExplicitComponent):
     def __init__(self, n):
         super(Comm_AntRotation, self).__init__()
 
+        self.n = n
+
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('antAngle', 0.0)
 
         # Outputs
         self.add_output('q_A', np.zeros((4, n)), units=None,
                         desc="Quarternion matrix in antenna angle frame over time")
+
+        self.declare_partials('*', '*')
 
         self.dq_dt = np.zeros(4)
 
@@ -119,6 +133,9 @@ class Comm_AntRotationMtx(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('q_A', np.zeros((4, self.n)),
                        desc="Quarternion matrix in antenna angle frame over time")
@@ -126,7 +143,9 @@ class Comm_AntRotationMtx(ExplicitComponent):
         # Outputs
         self.add_output('O_AB', np.zeros((3, 3, self.n)), units=None,
                         desc="Rotation matrix from antenna angle to body-fixed "
-                        "frame over time")
+                             "frame over time")
+
+        self.declare_partials('*', '*')
 
         self.J = np.empty((self.n, 3, 3, 4))
 
@@ -260,6 +279,7 @@ class Comm_BitRate(ExplicitComponent):
         super(Comm_BitRate, self).__init__()
         self.n = n
 
+    def setup(self):
         # Inputs
         self.add_input('P_comm', np.zeros(self.n), units="W",
                        desc="Communication power over time")
@@ -276,6 +296,8 @@ class Comm_BitRate(ExplicitComponent):
         # Outputs
         self.add_output('Dr', np.zeros(self.n), units="Gibyte/s",
                         desc="Download rate over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """
@@ -360,14 +382,17 @@ class Comm_Distance(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
         # Inputs
         self.add_input('r_b2g_A', np.zeros((3, self.n)), units="km",
                        desc="Position vector from satellite to ground station "
-                       "in antenna angle frame over time")
+                            "in antenna angle frame over time")
 
         # Outputs
         self.add_output('GSdist', np.zeros(self.n), units="km",
                         desc="Distance from ground station to satellite over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """
@@ -410,8 +435,10 @@ class Comm_EarthsSpin(ExplicitComponent):
 
     def __init__(self, n):
         super(Comm_EarthsSpin, self).__init__()
+
         self.n = n
 
+    def setup(self):
         # Inputs
         self.add_input('t', np.zeros(self.n), units="s",
                        desc="Time")
@@ -419,6 +446,8 @@ class Comm_EarthsSpin(ExplicitComponent):
         # Outputs
         self.add_output('q_E', np.zeros((4, self.n)), units=None,
                         desc="Quarternion matrix in Earth-fixed frame over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """
@@ -476,7 +505,9 @@ class Comm_EarthsSpinMtx(ExplicitComponent):
         # Outputs
         self.add_output('O_IE', np.zeros((3, 3, self.n)), units=None,
                         desc="Rotation matrix from Earth-centered inertial frame to "
-                        "Earth-fixed frame over time")
+                             "Earth-fixed frame over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -609,25 +640,30 @@ class Comm_GainPattern(ExplicitComponent):
             rawGdata = np.genfromtxt(fpath + '/data/Comm/Gain.txt')
             rawG = (10 ** (rawGdata / 10.0)).reshape((361, 361), order='F')
 
-        # Inputs
-        self.add_input('azimuthGS', np.zeros(n), units="rad",
-                       desc="Azimuth angle from satellite to ground station in "
-                       "Earth-fixed frame over time")
-
-        self.add_input('elevationGS', np.zeros(n), units="rad",
-                       desc="Elevation angle from satellite to ground station "
-                       "in Earth-fixed frame over time")
-
-        # Outputs
-        self.add_output('gain', np.zeros(n), units=None,
-                        desc="Transmitter gain over time")
-
         pi = np.pi
         az = np.linspace(0, 2 * pi, 361)
         el = np.linspace(0, 2 * pi, 361)
 
         self.MBI = MBI(rawG, [az, el], [15, 15], [4, 4])
         self.x = np.zeros((self.n, 2), order='F')
+
+    def setup(self):
+        n = self.n
+
+        # Inputs
+        self.add_input('azimuthGS', np.zeros(n), units="rad",
+                       desc="Azimuth angle from satellite to ground station in "
+                            "Earth-fixed frame over time")
+
+        self.add_input('elevationGS', np.zeros(n), units="rad",
+                       desc="Elevation angle from satellite to ground station "
+                            "in Earth-fixed frame over time")
+
+        # Outputs
+        self.add_output('gain', np.zeros(n), units=None,
+                        desc="Transmitter gain over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -677,6 +713,7 @@ class Comm_GSposEarth(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
         # Inputs
         self.add_input('lon', 0.0, units="rad",
                        desc="Longitude of ground station in Earth-fixed frame")
@@ -688,7 +725,9 @@ class Comm_GSposEarth(ExplicitComponent):
         # Outputs
         self.add_output('r_e2g_E', np.zeros((3, self.n)), units="km",
                         desc="Position vector from earth to ground station in "
-                        "Earth-fixed frame over time")
+                             "Earth-fixed frame over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -773,19 +812,22 @@ class Comm_GSposECI(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
         # Inputs
         self.add_input('O_IE', np.zeros((3, 3, self.n)), units=None,
                        desc="Rotation matrix from Earth-centered inertial "
-                       "frame to Earth-fixed frame over time")
+                            "frame to Earth-fixed frame over time")
 
         self.add_input('r_e2g_E', np.zeros((3, self.n)), units="km",
                        desc="Position vector from earth to ground station in "
-                       "Earth-fixed frame over time")
+                            "Earth-fixed frame over time")
 
         # Outputs
         self.add_output('r_e2g_I', np.zeros((3, self.n)), units="km",
                         desc="Position vector from earth to ground station in "
-                        "Earth-centered inertial frame over time")
+                             "Earth-centered inertial frame over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -856,18 +898,23 @@ class Comm_LOS(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('r_b2g_I', np.zeros((3, n)), units="km",
                        desc="Position vector from satellite to ground station "
-                       "in Earth-centered inertial frame over time")
+                            "in Earth-centered inertial frame over time")
 
         self.add_input('r_e2g_I', np.zeros((3, n)), units="km",
                        desc="Position vector from earth to ground station in "
-                       "Earth-centered inertial frame over time")
+                            "Earth-centered inertial frame over time")
 
         # Outputs
         self.add_output('CommLOS', np.zeros(n), units=None,
                         desc="Satellite to ground station line of sight over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -949,19 +996,24 @@ class Comm_VectorAnt(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('r_b2g_B', np.zeros((3, n)), units="km",
                        desc="Position vector from satellite to ground station "
-                       "in body-fixed frame over time")
+                            "in body-fixed frame over time")
 
         self.add_input('O_AB', np.zeros((3, 3, n)), units=None,
                        desc="Rotation matrix from antenna angle to body-fixed "
-                       "frame over time")
+                            "frame over time")
 
         # Outputs
         self.add_output('r_b2g_A', np.zeros((3, n)), units="km",
                         desc="Position vector from satellite to ground station "
-                        "in antenna angle frame over time")
+                             "in antenna angle frame over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -1016,19 +1068,24 @@ class Comm_VectorBody(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('r_b2g_I', np.zeros((3, n)), units="km",
                        desc="Position vector from satellite to ground station "
-                       "in Earth-centered inertial frame over time")
+                            "in Earth-centered inertial frame over time")
 
         self.add_input('O_BI', np.zeros((3, 3, n)), units=None,
                        desc="Rotation matrix from body-fixed frame to Earth-centered"
-                       "inertial frame over time")
+                            "inertial frame over time")
 
         # Outputs
         self.add_output('r_b2g_B', np.zeros((3, n)), units="km",
                         desc="Position vector from satellite to ground station "
-                        "in body-fixed frame over time")
+                             "in body-fixed frame over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -1095,19 +1152,24 @@ class Comm_VectorECI(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('r_e2g_I', np.zeros((3, n)), units="km",
                        desc="Position vector from earth to ground station in "
-                       "Earth-centered inertial frame over time")
+                            "Earth-centered inertial frame over time")
 
         self.add_input('r_e2b_I', np.zeros((6, n)), units=None,
                        desc="Position and velocity vector from earth to satellite "
-                       "in Earth-centered inertial frame over time")
+                            "in Earth-centered inertial frame over time")
 
         # Outputs
         self.add_output('r_b2g_I', np.zeros((3, n)), units="km",
                         desc="Position vector from satellite to ground station "
-                        "in Earth-centered inertial frame over time")
+                             "in Earth-centered inertial frame over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -1145,19 +1207,24 @@ class Comm_VectorSpherical(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('r_b2g_A', np.zeros((3, n)), units="km",
                        desc="Position vector from satellite to ground station "
-                       "in antenna angle frame over time")
+                            "in antenna angle frame over time")
 
         # Outputs
         self.add_output('azimuthGS', np.zeros(n), units="rad",
                         desc="Azimuth angle from satellite to ground station in "
-                        "Earth-fixed frame over time")
+                             "Earth-fixed frame over time")
 
         self.add_output('elevationGS', np.zeros(n), units="rad",
                         desc="Elevation angle from satellite to ground station "
-                        "in Earth-fixed frame over time")
+                             "in Earth-fixed frame over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """

@@ -41,11 +41,13 @@ class Orbit_Dynamics(rk4.RK4):
     def setup(self):
         self.add_input('r_e2b_I0', np.zeros((6, )), units=None,  # fd_step=1e-2,
                        desc='Initial position and velocity vectors from earth to '
-                       'satellite in Earth-centered inertial frame')
+                            'satellite in Earth-centered inertial frame')
 
         self.add_output('r_e2b_I', 1000.0*np.ones((6, self.n_times)), units=None,
                         desc='Position and velocity vectors from earth to satellite '
-                        'in Earth-centered inertial frame over time')
+                             'in Earth-centered inertial frame over time')
+
+        self.declare_partials('*', '*')
 
         self.dfdx = np.zeros((6, 1))
 

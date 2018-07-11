@@ -27,23 +27,6 @@ class Power_CellVoltage(ExplicitComponent):
             fpath = os.path.dirname(os.path.realpath(__file__))
             dat = np.genfromtxt(fpath + '/data/Power/curve.dat')
 
-        # Inputs
-        self.add_input('LOS', np.zeros((n)), units=None,
-                       desc="Line of Sight over Time")
-
-        self.add_input('temperature', np.zeros((5, n)), units="degK",
-                       desc="Temperature of solar cells over time")
-
-        self.add_input('exposedArea', np.zeros((7, 12, n)), units="m**2",
-                       desc="Exposed area to sun for each solar cell over time")
-
-        self.add_input('Isetpt', np.zeros((12, n)), units="A",
-                       desc="Currents of the solar panels")
-
-        # Outputs
-        self.add_output('V_sol', np.zeros((12, n)), units="V",
-                        desc="Output voltage of solar panel over time")
-
         nT, nA, nI = dat[:3]
         nT = int(nT)
         nA = int(nA)
@@ -61,6 +44,29 @@ class Power_CellVoltage(ExplicitComponent):
         self.dV_dT = np.zeros((self.n, 12, 5), order='F')
         self.dV_dA = np.zeros((self.n, 7, 12), order='F')
         self.dV_dI = np.zeros((self.n, 12), order='F')
+
+    def setup(self):
+        n = self.n
+
+        # Inputs
+        self.add_input('LOS', np.zeros((n)), units=None,
+                       desc="Line of Sight over Time")
+
+        self.add_input('temperature', np.zeros((5, n)), units="degK",
+                       desc="Temperature of solar cells over time")
+
+        self.add_input('exposedArea', np.zeros((7, 12, n)), units="m**2",
+                       desc="Exposed area to sun for each solar cell over time")
+
+        self.add_input('Isetpt', np.zeros((12, n)), units="A",
+                       desc="Currents of the solar panels")
+
+        # Outputs
+        self.add_output('V_sol', np.zeros((12, n)), units="V",
+                        desc="Output voltage of solar panel over time")
+
+        # FIXME: MemoryError
+        # self.declare_partials('*', '*')
 
     def setx(self, inputs):
 
@@ -161,6 +167,9 @@ class Power_SolarPower(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('Isetpt', np.zeros((12, n)), units="A",
                        desc="Currents of the solar panels")
@@ -170,6 +179,8 @@ class Power_SolarPower(ExplicitComponent):
 
         self.add_output('P_sol', np.zeros((n, )), units="W",
                         desc="Solar panels power over time")
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """
@@ -218,6 +229,9 @@ class Power_Total(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('P_sol', np.zeros((n, ), order='F'), units='W',
                        desc='Solar panels power over time')
@@ -231,6 +245,8 @@ class Power_Total(ExplicitComponent):
         # Outputs
         self.add_output('P_bat', np.zeros((n, ), order='F'), units='W',
                         desc='Battery power over time')
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """

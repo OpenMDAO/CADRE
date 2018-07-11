@@ -39,23 +39,6 @@ class Solar_ExposedArea(ExplicitComponent):
         self.nc = 7
         self.np = 12
 
-        # Inputs
-        self.add_input('finAngle', 0.0, units='rad',
-                       desc='Fin angle of solar panel')
-
-        self.add_input('azimuth', np.zeros((n, )), units='rad',
-                       desc='Azimuth angle of the sun in the body-fixed frame '
-                            'over time')
-
-        self.add_input('elevation', np.zeros((n, )), units='rad',
-                       desc='Elevation angle of the sun in the body-fixed '
-                            'frame over time')
-
-        # Outputs
-        self.add_output('exposedArea', np.zeros((self.nc, self.np, self.n)),
-                        desc='Exposed area to sun for each solar cell over time',
-                        units='m**2', lower=-5e-3, upper=1.834e-1)
-
         self.na = 10
         self.nz = 73
         self.ne = 37
@@ -103,6 +86,25 @@ class Solar_ExposedArea(ExplicitComponent):
         self.Jfin = None
         self.Jaz = None
         self.Jel = None
+
+    def setup(self):
+        # Inputs
+        self.add_input('finAngle', 0.0, units='rad',
+                       desc='Fin angle of solar panel')
+
+        self.add_input('azimuth', np.zeros((self.n, )), units='rad',
+                       desc='Azimuth angle of the sun in the body-fixed frame over time')
+
+        self.add_input('elevation', np.zeros((self.n, )), units='rad',
+                       desc='Elevation angle of the sun in the body-fixed frame over time')
+
+        # Outputs
+        self.add_output('exposedArea', np.zeros((self.nc, self.np, self.n)),
+                        desc='Exposed area to sun for each solar cell over time',
+                        units='m**2', lower=-5e-3, upper=1.834e-1)
+
+        # FIXME: MemoryError
+        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """

@@ -23,6 +23,9 @@ class ReactionWheel_Motor(ExplicitComponent):
         # Constant
         self.J_RW = 2.8e-5
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('T_RW', np.zeros((3, n)), units='N*m',
                        desc='Torque vector of reaction wheel over time')
@@ -36,6 +39,8 @@ class ReactionWheel_Motor(ExplicitComponent):
         # Outputs
         self.add_output('T_m', np.ones((3, n)), units='N*m',
                         desc='Torque vector of motor over time')
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """
@@ -145,7 +150,7 @@ class ReactionWheel_Power(ExplicitComponent):
         self.add_output('P_RW', np.ones((3, n)), units='W',
                         desc='Reaction wheel power over time')
 
-        self.declare_partials('*', '*', method='fd')
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """
@@ -211,6 +216,9 @@ class ReactionWheel_Torque(ExplicitComponent):
 
         self.n = n
 
+    def setup(self):
+        n = self.n
+
         # Inputs
         self.add_input('T_tot', np.zeros((3, n)), units='N*m',
                        desc='Total reaction wheel torque over time')
@@ -218,6 +226,8 @@ class ReactionWheel_Torque(ExplicitComponent):
         # Outputs
         self.add_output('T_RW', np.zeros((3, n)), units='N*m',
                         desc='Torque vector of reaction wheel over time')
+
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """
@@ -239,6 +249,11 @@ class ReactionWheel_Dynamics(rk4.RK4):
     def __init__(self, n_times, h):
         super(ReactionWheel_Dynamics, self).__init__(n_times, h)
 
+        self.n_times = n_times
+
+    def setup(self):
+        n_times = self.n_times
+
         # Inputs
         self.add_input('w_B', np.zeros((3, n_times)), units='1/s',
                        desc='Angular velocity vector in body-fixed frame over time')
@@ -252,6 +267,8 @@ class ReactionWheel_Dynamics(rk4.RK4):
         # Outputs
         self.add_output('w_RW', np.zeros((3, n_times)), units='1/s',
                         desc='Angular velocity vector of reaction wheel over time')
+
+        self.declare_partials('*', '*')
 
         self.options['state_var'] = 'w_RW'
         self.options['init_state_var'] = 'w_RW0'

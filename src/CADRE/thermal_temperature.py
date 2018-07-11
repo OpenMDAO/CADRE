@@ -54,12 +54,12 @@ class ThermalTemperature(RK4):
                         desc="Temperature for the 4 fins and body over time.",
                         lower=50, upper=400)
 
+        self.declare_partials('*', '*')
+
         self.options['state_var'] = "temperature"
         self.options['init_state_var'] = "T0"
         self.options['external_vars'] = ["exposedArea", "LOS", "P_comm"]
         self.options['fixed_external_vars'] = ["cellInstd"]
-
-        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """ Calculate outputs. """
