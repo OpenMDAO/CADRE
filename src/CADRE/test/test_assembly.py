@@ -101,7 +101,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
                 assert rel <= 1e-3
 
     def test_Comm_DataDownloaded(self):
-
         compname = 'Comm_DataDownloaded'
         inputs = ['Dr']
         outputs = ['Data']
@@ -109,7 +108,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_AntRotation(self):
-
         compname = 'Comm_AntRotation'
         inputs = ['antAngle']
         outputs = ['q_A']
@@ -117,7 +115,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_BitRate(self):
-
         compname = 'Comm_BitRate'
         inputs = ['P_comm', 'gain', 'GSdist', 'CommLOS']
         outputs = ['Dr']
@@ -125,7 +122,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_Distance(self):
-
         compname = 'Comm_Distance'
         inputs = ['r_b2g_A']
         outputs = ['GSdist']
@@ -133,7 +129,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_EarthsSpin(self):
-
         compname = 'Comm_EarthsSpin'
         inputs = ['t']
         outputs = ['q_E']
@@ -141,7 +136,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_EarthsSpinMtx(self):
-
         compname = 'Comm_EarthsSpinMtx'
         inputs = ['q_E']
         outputs = ['O_IE']
@@ -156,7 +150,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_GSposEarth(self):
-
         compname = 'Comm_GSposEarth'
         inputs = ['lon', 'lat', 'alt']
         outputs = ['r_e2g_E']
@@ -164,7 +157,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_GSposECI(self):
-
         compname = 'Comm_GSposECI'
         inputs = ['O_IE', 'r_e2g_E']
         outputs = ['r_e2g_I']
@@ -172,7 +164,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_LOS(self):
-
         compname = 'Comm_LOS'
         inputs = ['r_b2g_I', 'r_e2g_I']
         outputs = ['CommLOS']
@@ -180,7 +171,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_VectorAnt(self):
-
         compname = 'Comm_VectorAnt'
         inputs = ['r_b2g_B', 'O_AB']
         outputs = ['r_b2g_A']
@@ -188,7 +178,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_VectorBody(self):
-
         compname = 'Comm_VectorBody'
         inputs = ['r_b2g_I', 'O_BI']
         outputs = ['r_b2g_B']
@@ -196,7 +185,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_VectorECI(self):
-
         compname = 'Comm_VectorECI'
         inputs = ['r_e2g_I', 'r_e2b_I']
         outputs = ['r_b2g_I']
@@ -204,7 +192,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Comm_VectorSpherical(self):
-
         compname = 'Comm_VectorSpherical'
         inputs = ['r_b2g_A']
         outputs = ['azimuthGS', 'elevationGS']
@@ -212,7 +199,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_ThermalTemperature(self):
-
         compname = 'ThermalTemperature'
         inputs = ['exposedArea', 'cellInstd', 'LOS', 'P_comm']
         outputs = ['temperature']
@@ -220,7 +206,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Attitude_Angular(self):
-
         compname = 'Attitude_Angular'
         inputs = ['O_BI', 'Odot_BI']
         outputs = ['w_B']
@@ -228,7 +213,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Attitude_AngularRates(self):
-
         compname = 'Attitude_AngularRates'
         inputs = ['w_B']
         outputs = ['wdot_B']
@@ -236,7 +220,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Attitude_Attitude(self):
-
         compname = 'Attitude_Attitude'
         inputs = ['r_e2b_I']
         outputs = ['O_RI']
@@ -244,7 +227,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Attitude_Roll(self):
-
         compname = 'Attitude_Roll'
         inputs = ['Gamma']
         outputs = ['O_BR']
@@ -252,7 +234,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Attitude_RotationMtx(self):
-
         compname = 'Attitude_RotationMtx'
         inputs = ['O_BR', 'O_RI']
         outputs = ['O_BI']
@@ -260,7 +241,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Attitude_RotationMtxRates(self):
-
         compname = 'Attitude_RotationMtxRates'
         inputs = ['O_BI']
         outputs = ['Odot_BI']
@@ -268,7 +248,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     # def test_Attitude_Sideslip(self):
-
     #     compname = 'Attitude_Sideslip'
     #     inputs = ['r_e2b_I', 'O_BI']
     #     outputs = ['v_e2b_B']
@@ -276,7 +255,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
     #     self.compare(compname, inputs, outputs)
 
     def test_Attitude_Torque(self):
-
         compname = 'Attitude_Torque'
         inputs = ['w_B', 'wdot_B']
         outputs = ['T_tot']
@@ -284,7 +262,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Sun_LOS(self):
-
         compname = 'Sun_LOS'
         inputs = ['r_e2b_I', 'r_e2s_I']
         outputs = ['LOS']
@@ -292,7 +269,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Sun_PositionBody(self):
-
         compname = 'Sun_PositionBody'
         inputs = ['O_BI', 'r_e2s_I']
         outputs = ['r_e2s_B']
@@ -300,7 +276,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Sun_PositionECI(self):
-
         compname = 'Sun_PositionECI'
         inputs = ['t', 'LD']
         outputs = ['r_e2s_I']
@@ -308,7 +283,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Sun_PositionSpherical(self):
-
         compname = 'Sun_PositionSpherical'
         inputs = ['r_e2s_B']
         outputs = ['azimuth', 'elevation']
@@ -330,7 +304,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Power_SolarPower(self):
-
         compname = 'Power_SolarPower'
         inputs = ['V_sol', 'Isetpt']
         outputs = ['P_sol']
@@ -338,7 +311,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_Power_Total(self):
-
         compname = 'Power_Total'
         inputs = ['P_sol', 'P_comm', 'P_RW']
         outputs = ['P_bat']
@@ -346,7 +318,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     # def test_ReactionWheel_Motor(self):
-
     #     compname = 'ReactionWheel_Motor'
     #     inputs = ['T_RW', 'w_B', 'w_RW']
     #     outputs = ['T_m']
@@ -354,7 +325,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
     #     self.compare(compname, inputs, outputs)
 
     def test_ReactionWheel_Dynamics(self):
-
         compname = 'ReactionWheel_Dynamics'
         inputs = ['w_B', 'T_RW']
         outputs = ['w_RW']
@@ -362,7 +332,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_ReactionWheel_Power(self):
-
         compname = 'ReactionWheel_Power'
         inputs = ['w_RW', 'T_RW']
         outputs = ['P_RW']
@@ -370,7 +339,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_ReactionWheel_Torque(self):
-
         compname = 'ReactionWheel_Torque'
         inputs = ['T_tot']
         outputs = ['T_RW']
@@ -378,7 +346,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_BatterySOC(self):
-
         compname = 'BatterySOC'
         inputs = ['P_bat', 'temperature']
         outputs = ['SOC']
@@ -386,7 +353,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_BatteryPower(self):
-
         compname = 'BatteryPower'
         inputs = ['SOC', 'temperature', 'P_bat']
         outputs = ['I_bat']
@@ -394,7 +360,6 @@ class Testcase_CADRE_assembly(unittest.TestCase):
         self.compare(compname, inputs, outputs)
 
     def test_BatteryConstraints(self):
-
         compname = 'BatteryConstraints'
         inputs = ['I_bat', 'SOC']
         outputs = ['ConCh', 'ConDs', 'ConS0', 'ConS1']

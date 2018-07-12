@@ -21,6 +21,8 @@ class BsplineParameters(ExplicitComponent):
         self.n = n
         self.m = m
 
+        self.deriv_cached = False
+
     def setup(self):
         m = self.m
         n = self.n
@@ -51,13 +53,10 @@ class BsplineParameters(ExplicitComponent):
 
         self.declare_partials('*', '*')
 
-        self.deriv_cached = False
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.
         """
-
         # Only need to do this once.
         if self.deriv_cached is False:
             t1 = inputs['t1']
@@ -91,7 +90,6 @@ class BsplineParameters(ExplicitComponent):
             if 'Isetpt' in d_outputs and 'CP_Isetpt' in d_inputs:
                 for k in range(12):
                     d_outputs['Isetpt'][k, :] += self.B.dot(d_inputs['CP_Isetpt'][k, :])
-
         else:
             if 'P_comm' in d_outputs and 'CP_P_comm' in d_inputs:
                 d_inputs['CP_P_comm'] += self.BT.dot(d_outputs['P_comm'])

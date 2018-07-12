@@ -12,14 +12,14 @@ import unittest
 
 import numpy as np
 
-from openmdao.core.mpi_wrap import MPI
+from openmdao.utils.mpi import MPI
 from openmdao.core.problem import Problem
-from openmdao.solvers.petsc_ksp import PetscKSP
+from openmdao.solvers.linear.petsc_ksp import PETScKrylov
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 
-class CADREMDPTests(MPITestCase):
+class CADRE_MDP_TestCase(unittest.TestCase):
 
     N_PROCS = 2
 
@@ -45,46 +45,43 @@ class CADREMDPTests(MPITestCase):
         npts = 2
 
         # Instantiate
-        model = Problem(impl=impl)
-        root = model.root = CADRE_MDP_Group(n=n, m=m, npts=npts)
+        prob = Problem(CADRE_MDP_Group(n=n, m=m, npts=npts))
+        model = prob.model
 
         # Add parameters and constraints to each CADRE instance.
         names = ['pt%s' % i for i in range(npts)]
         for i, name in enumerate(names):
+            model.add_design_var("%s.CP_Isetpt" % name, lower=0., upper=0.4)
+            model.add_design_var("%s.CP_gamma" % name, lower=0, upper=np.pi/2.)
+            model.add_design_var("%s.CP_P_comm" % name, lower=0., upper=25.)
+            model.add_design_var("%s.iSOC" % name, indices=[0], lower=0.2, upper=1.)
 
-            # add parameters to driver
-            model.driver.add_desvar("%s.CP_Isetpt" % name, lower=0., upper=0.4)
-            model.driver.add_desvar("%s.CP_gamma" % name, lower=0, upper=np.pi/2.)
-            model.driver.add_desvar("%s.CP_P_comm" % name, lower=0., upper=25.)
-            model.driver.add_desvar("%s.iSOC" % name, indices=[0], lower=0.2, upper=1.)
-
-            model.driver.add_constraint("%s.ConCh" % name, upper=0.0)
-            model.driver.add_constraint("%s.ConDs" % name, upper=0.0)
-            model.driver.add_constraint("%s.ConS0" % name, upper=0.0)
-            model.driver.add_constraint("%s.ConS1" % name, upper=0.0)
-            model.driver.add_constraint("%s_con5.val" % name, equals=0.0)
+            model.add_constraint("%s.ConCh" % name, upper=0.0)
+            model.add_constraint("%s.ConDs" % name, upper=0.0)
+            model.add_constraint("%s.ConS0" % name, upper=0.0)
+            model.add_constraint("%s.ConS1" % name, upper=0.0)
+            model.add_constraint("%s_con5.val" % name, equals=0.0)
 
         # Add Parameter groups
-        model.driver.add_desvar("bp1.cellInstd", lower=0., upper=1.0)
-        model.driver.add_desvar("bp2.finAngle", lower=0., upper=np.pi/2.)
-        model.driver.add_desvar("bp3.antAngle", lower=-np.pi/4, upper=np.pi/4)
+        model.add_design_var("bp.cellInstd", lower=0., upper=1.0)
+        model.add_design_var("bp.finAngle", lower=0., upper=np.pi/2.)
+        model.add_design_var("bp.antAngle", lower=-np.pi/4, upper=np.pi/4)
 
         # Add objective
-        model.driver.add_objective('obj.val')
+        model.add_objective('obj.val')
 
-        # For Parallel exeuction, we must use KSP
+        # For Parallel execution, we must use KSP
         if MPI:
-            model.root.ln_solver = PetscKSP()
+            model.linear_solver = PETScKrylov()
 
         start_time = time.time()
 
-        model.setup(check=False)
-        model.run()
+        prob.setup(check=True)
+        prob.run_driver()
 
-        abs_u = model.root._sysdata.to_abs_uname
+        abs_u = model._var_allprocs_prom2abs_list['output']
 
         for var in data:
-
             # We changed constraint names
             xvar = var
             if '_con1' in xvar:
@@ -97,16 +94,15 @@ class CADREMDPTests(MPITestCase):
                 xvar = xvar.replace('_con4.val', '.ConS1')
 
             # make sure var is local before we try to look it up
-
-            compname = abs_u[xvar].rsplit('.', 1)[0]
-            comp = model.root.find_subsystem(compname)
+            compname = abs_u[xvar][0].rsplit('.', 1)[0]
+            comp = model._get_subsystem(compname)
             if comp.is_active():
-                computed = model[xvar]
+                computed = prob[xvar]
                 actual = data[var]
                 if isinstance(computed, np.ndarray):
-                    rel = np.linalg.norm(actual - computed)/np.linalg.norm(actual)
+                    rel = np.linalg.norm(actual - computed) / np.linalg.norm(actual)
                 else:
-                    rel = np.abs(actual - computed)/np.abs(actual)
+                    rel = np.abs(actual - computed) / np.abs(actual)
 
                 print(xvar)
                 print(computed)
@@ -115,9 +111,9 @@ class CADREMDPTests(MPITestCase):
                     assert rel <= 1e-3
 
         # Now do derivatives
-        inputs = list(model.driver.get_desvars().keys())
-        unks = list(model.driver.get_objectives().keys()) + list(model.driver.get_constraints().keys())
-        Jb = model.calc_gradient(inputs, unks, mode='rev', return_format='dict')
+        inputs = list(model.get_design_vars().keys())
+        outputs = list(model.get_responses().keys())
+        Jb = prob.calc_gradient(inputs, outputs, mode='rev', return_format='dict')
 
         for key1, value in sorted(Ja.items()):
             for key2 in sorted(value.keys()):
@@ -147,7 +143,6 @@ class CADREMDPTests(MPITestCase):
 
         print("\n\nElapsed time:", time.time()-start_time)
 
+
 if __name__ == '__main__':
-    from openmdao.test.mpi_util import mpirun_tests
-    #mpirun_tests()
     unittest.main()

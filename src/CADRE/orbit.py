@@ -142,7 +142,6 @@ class Orbit_Dynamics(rk4.RK4):
         dfdy[5, :3] += z*(C3/r7*dT3z + C4/r7*dT4z)
         dfdy[5, 2] += (C2/r5*2 + C3/r7*T3z + C4/r7*T4z)
 
-        # print dfdy
         return dfdy
 
     def df_dx(self, external, state):

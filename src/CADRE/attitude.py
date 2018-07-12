@@ -307,8 +307,6 @@ class Attitude_Attitude(ExplicitComponent):
 
             self.dO_dr[i, 2, :, 3:] = -dv_dv
 
-            # print('dO_dr: %s\n' % str(self.dO_dr.shape), self.dO_dr)
-
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
         """ Matrix-vector product with the Jacobian. """
 

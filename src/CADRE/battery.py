@@ -169,10 +169,6 @@ class BatteryPower(ExplicitComponent):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
-        np.set_printoptions(precision=3, linewidth=256)
-        from pprint import pprint
-        pprint(partials._subjacs_info)
-
         SOC = inputs['SOC']
         temperature = inputs['temperature']
         P_bat = inputs['P_bat']
@@ -186,19 +182,6 @@ class BatteryPower(ExplicitComponent):
         tmp = -P_bat/(self.V**2)
         self.dI_dT = tmp * dV_dT
         self.dI_dSOC = tmp * dV_dvoc * dVoc_dSOC
-
-        print('self.dI_dT:', self.dI_dT.shape, self.dI_dT)
-
-        partials['I_bat', 'SOC'] = self.dI_dSOC * np.eye(self.n)
-        partials['I_bat', 'temperature'][:, 4*self.n:] = self.dI_dT * np.eye(self.n)[:]
-        partials['I_bat', 'P_bat'] = self.dI_dP * np.eye(self.n)
-
-        print("partials['I_bat', 'SOC']")
-        print(partials['I_bat', 'SOC'])
-        print("partials['I_bat', 'temperature']")
-        print(partials['I_bat', 'temperature'])
-        print("partials['I_bat', 'P_bat']")
-        print(partials['I_bat', 'P_bat'])
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
         """

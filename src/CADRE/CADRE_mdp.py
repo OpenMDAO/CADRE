@@ -5,11 +5,7 @@ from six.moves import range
 import os.path
 import numpy as np
 
-from openmdao.components.exec_comp import ExecComp
-from openmdao.components.indepvarcomp import IndepVarComp
-from openmdao.core.group import Group
-from openmdao.core.parallel_group import ParallelGroup
-
+from openmdao.api import Group, ParallelGroup, IndepVarComp, ExecComp
 
 from CADRE.CADRE_group import CADRE
 
@@ -36,6 +32,15 @@ class CADRE_MDP_Group(Group):
     def __init__(self, n=1500, m=300, npts=6):
         super(CADRE_MDP_Group, self).__init__()
 
+        self.n = n
+        self.m = m
+        self.npts = npts
+
+    def setup(self):
+        n = self.n
+        m = self.m
+        npts = self.npts
+
         # Raw data to load
         fpath = os.path.dirname(os.path.realpath(__file__))
         fpath = os.path.join(fpath, 'data')
@@ -54,10 +59,11 @@ class CADRE_MDP_Group(Group):
         # number of days since launch for each design point
         LDs = launch_data[1::2, 0] - 2451545
 
-        # Create ParmComps for broadcast parameters.
-        self.add_subsystem('bp1', IndepVarComp('cellInstd', np.ones((7, 12))))
-        self.add_subsystem('bp2', IndepVarComp('finAngle', np.pi/4.0))
-        self.add_subsystem('bp3', IndepVarComp('antAngle', 0.0))
+        # Create IndepVarComp for broadcast parameters.
+        bp = self.add_subsystem('bp', IndepVarComp())
+        bp.add_output('cellInstd', np.ones((7, 12)))
+        bp.add_output('finAngle', np.pi/4.0, units='rad')
+        bp.add_output('antAngle', 0.0, units='rad')
 
         # CADRE instances go into a Parallel Group
         para = self.add_subsystem('parallel', ParallelGroup(), promotes=['*'])
@@ -65,7 +71,6 @@ class CADRE_MDP_Group(Group):
         # build design points
         names = ['pt%s' % i for i in range(npts)]
         for i, name in enumerate(names):
-
             # Some initial values
             inits = {}
             inits['LD'] = float(LDs[i])
@@ -75,19 +80,19 @@ class CADRE_MDP_Group(Group):
                                comm_raw, power_raw, initial_inputs=inits))
 
             # Hook up broadcast inputs
-            self.connect('bp1.cellInstd', "%s.cellInstd" % name)
-            self.connect('bp2.finAngle', "%s.finAngle" % name)
-            self.connect('bp3.antAngle', "%s.antAngle" % name)
+            self.connect('bp.cellInstd', "%s.cellInstd" % name)
+            self.connect('bp.finAngle', "%s.finAngle" % name)
+            self.connect('bp.antAngle', "%s.antAngle" % name)
 
             self.add_subsystem('%s_con5' % name, ExecComp("val = SOCi - SOCf"))
-            self.connect("%s.SOC" % name, '%s_con5.SOCi' % name, src_indices=[0])
-            self.connect("%s.SOC" % name, '%s_con5.SOCf' % name, src_indices=[n-1])
+            self.connect("%s.SOC" % name, '%s_con5.SOCi' % name, src_indices=[0], flat_src_indices=True)
+            self.connect("%s.SOC" % name, '%s_con5.SOCf' % name, src_indices=[n-1], flat_src_indices=True)
 
         obj = ''.join([" - %s_DataTot" % name for name in names])
         self.add_subsystem('obj', ExecComp('val='+obj))
         for name in names:
-            self.connect("%s.Data" % name, "obj.%s_DataTot" % name, src_indices=[n-1])
+            self.connect("%s.Data" % name, "obj.%s_DataTot" % name, src_indices=[n-1], flat_src_indices=True)
 
         # Set our groups to auto
-        self.ln_solver.options['mode'] = 'auto'
-        para.ln_solver.options['mode'] = 'auto'
+        # self.ln_solver.options['mode'] = 'auto'
+        # para.ln_solver.options['mode'] = 'auto'
