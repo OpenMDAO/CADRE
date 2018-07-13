@@ -1,7 +1,8 @@
-""" Tests the values computed in one execution of the MDP problem and
+"""
+Tests the values computed in one execution of the MDP problem and
 compares them to saved values in a pickle. It also tests the derivatives.
-This is set up so that it can be tested in parallel too."""
-
+This is set up so that it can be tested in parallel too.
+"""
 from __future__ import print_function
 
 import sys
@@ -12,9 +13,8 @@ import unittest
 
 import numpy as np
 
+from openmdao.api import Problem, PETScKrylov
 from openmdao.utils.mpi import MPI
-from openmdao.core.problem import Problem
-from openmdao.solvers.linear.petsc_ksp import PETScKrylov
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
