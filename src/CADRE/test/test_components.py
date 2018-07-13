@@ -73,7 +73,6 @@ class TestCADRE(unittest.TestCase):
     @parameterized.expand([(_class.__name__, _class) for _class in component_types],
                           testcase_func_name=lambda f, n, p: 'test_' + p.args[0])
     def test_component(self, name, comp_class):
-        # create instance of component type
         try:
             comp = comp_class(n)
         except TypeError:
@@ -85,18 +84,18 @@ class TestCADRE(unittest.TestCase):
         self.assertTrue(isinstance(comp, comp_class),
                         'Could not create instance of %s' % comp_class.__name__)
 
-        comp.h = h  # some components need this
-
         prob = Problem(comp)
         prob.setup()
         prob.final_setup()
 
-        inputs = prob.model.list_inputs(out_stream=None)
-        outputs = prob.model.list_outputs(out_stream=None)
+        inputs = comp.list_inputs(out_stream=None)
+        outputs = comp.list_outputs(out_stream=None)
 
         for var, meta in inputs:
             if var in setd:
                 prob[var] = setd[var]
+
+        comp.h = h  # some components need this
 
         prob.run_model()
 

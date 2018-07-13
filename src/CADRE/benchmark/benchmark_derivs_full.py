@@ -69,4 +69,4 @@ class BenchmarkDerivsSerial(unittest.TestCase):
         assert_rel_error(self, J['obj.val', 'bp.antAngle'][0][0],
                          67.15777407, 1e-4)
         assert_rel_error(self, J['obj.val', 'parallel.pt1.design.CP_gamma'][-1][-1],
-                         0.62410223816776056, 1e-4)
+                         -0.62410223816776056, 1e-4)

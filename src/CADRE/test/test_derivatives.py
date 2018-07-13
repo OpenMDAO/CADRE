@@ -33,10 +33,10 @@ NTIME = 5
 class TestCADRE(unittest.TestCase):
 
     def setup(self, compname, inputs, state0):
+        # create instance of component type
         try:
             comp = eval('%s(NTIME)' % compname)
         except TypeError:
-            # At least one comp has no args.
             try:
                 comp = eval('%s()' % compname)
             except TypeError:
