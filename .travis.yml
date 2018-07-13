@@ -37,16 +37,17 @@ install:
 - export PATH=$HOME/miniconda/bin:$PATH;
 - conda install --yes python=$PY;
 - pip install --upgrade pip;
-- pip install coveralls
+- pip install coveralls;
 - pip install petsc4py;
 - pip install openmdao;
+- pip install git+https://github.com/OpenMDAO/MBI
 - pip install .;
 - pip list;
 
 script:
-- mkdir temp
-- cd temp
+- mkdir temp;
+- cd temp;
 - testflo -n 1 CADRE --coverage --coverpkg CADRE --cover-omit \*test/\*;
 
 after_success:
-- coveralls
+- coveralls;
