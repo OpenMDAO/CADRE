@@ -29,5 +29,4 @@ kwargs = {
     'zip_safe': False
 }
 
-
 setup(**kwargs)
