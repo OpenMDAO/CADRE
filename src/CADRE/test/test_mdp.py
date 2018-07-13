@@ -152,7 +152,7 @@ class TestCADRE(unittest.TestCase):
                 else:
                     rel = np.abs(actual - computed)/np.abs(actual)
 
-                print(bkey1, 'wrt', key2)
+                print(bkey1, 'wrt', bkey2, '(', key1, 'wrt', key2, ')')
                 print(computed)
                 print(actual)
                 if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
