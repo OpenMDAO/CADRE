@@ -1,3 +1,7 @@
+
+[![Build Status](https://travis-ci.org/OpenMDAO/CADRE.svg?branch=master)](https://travis-ci.org/OpenMDAO/CADRE)   [![Coverage Status](https://coveralls.io/repos/github/OpenMDAO/CADRE/badge.svg?branch=master)](https://coveralls.io/github/OpenMDAO/CADRE?branch=master)
+
+
 CADRE CubeSat design problem
 ----------------------------
 

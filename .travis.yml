@@ -2,9 +2,10 @@ branches:
   only:
   - master
 
+env:
   matrix:
-    - PY=2.7 NUMPY=1.12
-    - PY=3.6 NUMPY=1.14
+    - PY=2.7
+    - PY=3.6
 
 git:
   depth: 99999
