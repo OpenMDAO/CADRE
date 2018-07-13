@@ -1,4 +1,6 @@
-""" Solar discipline for CADRE """
+"""
+Solar discipline for CADRE
+"""
 
 import os
 from six.moves import range
@@ -103,71 +105,63 @@ class Solar_ExposedArea(ExplicitComponent):
                         desc='Exposed area to sun for each solar cell over time',
                         units='m**2', lower=-5e-3, upper=1.834e-1)
 
-        # FIXME: MemoryError
-        # self.declare_partials('*', '*')
+        self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         self.setx(inputs)
         P = self.MBI.evaluate(self.x).T
         outputs['exposedArea'] = P.reshape(7, 12, self.n, order='F')
 
     def setx(self, inputs):
-        """ Sets our state array"""
-
+        """
+        Sets our state array
+        """
         result = fixangles(self.n, inputs['azimuth'], inputs['elevation'])
         self.x[:, 0] = inputs['finAngle']
         self.x[:, 1] = result[0]
         self.x[:, 2] = result[1]
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
-        self.Jfin = self.MBI.evaluate(self.x, 1).reshape(self.n, 7, 12,
-                                                         order='F')
-        self.Jaz = self.MBI.evaluate(self.x, 2).reshape(self.n, 7, 12,
-                                                        order='F')
-        self.Jel = self.MBI.evaluate(self.x, 3).reshape(self.n, 7, 12,
-                                                        order='F')
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
+        self.Jfin = self.MBI.evaluate(self.x, 1).reshape(self.n, 7, 12, order='F')
+        self.Jaz = self.MBI.evaluate(self.x, 2).reshape(self.n, 7, 12, order='F')
+        self.Jel = self.MBI.evaluate(self.x, 3).reshape(self.n, 7, 12, order='F')
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         deA = d_outputs['exposedArea']
 
         if mode == 'fwd':
             for c in range(7):
-
                 if 'finAngle' in d_inputs:
                     deA[c, :, :] += \
                         self.Jfin[:, c, :].T * d_inputs['finAngle']
-
                 if 'azimuth' in d_inputs:
                     deA[c, :, :] += \
                         self.Jaz[:, c, :].T * d_inputs['azimuth']
-
                 if 'elevation' in d_inputs:
                     deA[c, :, :] += \
                         self.Jel[:, c, :].T * d_inputs['elevation']
-
         else:
             for c in range(7):
-
                 # incoming arg is often sparse, so check it first
                 if len(np.nonzero(d_outputs['exposedArea'][c, :, :])[0]) == 0:
                     continue
-
                 if 'finAngle' in d_inputs:
                     d_inputs['finAngle'] += \
                         np.sum(
                             self.Jfin[:, c, :].T * deA[c, :, :])
-
                 if 'azimuth' in d_inputs:
                     d_inputs['azimuth'] += \
                         np.sum(
                             self.Jaz[:, c, :].T * deA[c, :, :], 0)
-
                 if 'elevation' in d_inputs:
                     d_inputs['elevation'] += \
                         np.sum(

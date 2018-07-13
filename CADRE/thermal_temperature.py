@@ -1,4 +1,6 @@
-""" Thermal discipline for CADRE """
+"""
+Thermal discipline for CADRE
+"""
 
 from six.moves import range
 import numpy as np
@@ -34,35 +36,37 @@ class ThermalTemperature(RK4):
         n_times = self.n_times
 
         # Inputs
-        self.add_input("T0", 273.*np.ones((5, )), units="degK",
-                       desc="Initial temperatures for the 4 fins and body")
+        self.add_input('T0', 273.*np.ones((5, )), units='degK',
+                       desc='Initial temperatures for the 4 fins and body')
 
-        self.add_input("exposedArea", np.zeros((7, 12, n_times)), units="m**2",
-                       desc="Exposed area to the sun for each solar cell over time")
+        self.add_input('exposedArea', np.zeros((7, 12, n_times)), units='m**2',
+                       desc='Exposed area to the sun for each solar cell over time')
 
-        self.add_input("cellInstd", np.ones((7, 12)), units=None,
-                       desc="Cell/Radiator indication")  # , lower=0, upper=1)
+        self.add_input('cellInstd', np.ones((7, 12)), units=None,
+                       desc='Cell/Radiator indication')  # , lower=0, upper=1)
 
-        self.add_input("LOS", np.zeros((n_times, )), units=None,
-                       desc="Satellite to Sun line of sight over time")  # , lower=0, upper=1)
+        self.add_input('LOS', np.zeros((n_times, )), units=None,
+                       desc='Satellite to Sun line of sight over time')  # , lower=0, upper=1)
 
-        self.add_input("P_comm", np.ones((n_times, )), units='W',
-                       desc="Communication power over time")  # , lower=0, upper=1)
+        self.add_input('P_comm', np.ones((n_times, )), units='W',
+                       desc='Communication power over time')  # , lower=0, upper=1)
 
         # Outputs
-        self.add_output("temperature", np.zeros((5, n_times)), units="degK",
-                        desc="Temperature for the 4 fins and body over time.",
+        self.add_output('temperature', np.zeros((5, n_times)), units='degK',
+                        desc='Temperature for the 4 fins and body over time.',
                         lower=50, upper=400)
 
         self.declare_partials('*', '*')
 
-        self.options['state_var'] = "temperature"
-        self.options['init_state_var'] = "T0"
-        self.options['external_vars'] = ["exposedArea", "LOS", "P_comm"]
-        self.options['fixed_external_vars'] = ["cellInstd"]
+        self.options['state_var'] = 'temperature'
+        self.options['init_state_var'] = 'T0'
+        self.options['external_vars'] = ['exposedArea', 'LOS', 'P_comm']
+        self.options['fixed_external_vars'] = ['cellInstd']
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
+        """
+        Calculate outputs.
+        """
 
         temperature = outputs['temperature']
 

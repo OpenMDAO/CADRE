@@ -1,14 +1,14 @@
-""" Battery discipline for CADRE """
+"""
+Battery discipline for CADRE
+"""
 
 import numpy as np
 
-from openmdao.core.explicitcomponent import ExplicitComponent
+from openmdao.api import ExplicitComponent
 from openmdao.components.ks_comp import KSfunction
 
 from CADRE import rk4
 
-# Allow non-standard variable names for scientific calc
-# pylint: disable-msg=C0103
 
 # Constants
 sigma = 1e-10
@@ -257,8 +257,9 @@ class BatteryConstraints(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         I_bat = inputs['I_bat']
         SOC = inputs['SOC']
 
@@ -268,29 +269,29 @@ class BatteryConstraints(ExplicitComponent):
         outputs['ConS1'] = self.KS_s1.compute(SOC - self.SOC1, self.rho)
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         self.dCh_dg, self.dCh_drho = self.KS_ch.derivatives()
         self.dDs_dg, self.dDs_drho = self.KS_ds.derivatives()
         self.dS0_dg, self.dS0_drho = self.KS_s0.derivatives()
         self.dS1_dg, self.dS1_drho = self.KS_s1.derivatives()
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+         Matrix-vector product with the Jacobian.
+         """
         if mode == 'fwd':
             if 'I_bat' in d_inputs:
                 if 'ConCh' in d_outputs:
                     d_outputs['ConCh'] += np.dot(self.dCh_dg, d_inputs['I_bat'])
                 if 'ConDs' in d_outputs:
                     d_outputs['ConDs'] -= np.dot(self.dDs_dg, d_inputs['I_bat'])
-
             if 'SOC' in d_inputs:
                 if 'ConS0' in d_outputs:
                     d_outputs['ConS0'] -= np.dot(self.dS0_dg, d_inputs['SOC'][0, :])
                 if 'ConS1' in d_outputs:
                     d_outputs['ConS1'] += np.dot(self.dS1_dg, d_inputs['SOC'][0, :])
-
         else:
             if 'I_bat' in d_inputs:
                 dI_bat = d_inputs['I_bat']
@@ -299,7 +300,6 @@ class BatteryConstraints(ExplicitComponent):
                 if 'ConDs' in d_outputs:
                     dI_bat -= self.dDs_dg * d_outputs['ConDs']
                 d_inputs['I_bat'] = dI_bat
-
             if 'SOC' in d_inputs:
                 dSOC = d_inputs['SOC']
                 if 'ConS0' in d_outputs:

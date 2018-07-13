@@ -72,7 +72,7 @@ class TestCADRE(unittest.TestCase):
         # Add objective
         model.add_objective('obj.val')
 
-        # For parallel execution, we must use KSP
+        # For parallel execution, use KSP
         if MPI:
             model.linear_solver = PETScKrylov()
 

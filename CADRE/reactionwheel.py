@@ -1,18 +1,19 @@
-""" Reaction wheel discipline for CADRE """
+"""
+Reaction wheel discipline for CADRE
+"""
 
 from six.moves import range
 import numpy as np
 
-from openmdao.core.explicitcomponent import ExplicitComponent
+from openmdao.api import ExplicitComponent
 
 from CADRE import rk4
 
-# Allow non-standard variable names for scientific calc
-# pylint: disable-msg=C0103
-
 
 class ReactionWheel_Motor(ExplicitComponent):
-    """Compute reaction wheel motor torque."""
+    """
+    Compute reaction wheel motor torque.
+    """
 
     def __init__(self, n):
         super(ReactionWheel_Motor, self).__init__()
@@ -41,8 +42,9 @@ class ReactionWheel_Motor(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         T_RW = inputs['T_RW']
         w_B = inputs['w_B']
         w_RW = inputs['w_RW']
@@ -58,8 +60,9 @@ class ReactionWheel_Motor(ExplicitComponent):
             T_m[:, i] = -T_RW[:, i] - np.dot(w_Bx, h_RW[:, i])
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         # T_RW = inputs['T_RW']
         w_B = inputs['w_B']
         w_RW = inputs['w_RW']
@@ -94,8 +97,9 @@ class ReactionWheel_Motor(ExplicitComponent):
             self.dT_dh[i, :, :] = -w_Bx
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         dT_m = d_outputs['T_m']
 
         if mode == 'fwd':
@@ -121,8 +125,9 @@ class ReactionWheel_Motor(ExplicitComponent):
 
 
 class ReactionWheel_Power(ExplicitComponent):
-    """Compute reaction wheel power."""
-
+    """
+    Compute reaction wheel power.
+    """
     # constants
     V = 4.0
     a = 4.9e-4
@@ -151,8 +156,9 @@ class ReactionWheel_Power(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         w_RW = inputs['w_RW']
         T_RW = inputs['T_RW']
         P_RW = outputs['P_RW']
@@ -164,8 +170,9 @@ class ReactionWheel_Power(ExplicitComponent):
                               self.V * self.I0)
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         w_RW = inputs['w_RW']
         T_RW = inputs['T_RW']
 
@@ -178,8 +185,9 @@ class ReactionWheel_Power(ExplicitComponent):
                 self.dP_dT[i, k] = self.b * prod
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         dP_RW = d_outputs['P_RW']
 
         if mode == 'fwd':
@@ -188,18 +196,18 @@ class ReactionWheel_Power(ExplicitComponent):
                     dP_RW[k, :] += self.dP_dw[:, k] * d_inputs['w_RW'][k, :]
                 if 'T_RW' in d_inputs:
                     dP_RW[k, :] += self.dP_dT[:, k] * d_inputs['T_RW'][k, :]
-
         else:
             for k in range(3):
                 if 'w_RW' in d_inputs:
                     d_inputs['w_RW'][k, :] += self.dP_dw[:, k] * dP_RW[k, :]
-
                 if 'T_RW' in d_inputs:
                     d_inputs['T_RW'][k, :] += self.dP_dT[:, k] * dP_RW[k, :]
 
 
 class ReactionWheel_Torque(ExplicitComponent):
-    """Compute torque vector of reaction wheel."""
+    """
+    Compute torque vector of reaction wheel.
+    """
 
     def __init__(self, n):
         super(ReactionWheel_Torque, self).__init__()
@@ -229,7 +237,6 @@ class ReactionWheel_Torque(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
-
         if mode == 'fwd':
             if 'T_tot' in d_inputs:
                 d_outputs['T_RW'][:] += d_inputs['T_tot'][:]

@@ -1,18 +1,17 @@
-""" Some Kinematics methods."""
+"""
+Some Kinematics methods.
+"""
 
 import numpy as np
 
 from six.moves import range
 
-# Allow non-standard variable names for scientific calc
-# pylint: disable=C0103
-
 
 def fixangles(n, azimuth0, elevation0):
-    """ Take an input azimuth and elevation angles in radians, and fix them
-    to lie on [0, 2pi]. Also swap azimuth 180deg if elevation is over
-    90deg."""
-
+    """
+    Take an input azimuth and elevation angles in radians, and fix them to
+    lie on [0, 2pi]. Also swap azimuth 180deg if elevation is over 90 deg.
+    """
     azimuth, elevation = np.zeros(azimuth0.shape), np.zeros(elevation0.shape)
 
     for i in range(n):
@@ -25,18 +24,21 @@ def fixangles(n, azimuth0, elevation0):
 
     return azimuth, elevation
 
-def computepositionrotd(n, vects, mat):
-    """ Perform matrix vector product between position vectors and rotation
-    matrix."""
 
+def computepositionrotd(n, vects, mat):
+    """
+    Perform matrix vector product between position vectors and rotation matrix.
+    """
     result = np.empty(vects.shape)
     for i in range(n):
         result[:, i] = np.dot(mat[:, :, i], vects[:, i])
     return result
 
-def computepositionrotdjacobian(n, v1, O_21):
-    """ Compute Jacobian for rotation matrix."""
 
+def computepositionrotdjacobian(n, v1, O_21):
+    """
+    Compute Jacobian for rotation matrix.
+    """
     J1 = np.zeros((n, 3, 3, 3))
 
     for k in range(0, 3):
@@ -47,16 +49,18 @@ def computepositionrotdjacobian(n, v1, O_21):
 
     return J1, J2
 
-def computepositionspherical(n, v):
-    """ Convert (x,y,z) position in v to spherical coordinates."""
 
+def computepositionspherical(n, v):
+    """
+    Convert (x,y,z) position in v to spherical coordinates.
+    """
     azimuth, elevation = np.empty(n), np.empty(n)
 
     r = np.sqrt(np.sum(v*v, 0))
     for i in range(n):
         x = v[0, i]
         y = v[1, i]
-        #z = v[2, i]
+        # z = v[2, i]
         if r[i] < 1e-15:
             r[i] = 1e-5
         azimuth[i] = arctan(x, y)
@@ -64,9 +68,11 @@ def computepositionspherical(n, v):
     elevation = np.arccos(v[2, :]/r)
     return azimuth, elevation
 
-def arctan(x, y):
-    """ Specific way we want out arctans."""
 
+def arctan(x, y):
+    """
+    Specific way we want out arctans.
+    """
     if x == 0:
         if y > 0:
             return np.pi/2.0
@@ -88,9 +94,11 @@ def arctan(x, y):
     else:
         return 0.0
 
-def computepositionsphericaljacobian(n, nJ, v):
-    """ Compute Jacobian across conversion to spherical coords."""
 
+def computepositionsphericaljacobian(n, nJ, v):
+    """
+    Compute Jacobian across conversion to spherical coords.
+    """
     Ja1 = np.empty(nJ)
     Ji1 = np.empty(nJ)
     Jj1 = np.empty(nJ)

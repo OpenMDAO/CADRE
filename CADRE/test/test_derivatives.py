@@ -80,6 +80,7 @@ class TestCADRE(unittest.TestCase):
                 assert_rel_error(self, diff.max(), 0.0, 1e-3)
 
         # check partials
+        # FIXME: several components fail check_partials
         # partials = self.prob.check_partials()
         # partials = self.prob.check_partials(compact_print=True, method='cs')
         # partials = self.prob.check_partials(out_stream=None)

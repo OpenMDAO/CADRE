@@ -1,4 +1,6 @@
-""" Group containing a single CADRE model."""
+"""
+Group containing a single CADRE model.
+"""
 
 import numpy as np
 

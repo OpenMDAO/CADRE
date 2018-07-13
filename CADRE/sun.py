@@ -1,4 +1,6 @@
-""" Sun discipline for CADRE """
+"""
+Sun discipline for CADRE
+"""
 
 from six.moves import range
 import numpy as np
@@ -8,9 +10,6 @@ from openmdao.core.explicitcomponent import ExplicitComponent
 
 from CADRE.kinematics import computepositionrotd, computepositionrotdjacobian
 from CADRE.kinematics import computepositionspherical, computepositionsphericaljacobian
-
-# Allow non-standard variable names for scientific calc
-# pylint: disable=C0103
 
 
 class Sun_LOS(ExplicitComponent):
@@ -331,10 +330,10 @@ class Sun_PositionECI(ExplicitComponent):
         dr_e2s_I = d_outputs['r_e2s_I']
 
         if mode == 'fwd':
-            # TODO - Should split this up so we can hook one up but not the other.
-            dr_e2s_I[:] += (self.J.dot(d_inputs['LD'] +
-                            d_inputs['t']/3600./24.).reshape((3, self.n), order='F'))
-
+            if 'LD' in d_inputs and 't' in d_inputs:
+                # TODO - Should split this up so we can hook one up but not the other.
+                dr_e2s_I[:] += (self.J.dot(d_inputs['LD'] +
+                                d_inputs['t']/3600./24.).reshape((3, self.n), order='F'))
         else:
             r_e2s_I = dr_e2s_I[:].reshape((3*self.n), order='F')
             if 'LD' in d_inputs:

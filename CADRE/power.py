@@ -1,16 +1,15 @@
-""" Power discipline for CADRE """
+"""
+Power discipline for CADRE
+"""
 
 import os
 from six.moves import range
 
 import numpy as np
 
-from openmdao.core.explicitcomponent import ExplicitComponent
+from openmdao.api import ExplicitComponent
 
 from MBI import MBI
-
-# Allow non-standard variable names for scientific calc
-# pylint: disable-msg=C0103
 
 
 class Power_CellVoltage(ExplicitComponent):
@@ -50,26 +49,22 @@ class Power_CellVoltage(ExplicitComponent):
 
         # Inputs
         self.add_input('LOS', np.zeros((n)), units=None,
-                       desc="Line of Sight over Time")
+                       desc='Line of Sight over Time')
 
-        self.add_input('temperature', np.zeros((5, n)), units="degK",
-                       desc="Temperature of solar cells over time")
+        self.add_input('temperature', np.zeros((5, n)), units='degK',
+                       desc='Temperature of solar cells over time')
 
-        self.add_input('exposedArea', np.zeros((7, 12, n)), units="m**2",
-                       desc="Exposed area to sun for each solar cell over time")
+        self.add_input('exposedArea', np.zeros((7, 12, n)), units='m**2',
+                       desc='Exposed area to sun for each solar cell over time')
 
-        self.add_input('Isetpt', np.zeros((12, n)), units="A",
-                       desc="Currents of the solar panels")
+        self.add_input('Isetpt', np.zeros((12, n)), units='A',
+                       desc='Currents of the solar panels')
 
         # Outputs
-        self.add_output('V_sol', np.zeros((12, n)), units="V",
-                        desc="Output voltage of solar panel over time")
-
-        # FIXME: MemoryError
-        # self.declare_partials('*', '*')
+        self.add_output('V_sol', np.zeros((12, n)), units='V',
+                        desc='Output voltage of solar panel over time')
 
     def setx(self, inputs):
-
         temperature = inputs['temperature']
         LOS = inputs['LOS']
         exposedArea = inputs['exposedArea']
@@ -83,8 +78,9 @@ class Power_CellVoltage(ExplicitComponent):
                 self.xV[:, c, p, 2] = Isetpt[p, :]
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         self.setx(inputs)
         self.raw = self.MBI.evaluate(self.x)[:, 0].reshape((self.n, 7, 12),
                                                            order='F')
@@ -93,8 +89,9 @@ class Power_CellVoltage(ExplicitComponent):
             outputs['V_sol'] += self.raw[:, c, :].T
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         exposedArea = inputs['exposedArea']
         LOS = inputs['LOS']
 
@@ -118,12 +115,12 @@ class Power_CellVoltage(ExplicitComponent):
                 self.dV_dI[:, p] += self.raw3[:, c, p]
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         dV_sol = d_outputs['V_sol']
 
         if mode == 'fwd':
-
             if 'LOS' in d_inputs:
                 dV_sol += self.dV_dL.T * d_inputs['LOS']
 
@@ -139,7 +136,6 @@ class Power_CellVoltage(ExplicitComponent):
                 for p in range(12):
                     dV_sol[p, :] += \
                         np.sum(self.dV_dA[:, :, p] * d_inputs['exposedArea'][:, p, :].T, 1)
-
         else:
             for p in range(12):
                 i = 4 if p < 4 else (p % 4)
@@ -160,7 +156,9 @@ class Power_CellVoltage(ExplicitComponent):
 
 
 class Power_SolarPower(ExplicitComponent):
-    """ Compute the output power of the solar panels. """
+    """
+    Compute the output power of the solar panels.
+    """
 
     def __init__(self, n=2):
         super(Power_SolarPower, self).__init__()
@@ -171,20 +169,21 @@ class Power_SolarPower(ExplicitComponent):
         n = self.n
 
         # Inputs
-        self.add_input('Isetpt', np.zeros((12, n)), units="A",
-                       desc="Currents of the solar panels")
+        self.add_input('Isetpt', np.zeros((12, n)), units='A',
+                       desc='Currents of the solar panels')
 
-        self.add_input('V_sol', np.zeros((12, n)), units="V",
-                       desc="Output voltage of solar panel over time")
+        self.add_input('V_sol', np.zeros((12, n)), units='V',
+                       desc='Output voltage of solar panel over time')
 
-        self.add_output('P_sol', np.zeros((n, )), units="W",
-                        desc="Solar panels power over time")
+        self.add_output('P_sol', np.zeros((n, )), units='W',
+                        desc='Solar panels power over time')
 
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         V_sol = inputs['V_sol']
         Isetpt = inputs['Isetpt']
         P_sol = outputs['P_sol']
@@ -194,8 +193,9 @@ class Power_SolarPower(ExplicitComponent):
             P_sol += V_sol[p, :] * Isetpt[p, :]
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         dP_sol = d_outputs['P_sol']
 
         if mode == 'fwd':
@@ -206,7 +206,6 @@ class Power_SolarPower(ExplicitComponent):
             if 'Isetpt' in d_inputs:
                 for p in range(12):
                     dP_sol += d_inputs['Isetpt'][p, :] * inputs['V_sol'][p, :]
-
         else:
             for p in range(12):
                 if 'V_sol' in d_inputs:
@@ -249,14 +248,16 @@ class Power_Total(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         outputs['P_bat'] = inputs['P_sol'] - 5.0*inputs['P_comm'] - \
             np.sum(inputs['P_RW'], 0) - 2.0
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         dP_bat = d_outputs['P_bat']
 
         if mode == 'fwd':

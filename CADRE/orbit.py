@@ -1,16 +1,15 @@
-""" Orbit discipline for CADRE """
-
+"""
+Orbit discipline for CADRE
+"""
 from math import sqrt
 
 from six.moves import range
 import numpy as np
 
-from openmdao.core.explicitcomponent import ExplicitComponent
+from openmdao.api import ExplicitComponent
 
 from CADRE import rk4
 
-# Allow non-standard variable names for scientific calc
-# pylint: disable-msg=C0103
 
 # Constants
 mu = 398600.44

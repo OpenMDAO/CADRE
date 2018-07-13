@@ -1,14 +1,13 @@
-""" Attitude discipline for CADRE. """
+"""
+Attitude discipline for CADRE.
+"""
 
 from six.moves import range
 import numpy as np
 
-from openmdao.core.explicitcomponent import ExplicitComponent
+from openmdao.api import ExplicitComponent
 
 from CADRE.kinematics import computepositionrotd, computepositionrotdjacobian
-
-# Allow non-standard variable names for scientific calc
-# pylint: disable=C0103
 
 
 class Attitude_Angular(ExplicitComponent):
@@ -309,7 +308,6 @@ class Attitude_Attitude(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
-
         dO_RI = d_outputs['O_RI']
 
         if mode == 'fwd':
@@ -368,8 +366,9 @@ class Attitude_Roll(ExplicitComponent):
         O_BR[2, 2, :] = np.ones(self.n)
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         Gamma = inputs['Gamma']
 
         self.dO_dg = np.zeros((self.n, 3, 3))
@@ -403,6 +402,7 @@ class Attitude_RotationMtx(ExplicitComponent):
     Multiplies transformations to produce the orientation matrix of the
     body frame with respect to inertial.
     """
+
     def __init__(self, n=2):
         super(Attitude_RotationMtx, self).__init__()
 
@@ -472,6 +472,7 @@ class Attitude_RotationMtxRates(ExplicitComponent):
     """
     Calculates time derivative of body frame orientation matrix.
     """
+
     def __init__(self, n=2, h=28.2):
         super(Attitude_RotationMtxRates, self).__init__()
 
@@ -541,6 +542,7 @@ class Attitude_Sideslip(ExplicitComponent):
     """
     Determine velocity in the body frame.
     """
+
     def __init__(self, n=2):
         super(Attitude_Sideslip, self).__init__()
 
@@ -569,7 +571,6 @@ class Attitude_Sideslip(ExplicitComponent):
         """
         Calculate outputs.
         """
-
         r_e2b_I = inputs['r_e2b_I']
         O_BI = inputs['O_BI']
         v_e2b_B = outputs['v_e2b_B']
@@ -622,6 +623,7 @@ class Attitude_Torque(ExplicitComponent):
     """
     Compute the required reaction wheel tourque.
     """
+
     J = np.zeros((3, 3))
     J[0, :] = (0.018, 0., 0.)
     J[1, :] = (0., 0.018, 0.)

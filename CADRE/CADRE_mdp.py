@@ -1,4 +1,6 @@
-""" CADRE MDP Group."""
+"""
+CADRE MDP Group.
+"""
 
 from six.moves import range
 

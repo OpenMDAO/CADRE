@@ -1,0 +1,46 @@
+branches:
+  only:
+  - master
+
+  matrix:
+    - PY=2.7 NUMPY=1.12
+    - PY=3.6 NUMPY=1.14
+
+git:
+  depth: 99999
+
+addons:
+  apt:
+    update: true
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gfortran
+    - libblas-dev
+    - liblapack-dev
+    - libopenmpi-dev
+    - openmpi-bin
+
+cache:
+  apt: true
+
+install:
+- wget "https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh" -O miniconda.sh;
+- chmod +x miniconda.sh;
+- ./miniconda.sh -b  -p $HOME/miniconda;
+- export PATH=$HOME/miniconda/bin:$PATH;
+- conda install --yes python=$PY;
+- pip install --upgrade pip;
+- pip install coveralls
+- pip install petsc4py;
+- pip install openmdao;
+- pip install .;
+- pip list;
+
+script:
+- mkdir temp
+- cd temp
+- testflo -n 1 CADRE --coverage --coverpkg CADRE --cover-omit \*test/\*;
+
+after_success:
+- coveralls

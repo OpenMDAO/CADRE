@@ -1,14 +1,13 @@
-""" RK4 time integration component """
+"""
+RK4 time integration component
+"""
 
 from six import iteritems
 from six.moves import range
 
 import numpy as np
 
-from openmdao.core.explicitcomponent import ExplicitComponent
-
-# Allow non-standard variable names for scientific calc
-# pylint: disable-msg=C0103
+from openmdao.api import ExplicitComponent
 
 
 class RK4(ExplicitComponent):
@@ -31,15 +30,15 @@ class RK4(ExplicitComponent):
         opts = self.options
 
         opts.declare('state_var', '',
-                     desc="Name of the variable to be used for time integration")
+                     desc='Name of the variable to be used for time integration')
         opts.declare('init_state_var', '',
-                     desc="Name of the variable to be used for initial conditions")
+                     desc='Name of the variable to be used for initial conditions')
         opts.declare('external_vars', [],
-                     desc="List of names of variables that are external to the system "
-                          "but DO vary with time.")
+                     desc='List of names of variables that are external to the system '
+                          'but DO vary with time.')
         opts.declare('fixed_external_vars', [],
-                     desc="List of names of variables that are external to the system "
-                          "but DO NOT vary with time.")
+                     desc='List of names of variables that are external to the system '
+                          'but DO NOT vary with time.')
 
     def _init_data(self, inputs, outputs):
         """
@@ -133,7 +132,6 @@ class RK4(ExplicitComponent):
         state: ndarray
             array of state variables for a single time step.
         """
-
         raise NotImplementedError
 
     def df_dx(self, external, state):

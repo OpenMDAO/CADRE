@@ -3,7 +3,8 @@ CADRE CubeSat design problem
 
 This is the implementation for OpenMDAO 2.x. It is currently a work in progress.
 
-Instructions for the latest dev version:
+
+Instructions for the latest development version:
 
   `git clone git@github.com:OpenMDAO/CADRE`
 
@@ -20,3 +21,4 @@ You will also need MBI:
 And for parallel execution you will need petsc4py:
 
   `pip install petsc4py`
+
