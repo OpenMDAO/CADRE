@@ -11,10 +11,13 @@ from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
 from CADRE.CADRE_group import CADRE
 
 
+# set verbose to True for debugging
+verbose = False
+
+
 class TestCADRE(unittest.TestCase):
 
     def test_RK4_issue(self):
-
         n = 60
         m = 20
 
@@ -33,17 +36,15 @@ class TestCADRE(unittest.TestCase):
                      np.array([-690.314375, -1081.78239, -6762.90367,
                                7.44316722, 1.19745345, -0.96035904])]
 
-        prob = Problem()
-
         i = 0
         init = {
             'LD': LDs[i],
             'r_e2b_I0': r_e2b_I0s[i]
         }
 
+        prob = Problem()
         prob.model.add_subsystem('pt', CADRE(n, m, initial_inputs=init), promotes=['*'])
-
-        prob.setup(check=True)
+        prob.setup(check=verbose)
         prob.run_model()
 
         inputs = ['CP_gamma']
@@ -54,17 +55,19 @@ class TestCADRE(unittest.TestCase):
         # assert_check_partials(partials)
 
         # check totals
-        J = prob.compute_totals(of=outputs, wrt=inputs)
-        from pprint import pprint
-        pprint(J)
+        if verbose:
+            J = prob.check_totals(of=outputs, wrt=inputs)
+        else:
+            J = prob.check_totals(of=outputs, wrt=inputs, out_stream=None)
 
         for outp in outputs:
             for inp in inputs:
                 Jn = J[outp, inp]['J_fd']
                 Jf = J[outp, inp]['J_fwd']
-                np.set_prinprobtions(threshold='nan')
-                print(np.nonzero(Jn))
-                print(np.nonzero(Jf))
+                if verbose:
+                    np.set_printoptions(threshold='nan')
+                    print(np.nonzero(Jn))
+                    print(np.nonzero(Jf))
                 diff = abs(Jf - Jn)
                 assert_rel_error(self, diff.max(), 0.0, 1e-4)
 

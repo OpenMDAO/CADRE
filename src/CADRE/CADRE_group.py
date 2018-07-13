@@ -2,8 +2,7 @@
 
 import numpy as np
 
-from openmdao.core.indepvarcomp import IndepVarComp
-from openmdao.core.group import Group
+from openmdao.api import Group, IndepVarComp
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, Attitude_Attitude, \
     Attitude_Roll, Attitude_RotationMtx, Attitude_RotationMtxRates, Attitude_Torque

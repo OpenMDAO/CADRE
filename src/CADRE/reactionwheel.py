@@ -220,21 +220,28 @@ class ReactionWheel_Torque(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         outputs['T_RW'][:] = inputs['T_tot'][:]
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
+        """
+        Matrix-vector product with the Jacobian.
+        """
 
         if mode == 'fwd':
-            d_outputs['T_RW'][:] += d_inputs['T_tot'][:]
+            if 'T_tot' in d_inputs:
+                d_outputs['T_RW'][:] += d_inputs['T_tot'][:]
         else:
-            d_inputs['T_tot'] += d_outputs['T_RW'][:]
+            if 'T_tot' in d_inputs:
+                d_inputs['T_tot'] += d_outputs['T_RW'][:]
 
 
 class ReactionWheel_Dynamics(rk4.RK4):
-    """Compute the angular velocity vector of reaction wheel."""
+    """
+    Compute the angular velocity vector of reaction wheel.
+    """
 
     def __init__(self, n_times, h):
         super(ReactionWheel_Dynamics, self).__init__(n_times, h)

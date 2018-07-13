@@ -89,7 +89,9 @@ class Comm_AntRotation(ExplicitComponent):
         self.dq_dt = np.zeros(4)
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
+        """
+        Calculate outputs.
+        """
 
         antAngle = inputs['antAngle']
         q_A = outputs['q_A']
@@ -101,7 +103,9 @@ class Comm_AntRotation(ExplicitComponent):
         q_A[3, :] = 0.0
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
 
         antAngle = inputs['antAngle']
 
@@ -112,15 +116,17 @@ class Comm_AntRotation(ExplicitComponent):
         self.dq_dt[3] = 0.0
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         if mode == 'fwd':
-            for k in range(4):
-                d_outputs['q_A'][k, :] += self.dq_dt[k] * d_inputs['antAngle']
-
+            if 'antAngle' in d_inputs:
+                for k in range(4):
+                    d_outputs['q_A'][k, :] += self.dq_dt[k] * d_inputs['antAngle']
         else:
-            for k in range(4):
-                d_inputs['antAngle'] += self.dq_dt[k] * np.sum(d_outputs['q_A'][k, :])
+            if 'antAngle' in d_inputs:
+                for k in range(4):
+                    d_inputs['antAngle'] += self.dq_dt[k] * np.sum(d_outputs['q_A'][k, :])
 
 
 class Comm_AntRotationMtx(ExplicitComponent):
@@ -150,7 +156,9 @@ class Comm_AntRotationMtx(ExplicitComponent):
         self.J = np.empty((self.n, 3, 3, 4))
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
+        """
+        Calculate outputs.
+        """
 
         q_A = inputs['q_A']
         O_AB = outputs['O_AB']
@@ -172,7 +180,9 @@ class Comm_AntRotationMtx(ExplicitComponent):
             O_AB[:, :, i] = np.dot(A.T, B)
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
 
         q_A = inputs['q_A']
 
@@ -239,24 +249,25 @@ class Comm_AntRotationMtx(ExplicitComponent):
                     np.dot(A.T, dB_dq[:, :, k])
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
+        """
+        Matrix-vector product with the Jacobian.
+        """
+        if 'q_A' in d_inputs:
+            dq_A = d_inputs['q_A']
+            dO_AB = d_outputs['O_AB']
 
-        dq_A = d_inputs['q_A']
-        dO_AB = d_outputs['O_AB']
-
-        if mode == 'fwd':
-            for u in range(3):
-                for v in range(3):
-                    for k in range(4):
-                        dO_AB[u, v, :] += \
-                            self.J[:, u, v, k] * dq_A[k, :]
-
-        else:
-            for u in range(3):
-                for v in range(3):
-                    for k in range(4):
-                        dq_A[k, :] += self.J[:, u, v, k] * \
-                            dO_AB[u, v, :]
+            if mode == 'fwd':
+                for u in range(3):
+                    for v in range(3):
+                        for k in range(4):
+                            dO_AB[u, v, :] += \
+                                self.J[:, u, v, k] * dq_A[k, :]
+            else:
+                for u in range(3):
+                    for v in range(3):
+                        for k in range(4):
+                            dq_A[k, :] += self.J[:, u, v, k] * \
+                                dO_AB[u, v, :]
 
 
 class Comm_BitRate(ExplicitComponent):
@@ -300,8 +311,9 @@ class Comm_BitRate(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+         Calculate outputs.
+        """
         P_comm = inputs['P_comm']
         gain = inputs['gain']
         GSdist = inputs['GSdist']
@@ -317,8 +329,9 @@ class Comm_BitRate(ExplicitComponent):
                 CommLOS[i] / S2 ** 2
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         P_comm = inputs['P_comm']
         gain = inputs['gain']
         GSdist = inputs['GSdist']
@@ -347,8 +360,9 @@ class Comm_BitRate(ExplicitComponent):
                 P_comm[i] * gain[i] / S2 ** 2
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         dDr = d_outputs['Dr']
 
         if mode == 'fwd':
@@ -360,7 +374,6 @@ class Comm_BitRate(ExplicitComponent):
                 dDr += self.dD_dS * d_inputs['GSdist']
             if 'CommLOS' in d_inputs:
                 dDr += self.dD_dLOS * d_inputs['CommLOS']
-
         else:
             if 'P_comm' in d_inputs:
                 d_inputs['P_comm'] += self.dD_dP.T * dDr
@@ -374,7 +387,7 @@ class Comm_BitRate(ExplicitComponent):
 
 class Comm_Distance(ExplicitComponent):
     """
-    Calculates distance from ground station to satellitle.
+    Calculates distance from ground station to satellite.
     """
 
     def __init__(self, n):
@@ -395,7 +408,9 @@ class Comm_Distance(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
+        """
+        Calculate outputs.
+        """
 
         r_b2g_A = inputs['r_b2g_A']
         GSdist = outputs['GSdist']
@@ -404,7 +419,9 @@ class Comm_Distance(ExplicitComponent):
             GSdist[i] = np.dot(r_b2g_A[:, i], r_b2g_A[:, i])**0.5
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
 
         r_b2g_A = inputs['r_b2g_A']
 
@@ -417,15 +434,17 @@ class Comm_Distance(ExplicitComponent):
                 self.J[i, :] = 0.
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         if mode == 'fwd':
-            for k in range(3):
-                d_outputs['GSdist'] += self.J[:, k] * d_inputs['r_b2g_A'][k, :]
-
+            if 'r_b2g_A' in d_inputs:
+                for k in range(3):
+                    d_outputs['GSdist'] += self.J[:, k] * d_inputs['r_b2g_A'][k, :]
         else:
-            for k in range(3):
-                d_inputs['r_b2g_A'][k, :] += self.J[:, k] * d_outputs['GSdist']
+            if 'r_b2g_A' in d_inputs:
+                for k in range(3):
+                    d_inputs['r_b2g_A'][k, :] += self.J[:, k] * d_outputs['GSdist']
 
 
 class Comm_EarthsSpin(ExplicitComponent):
@@ -450,8 +469,9 @@ class Comm_EarthsSpin(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         t = inputs['t']
         q_E = outputs['q_E']
 
@@ -462,8 +482,9 @@ class Comm_EarthsSpin(ExplicitComponent):
         q_E[3, :] = -np.sin(theta)
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         t = inputs['t']
 
         ntime = self.n
@@ -476,15 +497,17 @@ class Comm_EarthsSpin(ExplicitComponent):
         self.dq_dt[:, 3] = -np.cos(theta) * fact
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         if mode == 'fwd':
-            for k in range(4):
-                d_outputs['q_E'][k, :] += self.dq_dt[:, k] * d_inputs['t']
-
+            if 't' in d_inputs:
+                for k in range(4):
+                    d_outputs['q_E'][k, :] += self.dq_dt[:, k] * d_inputs['t']
         else:
-            for k in range(4):
-                d_inputs['t'] += self.dq_dt[:, k] * d_outputs['q_E'][k, :]
+            if 't' in d_inputs:
+                for k in range(4):
+                    d_inputs['t'] += self.dq_dt[:, k] * d_outputs['q_E'][k, :]
 
 
 class Comm_EarthsSpinMtx(ExplicitComponent):
@@ -607,22 +630,22 @@ class Comm_EarthsSpinMtx(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        if 'q_E' in d_inputs:
+            dO_IE = d_outputs['O_IE']
+            dq_E = d_inputs['q_E']
 
-        dO_IE = d_outputs['O_IE']
-        dq_E = d_inputs['q_E']
-
-        if mode == 'fwd':
-            for u in range(3):
-                for v in range(3):
-                    for k in range(4):
-                        dO_IE[u, v, :] += self.J[:, u, v, k] * \
-                            dq_E[k, :]
-        else:
-            for u in range(3):
-                for v in range(3):
-                    for k in range(4):
-                        dq_E[k, :] += self.J[:, u, v, k] * \
-                            dO_IE[u, v, :]
+            if mode == 'fwd':
+                for u in range(3):
+                    for v in range(3):
+                        for k in range(4):
+                            dO_IE[u, v, :] += self.J[:, u, v, k] * \
+                                dq_E[k, :]
+            else:
+                for u in range(3):
+                    for v in range(3):
+                        for k in range(4):
+                            dq_E[k, :] += self.J[:, u, v, k] * \
+                                dO_IE[u, v, :]
 
 
 class Comm_GainPattern(ExplicitComponent):
@@ -1253,17 +1276,17 @@ class Comm_VectorSpherical(ExplicitComponent):
         Matrix-vector product with the Jacobian.
         """
         if mode == 'fwd':
-            r_b2g_A = d_inputs['r_b2g_A'].reshape((3 * self.n), order='F')
-            if 'azimuthGS' in d_outputs:
-                d_outputs['azimuthGS'] += self.J1.dot(r_b2g_A)
-            if 'elevationGS' in d_outputs:
-                d_outputs['elevationGS'] += self.J2.dot(r_b2g_A)
+            if 'r_b2g_A' in d_inputs:
+                r_b2g_A = d_inputs['r_b2g_A'].reshape((3 * self.n), order='F')
+                if 'azimuthGS' in d_outputs:
+                    d_outputs['azimuthGS'] += self.J1.dot(r_b2g_A)
+                if 'elevationGS' in d_outputs:
+                    d_outputs['elevationGS'] += self.J2.dot(r_b2g_A)
         else:
-            if 'azimuthGS' in d_outputs:
-                az_GS = d_outputs['azimuthGS']
-                d_inputs['r_b2g_A'] += (self.J1T.dot(az_GS)).reshape((3, self.n),
-                                                                     order='F')
-            if 'elevationGS' in d_outputs:
-                el_GS = d_outputs['elevationGS']
-                d_inputs['r_b2g_A'] += (self.J2T.dot(el_GS)).reshape((3, self.n),
-                                                                     order='F')
+            if 'r_b2g_A' in d_inputs:
+                if 'azimuthGS' in d_outputs:
+                    az_GS = d_outputs['azimuthGS']
+                    d_inputs['r_b2g_A'] += (self.J1T.dot(az_GS)).reshape((3, self.n), order='F')
+                if 'elevationGS' in d_outputs:
+                    el_GS = d_outputs['elevationGS']
+                    d_inputs['r_b2g_A'] += (self.J2T.dot(el_GS)).reshape((3, self.n), order='F')

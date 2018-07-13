@@ -91,11 +91,9 @@ class Attitude_Angular(ExplicitComponent):
             for k in range(3):
                 for i in range(3):
                     for j in range(3):
-
                         if 'O_BI' in d_inputs:
                             d_inputs['O_BI'][i, j, :] += self.dw_dO[:, k, i, j] * \
                                 dw_B[k, :]
-
                         if 'Odot_BI' in d_inputs:
                             d_inputs['Odot_BI'][i, j, :] += self.dw_dOdot[:, k, i, j] * \
                                 dw_B[k, :]
@@ -315,17 +313,19 @@ class Attitude_Attitude(ExplicitComponent):
         dO_RI = d_outputs['O_RI']
 
         if mode == 'fwd':
-            for k in range(3):
-                for j in range(3):
-                    for i in range(6):
-                        dO_RI[k, j, :] += self.dO_dr[:, k, j, i] * \
-                            d_inputs['r_e2b_I'][i, :]
+            if 'r_e2b_I' in d_inputs:
+                for k in range(3):
+                    for j in range(3):
+                        for i in range(6):
+                            dO_RI[k, j, :] += self.dO_dr[:, k, j, i] * \
+                                d_inputs['r_e2b_I'][i, :]
         else:
-            for k in range(3):
-                for j in range(3):
-                    for i in range(6):
-                        d_inputs['r_e2b_I'][i, :] += self.dO_dr[:, k, j, i] * \
-                            dO_RI[k, j, :]
+            if 'r_e2b_I' in d_inputs:
+                for k in range(3):
+                    for j in range(3):
+                        for i in range(6):
+                            d_inputs['r_e2b_I'][i, :] += self.dO_dr[:, k, j, i] * \
+                                dO_RI[k, j, :]
 
 
 class Attitude_Roll(ExplicitComponent):
@@ -385,15 +385,17 @@ class Attitude_Roll(ExplicitComponent):
         dO_BR = d_outputs['O_BR']
 
         if mode == 'fwd':
-            for k in range(3):
-                for j in range(3):
-                    dO_BR[k, j, :] += self.dO_dg[:, k, j] * \
-                        d_inputs['Gamma']
+            if 'Gamma' in d_inputs:
+                for k in range(3):
+                    for j in range(3):
+                        dO_BR[k, j, :] += self.dO_dg[:, k, j] * \
+                            d_inputs['Gamma']
         else:
-            for k in range(3):
-                for j in range(3):
-                    d_inputs['Gamma'] += self.dO_dg[:, k, j] * \
-                        dO_BR[k, j, :]
+            if 'Gamma' in d_inputs:
+                for k in range(3):
+                    for j in range(3):
+                        d_inputs['Gamma'] += self.dO_dg[:, k, j] * \
+                            dO_BR[k, j, :]
 
 
 class Attitude_RotationMtx(ExplicitComponent):
@@ -515,22 +517,24 @@ class Attitude_RotationMtxRates(ExplicitComponent):
         h = self.h
 
         if mode == 'fwd':
-            dO_BI = d_inputs['O_BI']
-            dOdot_BI[:, :, 0] += dO_BI[:, :, 1] / h
-            dOdot_BI[:, :, 0] -= dO_BI[:, :, 0] / h
-            dOdot_BI[:, :, 1:-1] += dO_BI[:, :, 2:] / (2.0*h)
-            dOdot_BI[:, :, 1:-1] -= dO_BI[:, :, :-2] / (2.0*h)
-            dOdot_BI[:, :, -1] += dO_BI[:, :, -1] / h
-            dOdot_BI[:, :, -1] -= dO_BI[:, :, -2] / h
+            if 'O_BI' in d_inputs:
+                dO_BI = d_inputs['O_BI']
+                dOdot_BI[:, :, 0] += dO_BI[:, :, 1] / h
+                dOdot_BI[:, :, 0] -= dO_BI[:, :, 0] / h
+                dOdot_BI[:, :, 1:-1] += dO_BI[:, :, 2:] / (2.0*h)
+                dOdot_BI[:, :, 1:-1] -= dO_BI[:, :, :-2] / (2.0*h)
+                dOdot_BI[:, :, -1] += dO_BI[:, :, -1] / h
+                dOdot_BI[:, :, -1] -= dO_BI[:, :, -2] / h
         else:
-            dO_BI = np.zeros(d_inputs['O_BI'].shape)
-            dO_BI[:, :, 1] += dOdot_BI[:, :, 0] / h
-            dO_BI[:, :, 0] -= dOdot_BI[:, :, 0] / h
-            dO_BI[:, :, 2:] += dOdot_BI[:, :, 1:-1] / (2.0*h)
-            dO_BI[:, :, :-2] -= dOdot_BI[:, :, 1:-1] / (2.0*h)
-            dO_BI[:, :, -1] += dOdot_BI[:, :, -1] / h
-            dO_BI[:, :, -2] -= dOdot_BI[:, :, -1] / h
-            d_inputs['O_BI'] += dO_BI
+            if 'O_BI' in d_inputs:
+                dO_BI = np.zeros(d_inputs['O_BI'].shape)
+                dO_BI[:, :, 1] += dOdot_BI[:, :, 0] / h
+                dO_BI[:, :, 0] -= dOdot_BI[:, :, 0] / h
+                dO_BI[:, :, 2:] += dOdot_BI[:, :, 1:-1] / (2.0*h)
+                dO_BI[:, :, :-2] -= dOdot_BI[:, :, 1:-1] / (2.0*h)
+                dO_BI[:, :, -1] += dOdot_BI[:, :, -1] / h
+                dO_BI[:, :, -2] -= dOdot_BI[:, :, -1] / h
+                d_inputs['O_BI'] += dO_BI
 
 
 class Attitude_Sideslip(ExplicitComponent):

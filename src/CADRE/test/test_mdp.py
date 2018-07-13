@@ -19,12 +19,15 @@ from openmdao.utils.mpi import MPI
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 
+# set verbose to True for debugging
+verbose = False
+
+
 class TestCADRE(unittest.TestCase):
 
     N_PROCS = 2
 
     def test_CADRE_MDP(self):
-
         # Read pickles
         fpath = os.path.dirname(os.path.realpath(__file__))
         if sys.version_info.major == 2:
@@ -45,10 +48,9 @@ class TestCADRE(unittest.TestCase):
         npts = 2
 
         # Instantiate
-        prob = Problem(CADRE_MDP_Group(n=n, m=m, npts=npts))
-        model = prob.model
+        model = CADRE_MDP_Group(n=n, m=m, npts=npts)
 
-        # Add parameters and constraints to each CADRE instance.
+        # Add design variables and constraints to each CADRE instance.
         names = ['pt%s' % i for i in range(npts)]
         for i, name in enumerate(names):
             model.add_design_var('%s.CP_Isetpt' % name, lower=0., upper=0.4)
@@ -62,7 +64,7 @@ class TestCADRE(unittest.TestCase):
             model.add_constraint('%s.ConS1' % name, upper=0.0)
             model.add_constraint('%s_con5.val' % name, equals=0.0)
 
-        # Add Parameter groups
+        # Add broadcast parameters
         model.add_design_var('bp.cellInstd', lower=0., upper=1.0)
         model.add_design_var('bp.finAngle', lower=0., upper=np.pi/2.)
         model.add_design_var('bp.antAngle', lower=-np.pi/4, upper=np.pi/4)
@@ -70,16 +72,17 @@ class TestCADRE(unittest.TestCase):
         # Add objective
         model.add_objective('obj.val')
 
-        # For Parallel execution, we must use KSP
+        # For parallel execution, we must use KSP
         if MPI:
             model.linear_solver = PETScKrylov()
 
-        start_time = time.time()
-
-        prob.setup(check=True)
+        # create problem
+        prob = Problem(model)
+        prob.setup(check=verbose)
         prob.run_driver()
 
-        abs_u = model._var_allprocs_prom2abs_list['output']
+        # Check output values
+        abs_names = model._var_allprocs_prom2abs_list['output']
 
         for var in data:
             # We changed constraint names
@@ -94,7 +97,7 @@ class TestCADRE(unittest.TestCase):
                 xvar = xvar.replace('_con4.val', '.ConS1')
 
             # make sure var is local before we try to look it up
-            compname = abs_u[xvar][0].rsplit('.', 1)[0]
+            compname = abs_names[xvar][0].rsplit('.', 1)[0]
             comp = model._get_subsystem(compname)
             if comp.is_active():
                 computed = prob[xvar]
@@ -104,14 +107,16 @@ class TestCADRE(unittest.TestCase):
                 else:
                     rel = np.abs(actual - computed) / np.abs(actual)
 
-                print(xvar)
-                print(computed)
-                print(actual)
+                if verbose:
+                    print(xvar)
+                    print(computed)
+                    print(actual)
+
                 if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
                     assert rel <= 1e-3
 
-        # Now do derivatives
-        Jb = prob.compute_totals(debug_print=True)
+        # Check derivatives
+        Jb = prob.compute_totals(debug_print=verbose)
 
         for key1, value in sorted(Ja.items()):
             for key2 in sorted(value.keys()):
@@ -152,13 +157,13 @@ class TestCADRE(unittest.TestCase):
                 else:
                     rel = np.abs(actual - computed)/np.abs(actual)
 
-                print(bkey1, 'wrt', bkey2, '(', key1, 'wrt', key2, ')')
-                print(computed)
-                print(actual)
+                if verbose:
+                    print(bkey1, 'wrt', bkey2, '(', key1, 'wrt', key2, ')')
+                    print(computed)
+                    print(actual)
+
                 if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
                     assert rel <= 1e-3
-
-        print('\n\nElapsed time:', time.time()-start_time)
 
 
 if __name__ == '__main__':

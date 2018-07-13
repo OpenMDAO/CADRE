@@ -14,7 +14,9 @@ from CADRE.kinematics import computepositionspherical, computepositionsphericalj
 
 
 class Sun_LOS(ExplicitComponent):
-    """ Compute the Satellite to sun line of sight. """
+    """
+    Compute the Satellite to sun line of sight.
+    """
 
     def __init__(self, n=2):
         super(Sun_LOS, self).__init__()
@@ -43,8 +45,9 @@ class Sun_LOS(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         r_e2b_I = inputs['r_e2b_I']
         r_e2s_I = inputs['r_e2s_I']
         LOS = outputs['LOS']
@@ -67,8 +70,9 @@ class Sun_LOS(ExplicitComponent):
                 LOS[i] = 3*x**2 - 2*x**3
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         r_e2b_I = inputs['r_e2b_I']
         r_e2s_I = inputs['r_e2s_I']
 
@@ -139,8 +143,9 @@ class Sun_LOS(ExplicitComponent):
         self.JsT = self.Js.transpose()
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         dLOS = d_outputs['LOS']
 
         if mode == 'fwd':
@@ -168,7 +173,9 @@ def crossMatrix(v):
 
 
 class Sun_PositionBody(ExplicitComponent):
-    """ Position vector from earth to sun in body-fixed frame. """
+    """
+    Position vector from earth to sun in body-fixed frame.
+    """
 
     def __init__(self, n=2):
         super(Sun_PositionBody, self).__init__()
@@ -195,20 +202,23 @@ class Sun_PositionBody(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         outputs['r_e2s_B'] = computepositionrotd(self.n, inputs['r_e2s_I'],
                                                  inputs['O_BI'])
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         self.J1, self.J2 = computepositionrotdjacobian(self.n, inputs['r_e2s_I'],
                                                        inputs['O_BI'])
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         dr_e2s_B = d_outputs['r_e2s_B']
 
         if mode == 'fwd':
@@ -217,21 +227,17 @@ class Sun_PositionBody(ExplicitComponent):
                     for u in range(3):
                         for v in range(3):
                             dr_e2s_B[k, :] += self.J1[:, k, u, v] * d_inputs['O_BI'][u, v, :]
-
             if 'r_e2s_I' in d_inputs:
                 for k in range(3):
                     for j in range(3):
                         dr_e2s_B[k, :] += self.J2[:, k, j] * d_inputs['r_e2s_I'][j, :]
-
         else:
             for k in range(3):
-
                 if 'O_BI' in d_inputs:
                     dO_BI = d_inputs['O_BI']
                     for u in range(3):
                         for v in range(3):
                             dO_BI[u, v, :] += self.J1[:, k, u, v] * dr_e2s_B[k, :]
-
                 if 'r_e2s_I' in d_inputs:
                     dr_e2s_I = d_inputs['r_e2s_I']
                     for j in range(3):
@@ -271,8 +277,9 @@ class Sun_PositionECI(ExplicitComponent):
         self.Jj = np.zeros(3*n)
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         r_e2s_I = outputs['r_e2s_I']
 
         T = inputs['LD'] + inputs['t'][:]/3600./24.
@@ -286,8 +293,9 @@ class Sun_PositionECI(ExplicitComponent):
             r_e2s_I[2, i] = np.sin(Lambda)*np.sin(eps)
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         T = inputs['LD'] + inputs['t'][:]/3600./24.
         dr_dt = np.empty(3)
         for i in range(0, self.n):
@@ -317,8 +325,9 @@ class Sun_PositionECI(ExplicitComponent):
         self.JT = self.J.transpose()
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         dr_e2s_I = d_outputs['r_e2s_I']
 
         if mode == 'fwd':
@@ -335,7 +344,9 @@ class Sun_PositionECI(ExplicitComponent):
 
 
 class Sun_PositionSpherical(ExplicitComponent):
-    """ Compute the elevation angle of the Sun in the body-fixed frame."""
+    """
+    Compute the elevation angle of the Sun in the body-fixed frame.
+    """
 
     def __init__(self, n=2):
         super(Sun_PositionSpherical, self).__init__()
@@ -362,16 +373,18 @@ class Sun_PositionSpherical(ExplicitComponent):
         self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
-        """ Calculate outputs. """
-
+        """
+        Calculate outputs.
+        """
         azimuth, elevation = computepositionspherical(self.n, inputs['r_e2s_B'])
 
         outputs['azimuth'] = azimuth
         outputs['elevation'] = elevation
 
     def compute_partials(self, inputs, partials):
-        """ Calculate and save derivatives. (i.e., Jacobian) """
-
+        """
+        Calculate and save derivatives. (i.e., Jacobian)
+        """
         self.Ja1, self.Ji1, self.Jj1, self.Ja2, self.Ji2, self.Jj2 = \
             computepositionsphericaljacobian(self.n, 3*self.n, inputs['r_e2s_B'])
         self.J1 = scipy.sparse.csc_matrix((self.Ja1, (self.Ji1, self.Jj1)),
@@ -382,22 +395,21 @@ class Sun_PositionSpherical(ExplicitComponent):
         self.J2T = self.J2.transpose()
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
-        """ Matrix-vector product with the Jacobian. """
-
+        """
+        Matrix-vector product with the Jacobian.
+        """
         if mode == 'fwd':
-            r_e2s_B = d_inputs['r_e2s_B'].reshape((3*self.n), order='F')
-            if 'azimuth' in d_outputs:
-                d_outputs['azimuth'] += self.J1.dot(r_e2s_B)
-            if 'elevation' in d_outputs:
-                d_outputs['elevation'] += self.J2.dot(r_e2s_B)
-
+            if 'r_e2s_B' in d_inputs:
+                r_e2s_B = d_inputs['r_e2s_B'].reshape((3*self.n), order='F')
+                if 'azimuth' in d_outputs:
+                    d_outputs['azimuth'] += self.J1.dot(r_e2s_B)
+                if 'elevation' in d_outputs:
+                    d_outputs['elevation'] += self.J2.dot(r_e2s_B)
         else:
-            if 'azimuth' in d_outputs:
-                azimuth = d_outputs['azimuth'][:]
-                d_inputs['r_e2s_B'] += self.J1T.dot(azimuth).reshape((3, self.n),
-                                                                     order='F')
-
-            if 'elevation' in d_outputs:
-                elevation = d_outputs['elevation'][:]
-                d_inputs['r_e2s_B'] += self.J2T.dot(elevation).reshape((3, self.n),
-                                                                       order='F')
+            if 'r_e2s_B' in d_inputs:
+                if 'azimuth' in d_outputs:
+                    azimuth = d_outputs['azimuth'][:]
+                    d_inputs['r_e2s_B'] += self.J1T.dot(azimuth).reshape((3, self.n), order='F')
+                if 'elevation' in d_outputs:
+                    elevation = d_outputs['elevation'][:]
+                    d_inputs['r_e2s_B'] += self.J2T.dot(elevation).reshape((3, self.n), order='F')
