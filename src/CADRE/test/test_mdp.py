@@ -19,7 +19,7 @@ from openmdao.solvers.linear.petsc_ksp import PETScKrylov
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 
-class CADRE_MDP_TestCase(unittest.TestCase):
+class TestCADRE(unittest.TestCase):
 
     N_PROCS = 2
 
@@ -28,11 +28,11 @@ class CADRE_MDP_TestCase(unittest.TestCase):
         # Read pickles
         fpath = os.path.dirname(os.path.realpath(__file__))
         if sys.version_info.major == 2:
-            file1 = fpath + "/mdp_execute_py2.pkl"
-            file2 = fpath + "/mdp_derivs_py2.pkl"
+            file1 = fpath + '/mdp_execute_py2.pkl'
+            file2 = fpath + '/mdp_derivs_py2.pkl'
         else:
-            file1 = fpath + "/mdp_execute.pkl"
-            file2 = fpath + "/mdp_derivs.pkl"
+            file1 = fpath + '/mdp_execute.pkl'
+            file2 = fpath + '/mdp_derivs.pkl'
 
         with open(file1, 'rb') as f:
             data = pickle.load(f)
@@ -51,21 +51,21 @@ class CADRE_MDP_TestCase(unittest.TestCase):
         # Add parameters and constraints to each CADRE instance.
         names = ['pt%s' % i for i in range(npts)]
         for i, name in enumerate(names):
-            model.add_design_var("%s.CP_Isetpt" % name, lower=0., upper=0.4)
-            model.add_design_var("%s.CP_gamma" % name, lower=0, upper=np.pi/2.)
-            model.add_design_var("%s.CP_P_comm" % name, lower=0., upper=25.)
-            model.add_design_var("%s.iSOC" % name, indices=[0], lower=0.2, upper=1.)
+            model.add_design_var('%s.CP_Isetpt' % name, lower=0., upper=0.4)
+            model.add_design_var('%s.CP_gamma' % name, lower=0, upper=np.pi/2.)
+            model.add_design_var('%s.CP_P_comm' % name, lower=0., upper=25.)
+            model.add_design_var('%s.iSOC' % name, indices=[0], lower=0.2, upper=1.)
 
-            model.add_constraint("%s.ConCh" % name, upper=0.0)
-            model.add_constraint("%s.ConDs" % name, upper=0.0)
-            model.add_constraint("%s.ConS0" % name, upper=0.0)
-            model.add_constraint("%s.ConS1" % name, upper=0.0)
-            model.add_constraint("%s_con5.val" % name, equals=0.0)
+            model.add_constraint('%s.ConCh' % name, upper=0.0)
+            model.add_constraint('%s.ConDs' % name, upper=0.0)
+            model.add_constraint('%s.ConS0' % name, upper=0.0)
+            model.add_constraint('%s.ConS1' % name, upper=0.0)
+            model.add_constraint('%s_con5.val' % name, equals=0.0)
 
         # Add Parameter groups
-        model.add_design_var("bp.cellInstd", lower=0., upper=1.0)
-        model.add_design_var("bp.finAngle", lower=0., upper=np.pi/2.)
-        model.add_design_var("bp.antAngle", lower=-np.pi/4, upper=np.pi/4)
+        model.add_design_var('bp.cellInstd', lower=0., upper=1.0)
+        model.add_design_var('bp.finAngle', lower=0., upper=np.pi/2.)
+        model.add_design_var('bp.antAngle', lower=-np.pi/4, upper=np.pi/4)
 
         # Add objective
         model.add_objective('obj.val')
@@ -111,37 +111,54 @@ class CADRE_MDP_TestCase(unittest.TestCase):
                     assert rel <= 1e-3
 
         # Now do derivatives
-        inputs = list(model.get_design_vars().keys())
-        outputs = list(model.get_responses().keys())
-        Jb = prob.calc_gradient(inputs, outputs, mode='rev', return_format='dict')
+        Jb = prob.compute_totals(debug_print=True)
 
         for key1, value in sorted(Ja.items()):
             for key2 in sorted(value.keys()):
-                # We changed constraint names
-                xkey1 = key1
-                if '_con1' in xkey1:
-                    xkey1 = xkey1.replace('_con1.val', '.ConCh')
-                if '_con2' in xkey1:
-                    xkey1 = xkey1.replace('_con2.val', '.ConDs')
-                if '_con3' in xkey1:
-                    xkey1 = xkey1.replace('_con3.val', '.ConS0')
-                if '_con4' in xkey1:
-                    xkey1 = xkey1.replace('_con4.val', '.ConS1')
+                bkey1 = key1
+                bkey2 = key2
 
-                computed = Jb[xkey1][key2]
+                # we changed constraint names
+                if '_con1' in bkey1:
+                    bkey1 = bkey1.replace('_con1.val', '.ConCh')
+                if '_con2' in bkey1:
+                    bkey1 = bkey1.replace('_con2.val', '.ConDs')
+                if '_con3' in bkey1:
+                    bkey1 = bkey1.replace('_con3.val', '.ConS0')
+                if '_con4' in bkey1:
+                    bkey1 = bkey1.replace('_con4.val', '.ConS1')
+
+                if bkey1.startswith('pt') and not bkey1.endswith('.val'):
+                    # need full path of constraint vars in the parallel CADRE groups
+                    parts = bkey1.split('.')
+                    parts[0] = 'parallel.%s.BatteryConstraints' % parts[0]
+                    bkey1 = '.'.join(parts)
+
+                if key2.startswith('bp'):
+                    # the 3 broadcast params were merged into a single IndepVarComp
+                    parts = bkey2.split('.')
+                    parts[0] = 'bp'
+                    bkey2 = '.'.join(parts)
+                elif key2.startswith('pt'):
+                    # need full path of design vars in the parallel CADRE groups
+                    parts = bkey2.split('.')
+                    parts[0] = 'parallel.%s.design' % parts[0]
+                    bkey2 = '.'.join(parts)
+
                 actual = Ja[key1][key2]
+                computed = Jb[bkey1, bkey2]
                 if isinstance(computed, np.ndarray):
                     rel = np.linalg.norm(actual - computed)/np.linalg.norm(actual)
                 else:
                     rel = np.abs(actual - computed)/np.abs(actual)
 
-                print(xkey1, 'wrt', key2)
+                print(bkey1, 'wrt', key2)
                 print(computed)
                 print(actual)
                 if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
                     assert rel <= 1e-3
 
-        print("\n\nElapsed time:", time.time()-start_time)
+        print('\n\nElapsed time:', time.time()-start_time)
 
 
 if __name__ == '__main__':

@@ -29,7 +29,7 @@ from CADRE.thermal_temperature import ThermalTemperature
 NTIME = 5
 
 
-class Testcase_CADRE(unittest.TestCase):
+class TestCADRE(unittest.TestCase):
 
     def setup(self, compname, inputs, state0):
         try:

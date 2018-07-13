@@ -1,18 +1,17 @@
-""" Poor man's test_total_derivatives for CADRE."""
+""" Test_total_derivatives for CADRE RK4 Component. """
 from __future__ import print_function
 
 import unittest
 
 import numpy as np
 
-from openmdao.core.problem import Problem
+from openmdao.api import Problem
+from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
 
 from CADRE.CADRE_group import CADRE
 
-from openmdao.utils.assert_utils import assert_check_partials
 
-
-class Testcase_CADRE_deriv(unittest.TestCase):
+class TestCADRE(unittest.TestCase):
 
     def test_RK4_issue(self):
 
@@ -37,48 +36,38 @@ class Testcase_CADRE_deriv(unittest.TestCase):
         prob = Problem()
 
         i = 0
-        init = {}
-        init["LD"] = LDs[i]
-        init["r_e2b_I0"] = r_e2b_I0s[i]
+        init = {
+            'LD': LDs[i],
+            'r_e2b_I0': r_e2b_I0s[i]
+        }
 
         prob.model.add_subsystem('pt', CADRE(n, m, initial_inputs=init), promotes=['*'])
 
-        prob.setup(check=False)
+        prob.setup(check=True)
         prob.run_model()
 
-        # inputs = ['CP_gamma']
-        # outputs = ['Data']
+        inputs = ['CP_gamma']
+        outputs = ['Data']
 
-        partials = prob.check_partials()  # out_stream=None)
-        assert_check_partials(partials)
+        # check partials
+        # partials = prob.check_partials()  # out_stream=None)
+        # assert_check_partials(partials)
 
-        # from time import time
-        # t0 = time()
-        # J1 = prob.calc_gradient(inputs, outputs, mode='fwd')
-        # print('Forward', time()-t0)
-        # t0 = time()
-        # J2 = prob.calc_gradient(inputs, outputs, mode='rev')
-        # print('Reverse', time()-t0)
-        # t0 = time()
-        # Jfd = prob.calc_gradient(inputs, outputs, mode='fd')
-        # print('Fd', time()-t0)
+        # check totals
+        J = prob.compute_totals(of=outputs, wrt=inputs)
+        from pprint import pprint
+        pprint(J)
 
-        # np.set_prinprobtions(threshold='nan')
-        # # print(np.nonzero(J1))
-        # # print(np.nonzero(J2))
-        # # print(np.nonzero(Jfd))
-        # # print(J1)
-        # # print(J2)
-        # # print(Jfd)
-        # print(np.max(abs(J1-Jfd)))
-        # print(np.max(abs(J2-Jfd)))
-        # print(np.max(abs(J1-J2)))
-
-        # self.assertTrue(np.max(abs(J1-J2)) < 1.0e-6)
-        # self.assertTrue(np.max(abs(J1-Jfd)) < 1.0e-4)
-        # self.assertTrue(np.max(abs(J2-Jfd)) < 1.0e-4)
+        for outp in outputs:
+            for inp in inputs:
+                Jn = J[outp, inp]['J_fd']
+                Jf = J[outp, inp]['J_fwd']
+                np.set_prinprobtions(threshold='nan')
+                print(np.nonzero(Jn))
+                print(np.nonzero(Jf))
+                diff = abs(Jf - Jn)
+                assert_rel_error(self, diff.max(), 0.0, 1e-4)
 
 
-if __name__ == "__main__":
-
+if __name__ == '__main__':
     unittest.main()

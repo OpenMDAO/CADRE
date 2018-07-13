@@ -8,7 +8,7 @@ from parameterized import parameterized
 
 import numpy as np
 
-from openmdao.core.problem import Problem
+from openmdao.api import Problem
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
     Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
@@ -68,7 +68,8 @@ component_types = [
 n, m, h, setd = load_validation_data(idx='5')
 
 
-class TestComponents(unittest.TestCase):
+class TestCADRE(unittest.TestCase):
+
     @parameterized.expand([(_class.__name__, _class) for _class in component_types],
                           testcase_func_name=lambda f, n, p: 'test_' + p.args[0])
     def test_component(self, name, comp_class):

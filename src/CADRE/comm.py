@@ -78,7 +78,7 @@ class Comm_AntRotation(ExplicitComponent):
         n = self.n
 
         # Inputs
-        self.add_input('antAngle', 0.0)
+        self.add_input('antAngle', 0.0, units='rad')
 
         # Outputs
         self.add_output('q_A', np.zeros((4, n)), units=None,

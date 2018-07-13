@@ -4,16 +4,15 @@ import unittest
 
 import numpy as np
 
-from openmdao.core.problem import Problem
-from openmdao.core.indepvarcomp import IndepVarComp
-from openmdao.utils.assert_utils import assert_check_partials
+from openmdao.api import Problem, IndepVarComp
+from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
 
 from CADRE.rk4 import RK4
 
 
 class RKTest(RK4):
     """
-    Simple case with 2 states, 2 time points, and a 2-wide time-invariant input.
+    An RK4 component with 2 states, 2 time points, and a 2-wide time-invariant input.
     """
     def __init__(self, n_times):
         super(RKTest, self).__init__()
@@ -105,9 +104,9 @@ class RKTest(RK4):
 NTIME = 3
 
 
-class Testcase_RK_deriv(unittest.TestCase):
+class TestCADRE(unittest.TestCase):
 
-    def test_with_time_invariant(self):
+    def test_rk_with_time_invariant(self):
         np.random.seed(1)
 
         indeps = IndepVarComp()
@@ -118,17 +117,29 @@ class Testcase_RK_deriv(unittest.TestCase):
         indeps.add_output('x0', np.random.random((2,)))
 
         prob = Problem()
-        model = prob.model
 
-        model.add_subsystem('indeps', indeps, promotes=['*'])
-        model.add_subsystem('rktest', rktest, promotes=['*'])
+        prob.model.add_subsystem('indeps', indeps, promotes=['*'])
+        prob.model.add_subsystem('rktest', rktest, promotes=['*'])
 
         prob.setup()
         prob.run_model()
 
-        partials = prob.check_partials()  # out_stream=None)
-
+        # check partials
+        partials = prob.check_partials(out_stream=None)
         assert_check_partials(partials, atol=6e-5, rtol=6e-5)
+
+        # check totals
+        inputs = ['yi', 'yv', 'x0']
+        outputs = ['x']
+
+        J = prob.check_totals(of=outputs, wrt=inputs, out_stream=None)
+
+        for outp in outputs:
+            for inp in inputs:
+                Jn = J[outp, inp]['J_fd']
+                Jf = J[outp, inp]['J_fwd']
+                diff = abs(Jf - Jn)
+                assert_rel_error(self, diff.max(), 0.0, 6e-5)
 
 
 if __name__ == '__main__':

@@ -20,9 +20,6 @@ from CADRE.sun import Sun_LOS, Sun_PositionBody, Sun_PositionECI, Sun_PositionSp
 from CADRE.thermal_temperature import ThermalTemperature
 from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 
-# Allow non-standard variable names for scientific calc
-# pylint: disable=C0103
-
 
 class CADRE(Group):
     """
@@ -101,9 +98,9 @@ class CADRE(Group):
 
         # Some initial setup.
         indeps = IndepVarComp()
-        indeps.add_output('t1', initial_inputs['t1'], units="s")
-        indeps.add_output('t2', initial_inputs['t2'], units="s")
-        indeps.add_output('t', initial_inputs['t'], units="s")
+        indeps.add_output('t1', initial_inputs['t1'], units='s')
+        indeps.add_output('t2', initial_inputs['t2'], units='s')
+        indeps.add_output('t', initial_inputs['t'], units='s')
 
         # Design parameters
         design = IndepVarComp()
@@ -122,9 +119,9 @@ class CADRE(Group):
         # params
         params = IndepVarComp()
         params.add_output('LD', initial_inputs['LD'])
-        params.add_output('lat', initial_inputs['lat'], units="rad")
-        params.add_output('lon', initial_inputs['lon'], units="rad")
-        params.add_output('alt', initial_inputs['alt'], units="km")
+        params.add_output('lat', initial_inputs['lat'], units='rad')
+        params.add_output('lon', initial_inputs['lon'], units='rad')
+        params.add_output('alt', initial_inputs['alt'], units='km')
         params.add_output('r_e2b_I0', initial_inputs['r_e2b_I0'])
 
         # add independent vars
@@ -133,57 +130,114 @@ class CADRE(Group):
         self.add_subsystem('params', params, promotes=['*'])
 
         # Add Component Models
-        self.add_subsystem("BsplineParameters", BsplineParameters(n, m), promotes=['*'])
-        self.add_subsystem("Attitude_Angular", Attitude_Angular(n), promotes=['*'])
-        self.add_subsystem("Attitude_AngularRates", Attitude_AngularRates(n, h), promotes=['*'])
-        self.add_subsystem("Attitude_Attitude", Attitude_Attitude(n), promotes=['*'])
-        self.add_subsystem("Attitude_Roll", Attitude_Roll(n), promotes=['*'])
-        self.add_subsystem("Attitude_RotationMtx", Attitude_RotationMtx(n), promotes=['*'])
-        self.add_subsystem("Attitude_RotationMtxRates", Attitude_RotationMtxRates(n, h),
+        self.add_subsystem('BsplineParameters', BsplineParameters(n, m), promotes=['*'])
+        self.add_subsystem('Attitude_Angular', Attitude_Angular(n), promotes=['*'])
+        self.add_subsystem('Attitude_AngularRates', Attitude_AngularRates(n, h), promotes=['*'])
+        self.add_subsystem('Attitude_Attitude', Attitude_Attitude(n), promotes=['*'])
+        self.add_subsystem('Attitude_Roll', Attitude_Roll(n), promotes=['*'])
+        self.add_subsystem('Attitude_RotationMtx', Attitude_RotationMtx(n), promotes=['*'])
+        self.add_subsystem('Attitude_RotationMtxRates', Attitude_RotationMtxRates(n, h),
                            promotes=['*'])
 
         # Not needed?
-        # self.add_subsystem("Attitude_Sideslip", Attitude_Sideslip(n))
+        # self.add_subsystem('Attitude_Sideslip', Attitude_Sideslip(n))
 
-        self.add_subsystem("Attitude_Torque", Attitude_Torque(n), promotes=['*'])
-        self.add_subsystem("BatteryConstraints", BatteryConstraints(n), promotes=['*'])
-        self.add_subsystem("BatteryPower", BatteryPower(n), promotes=['*'])
-        self.add_subsystem("BatterySOC", BatterySOC(n, h), promotes=['*'])
-        self.add_subsystem("Comm_AntRotation", Comm_AntRotation(n), promotes=['*'])
-        self.add_subsystem("Comm_AntRotationMtx", Comm_AntRotationMtx(n), promotes=['*'])
-        self.add_subsystem("Comm_BitRate", Comm_BitRate(n), promotes=['*'])
-        self.add_subsystem("Comm_DataDownloaded", Comm_DataDownloaded(n, h), promotes=['*'])
-        self.add_subsystem("Comm_Distance", Comm_Distance(n), promotes=['*'])
-        self.add_subsystem("Comm_EarthsSpin", Comm_EarthsSpin(n), promotes=['*'])
-        self.add_subsystem("Comm_EarthsSpinMtx", Comm_EarthsSpinMtx(n), promotes=['*'])
-        self.add_subsystem("Comm_GainPattern", Comm_GainPattern(n, comm_raw), promotes=['*'])
-        self.add_subsystem("Comm_GSposEarth", Comm_GSposEarth(n), promotes=['*'])
-        self.add_subsystem("Comm_GSposECI", Comm_GSposECI(n), promotes=['*'])
-        self.add_subsystem("Comm_LOS", Comm_LOS(n), promotes=['*'])
-        self.add_subsystem("Comm_VectorAnt", Comm_VectorAnt(n), promotes=['*'])
-        self.add_subsystem("Comm_VectorBody", Comm_VectorBody(n), promotes=['*'])
-        self.add_subsystem("Comm_VectorECI", Comm_VectorECI(n), promotes=['*'])
-        self.add_subsystem("Comm_VectorSpherical", Comm_VectorSpherical(n), promotes=['*'])
-
-        # Not needed?
-        # self.add_subsystem("Orbit_Initial", Orbit_Initial())
-
-        self.add_subsystem("Orbit_Dynamics", Orbit_Dynamics(n, h), promotes=['*'])
-        self.add_subsystem("Power_CellVoltage", Power_CellVoltage(n, power_raw),
-                           promotes=['*'])
-        self.add_subsystem("Power_SolarPower", Power_SolarPower(n), promotes=['*'])
-        self.add_subsystem("Power_Total", Power_Total(n), promotes=['*'])
+        self.add_subsystem('Attitude_Torque', Attitude_Torque(n), promotes=['*'])
+        self.add_subsystem('BatteryConstraints', BatteryConstraints(n), promotes=['*'])
+        self.add_subsystem('BatteryPower', BatteryPower(n), promotes=['*'])
+        self.add_subsystem('BatterySOC', BatterySOC(n, h), promotes=['*'])
+        self.add_subsystem('Comm_AntRotation', Comm_AntRotation(n), promotes=['*'])
+        self.add_subsystem('Comm_AntRotationMtx', Comm_AntRotationMtx(n), promotes=['*'])
+        self.add_subsystem('Comm_BitRate', Comm_BitRate(n), promotes=['*'])
+        self.add_subsystem('Comm_DataDownloaded', Comm_DataDownloaded(n, h), promotes=['*'])
+        self.add_subsystem('Comm_Distance', Comm_Distance(n), promotes=['*'])
+        self.add_subsystem('Comm_EarthsSpin', Comm_EarthsSpin(n), promotes=['*'])
+        self.add_subsystem('Comm_EarthsSpinMtx', Comm_EarthsSpinMtx(n), promotes=['*'])
+        self.add_subsystem('Comm_GainPattern', Comm_GainPattern(n, comm_raw), promotes=['*'])
+        self.add_subsystem('Comm_GSposEarth', Comm_GSposEarth(n), promotes=['*'])
+        self.add_subsystem('Comm_GSposECI', Comm_GSposECI(n), promotes=['*'])
+        self.add_subsystem('Comm_LOS', Comm_LOS(n), promotes=['*'])
+        self.add_subsystem('Comm_VectorAnt', Comm_VectorAnt(n), promotes=['*'])
+        self.add_subsystem('Comm_VectorBody', Comm_VectorBody(n), promotes=['*'])
+        self.add_subsystem('Comm_VectorECI', Comm_VectorECI(n), promotes=['*'])
+        self.add_subsystem('Comm_VectorSpherical', Comm_VectorSpherical(n), promotes=['*'])
 
         # Not needed?
-        # self.add_subsystem("ReactionWheel_Motor", ReactionWheel_Motor(n))
+        # self.add_subsystem('Orbit_Initial', Orbit_Initial())
 
-        self.add_subsystem("ReactionWheel_Power", ReactionWheel_Power(n), promotes=['*'])
-        self.add_subsystem("ReactionWheel_Torque", ReactionWheel_Torque(n), promotes=['*'])
-        self.add_subsystem("ReactionWheel_Dynamics", ReactionWheel_Dynamics(n, h), promotes=['*'])
-        self.add_subsystem("Solar_ExposedArea", Solar_ExposedArea(n, solar_raw1, solar_raw2),
+        self.add_subsystem('Orbit_Dynamics', Orbit_Dynamics(n, h), promotes=['*'])
+        self.add_subsystem('Power_CellVoltage', Power_CellVoltage(n, power_raw),
                            promotes=['*'])
-        self.add_subsystem("Sun_LOS", Sun_LOS(n), promotes=['*'])
-        self.add_subsystem("Sun_PositionBody", Sun_PositionBody(n), promotes=['*'])
-        self.add_subsystem("Sun_PositionECI", Sun_PositionECI(n), promotes=['*'])
-        self.add_subsystem("Sun_PositionSpherical", Sun_PositionSpherical(n), promotes=['*'])
-        self.add_subsystem("ThermalTemperature", ThermalTemperature(n, h), promotes=['*'])
+        self.add_subsystem('Power_SolarPower', Power_SolarPower(n), promotes=['*'])
+        self.add_subsystem('Power_Total', Power_Total(n), promotes=['*'])
+
+        # Not needed?
+        # self.add_subsystem('ReactionWheel_Motor', ReactionWheel_Motor(n))
+
+        self.add_subsystem('ReactionWheel_Power', ReactionWheel_Power(n), promotes=['*'])
+        self.add_subsystem('ReactionWheel_Torque', ReactionWheel_Torque(n), promotes=['*'])
+        self.add_subsystem('ReactionWheel_Dynamics', ReactionWheel_Dynamics(n, h), promotes=['*'])
+        self.add_subsystem('Solar_ExposedArea', Solar_ExposedArea(n, solar_raw1, solar_raw2),
+                           promotes=['*'])
+        self.add_subsystem('Sun_LOS', Sun_LOS(n), promotes=['*'])
+        self.add_subsystem('Sun_PositionBody', Sun_PositionBody(n), promotes=['*'])
+        self.add_subsystem('Sun_PositionECI', Sun_PositionECI(n), promotes=['*'])
+        self.add_subsystem('Sun_PositionSpherical', Sun_PositionSpherical(n), promotes=['*'])
+        self.add_subsystem('ThermalTemperature', ThermalTemperature(n, h), promotes=['*'])
+
+        self.set_order([
+            # independent vars
+            'indeps',
+            'design',
+            'params',
+
+            # Component Models
+            'BsplineParameters',
+
+            'Orbit_Dynamics',
+
+            'Attitude_Attitude',
+            'Attitude_Roll',
+            'Attitude_RotationMtx',
+            'Attitude_RotationMtxRates',
+            'Attitude_Angular',
+            'Attitude_AngularRates',
+            'Attitude_Torque',
+
+            'ReactionWheel_Torque',
+            'ReactionWheel_Dynamics',
+            'ReactionWheel_Power',
+
+            'Sun_PositionECI',
+            'Sun_PositionBody',
+            'Sun_PositionSpherical',
+            'Sun_LOS',
+
+            'Solar_ExposedArea',
+
+            'ThermalTemperature',
+
+            'Power_CellVoltage',
+            'Power_SolarPower',
+            'Power_Total',
+
+            'BatterySOC',
+            'BatteryPower',
+            'BatteryConstraints',
+
+            'Comm_AntRotation',
+            'Comm_AntRotationMtx',
+            'Comm_EarthsSpin',
+            'Comm_EarthsSpinMtx',
+            'Comm_GSposEarth',
+            'Comm_GSposECI',
+            'Comm_VectorECI',
+            'Comm_VectorBody',
+            'Comm_VectorAnt',
+            'Comm_VectorSpherical',
+            'Comm_LOS',
+            'Comm_GainPattern',
+            'Comm_Distance',
+            'Comm_BitRate',
+            'Comm_DataDownloaded',
+        ])
