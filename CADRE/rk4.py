@@ -199,7 +199,7 @@ class RK4(ExplicitComponent):
         n_state = self.n_states
         n_time = self.n
         h = self.h
-        I = np.eye(n_state)
+        I = np.eye(n_state)  # noqa: E741
 
         # Full Jacobian with respect to states
         self.Jy = np.zeros((self.n, self.n_states, self.n_states))

@@ -74,7 +74,7 @@ model.parallel.pt3.linear_solver = LinearBlockGS()
 model.parallel.pt4.linear_solver = LinearBlockGS()
 model.parallel.pt5.linear_solver = LinearBlockGS()
 
-prob.run()
+prob.run_driver()
 
 print('Memory Usage:', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000.0, 'MB (on unix)')
 

@@ -12,6 +12,7 @@ from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
 from CADRE.power import Power_SolarPower, Power_CellVoltage
 from CADRE.parameters import BsplineParameters
+import CADRE.test
 
 
 class Perf(ExplicitComponent):
@@ -51,18 +52,16 @@ class MPPT(Group):
         self.n
 
     def setup(self):
-        LOS = self.LOS
-        temp = self.temp
-        area = self.area
         m = self.m
         n = self.n
 
-        inputs = (('LOS', LOS, {'units': 'unitless'}),
-                  ('temperature', temp, {'units': 'degK'}),
-                  ('exposedArea', area, {'units': 'm**2'}),
-                  ('CP_Isetpt', np.zeros((12, m)),  {'units': 'A'}))
+        param = IndepVarComp()
+        param.add_output('LOS', self.LOS, units=None)
+        param.add_output('temperature', self.temp, units='degK')
+        param.add_output('exposedArea', self.area, units='m**2')
+        param.add_output('CP_Isetpt', np.zeros((12, m)), units='A')
 
-        self.add_subsystem('param', IndepVarComp(inputs))
+        self.add_subsystem('param', param)
         self.add_subsystem('bspline', BsplineParameters(n, m))
         self.add_subsystem('voltage', Power_CellVoltage(n))
         self.add_subsystem('power', Power_SolarPower(n))
@@ -93,8 +92,8 @@ class MPPT_MDP(Group):
         n = self.n
         m = self.m
 
-        fpath = os.path.dirname(os.path.realpath(__file__))
-        data = pickle.load(open(fpath + '/src/CADRE/test/data1346.pkl', 'rb'))
+        fpath = os.path.dirname(os.path.realpath(CADRE.test.__file__))
+        data = pickle.load(open(fpath + '/data1346.pkl', 'rb'))
 
         pt0 = MPPT(data['0:LOS'], data['0:temperature'], data['0:exposedArea'], m, n)
         pt1 = MPPT(data['1:LOS'], data['1:temperature'], data['1:exposedArea'], m, n)
@@ -117,9 +116,13 @@ if __name__ == '__main__':
     import time
 
     model = MPPT_MDP()
-    prob = Problem(model)
 
-    # add SNOPT driver
+    model.add_design_var('pt0.param.CP_Isetpt', lower=0., upper=0.4)
+    model.add_design_var('pt1.param.CP_Isetpt', lower=0., upper=0.4)
+    model.add_objective('perf.result')
+
+    # create problem and add optimizer
+    prob = Problem(model)
     prob.driver = pyOptSparseDriver(optimizer='SNOPT')
     prob.driver.opt_settings = {
         'Major optimality tolerance': 1e-3,
@@ -127,11 +130,6 @@ if __name__ == '__main__':
         'Iterations limit': 500000000,
         'New basis file': 10
     }
-
-    model.add_objective('perf.result')
-    model.add_design_var('pt0.param.CP_Isetpt', lower=0., upper=0.4)
-    model.add_design_var('pt1.param.CP_Isetpt', lower=0., upper=0.4)
-
     prob.setup()
 
     # pylab.figure()
@@ -141,7 +139,7 @@ if __name__ == '__main__':
 
     t = time.time()
 
-    prob.run()
+    prob.run_driver()
 
     # pylab.subplot(212)
     # pylab.plot(prob['pt0.param.CP_Isetpt'].T)

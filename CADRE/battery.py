@@ -72,7 +72,7 @@ class BatterySOC(rk4.RK4):
         # dVoc_dSOC = np.exp(SOC) / (np.e-1)
 
         V = IR * voc * (2.0 - np.exp(alpha*(T-T0)/T0))
-        I = P/V
+        I = P/V  # noqa: E741
 
         soc_dot = -sigma/24*SOC + eta/Cp*I
 

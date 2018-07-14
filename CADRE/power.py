@@ -32,7 +32,7 @@ class Power_CellVoltage(ExplicitComponent):
         nI = int(nI)
         T = dat[3:3 + nT]
         A = dat[3 + nT:3 + nT + nA]
-        I = dat[3 + nT + nA:3 + nT + nA + nI]
+        I = dat[3 + nT + nA:3 + nT + nA + nI]  # noqa: E741
         V = dat[3 + nT + nA + nI:].reshape((nT, nA, nI), order='F')
 
         self.MBI = MBI(V, [T, A, I], [6, 6, 15], [3, 3, 3])

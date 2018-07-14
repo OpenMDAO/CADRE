@@ -1,4 +1,6 @@
-""" Test derivatives by comparing analytic to finite difference."""
+"""
+Test derivatives by comparing analytic to finite difference.
+"""
 from __future__ import print_function
 
 import unittest

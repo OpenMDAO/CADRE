@@ -1,22 +1,17 @@
-""" Optimization of the CADRE MDP."""
+"""
+Optimization of the CADRE MDP.
+"""
 
 from __future__ import print_function
 
 import numpy as np
 
-from openmdao.core.mpi_wrap import MPI
-from openmdao.core.problem import Problem
-from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
-
-if MPI:
-    from openmdao.core.petsc_impl import PetscImpl as impl
-else:
-    impl = None
-
-from openmdao.solvers.ln_gauss_seidel import LinearGaussSeidel
-from openmdao.solvers.petsc_ksp import PetscKSP
+from openmdao.api import Problem, LinearBlockGS, PETScKrylov
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
+
+import cProfile
+import pstats
 
 
 # These numbers are for quick testing
@@ -24,55 +19,53 @@ n = 150
 m = 6
 npts = 2
 
+# instantiate model
+model = CADRE_MDP_Group(n=n, m=m, npts=npts)
 
-# Instantiate
-model = Problem(impl=impl)
-root = model.root = CADRE_MDP_Group(n=n, m=m, npts=npts)
-
-# Add parameters and constraints to each CADRE instance.
+# add design variables and constraints to each CADRE instance
 names = ['pt%s' % i for i in range(npts)]
 for i, name in enumerate(names):
+    model.add_design_var('%s.CP_Isetpt' % name, lower=0., upper=0.4)
+    model.add_design_var('%s.CP_gamma' % name, lower=0, upper=np.pi/2.)
+    model.add_design_var('%s.CP_P_comm' % name, lower=0., upper=25.)
+    model.add_design_var('%s.iSOC' % name, indices=[0], lower=0.2, upper=1.)
 
-    # add parameters to driver
-    model.driver.add_desvar("%s.CP_Isetpt" % name, lower=0., upper=0.4)
-    model.driver.add_desvar("%s.CP_gamma" % name, lower=0, upper=np.pi/2.)
-    model.driver.add_desvar("%s.CP_P_comm" % name, lower=0., upper=25.)
-    model.driver.add_desvar("%s.iSOC" % name, indices=[0], lower=0.2, upper=1.)
+    model.add_constraint('%s.ConCh' % name, upper=0.0)
+    model.add_constraint('%s.ConDs' % name, upper=0.0)
+    model.add_constraint('%s.ConS0' % name, upper=0.0)
+    model.add_constraint('%s.ConS1' % name, upper=0.0)
+    model.add_constraint('%s_con5.val' % name, equals=0.0)
 
-    model.driver.add_constraint('%s.ConCh'% name, upper=0.0)
-    model.driver.add_constraint('%s.ConDs'% name, upper=0.0)
-    model.driver.add_constraint('%s.ConS0'% name, upper=0.0)
-    model.driver.add_constraint('%s.ConS1'% name, upper=0.0)
-    model.driver.add_constraint('%s_con5.val'% name, equals=0.0)
+# add broadcast parameters
+model.add_design_var('bp.cellInstd', lower=0., upper=1.0)
+model.add_design_var('bp.finAngle', lower=0., upper=np.pi/2.)
+model.add_design_var('bp.antAngle', lower=-np.pi/4, upper=np.pi/4)
 
-# Add Parameter groups
-model.driver.add_desvar("bp1.cellInstd", lower=0., upper=1.0)
-model.driver.add_desvar("bp2.finAngle", lower=0., upper=np.pi/2.)
-model.driver.add_desvar("bp3.antAngle", lower=-np.pi/4, upper=np.pi/4)
+# add objective
+model.add_objective('obj.val')
 
-# Add objective
-model.driver.add_objective('obj.val')
+# for parallel execution, we must use KSP
+# model.linear_solver = PETScKrylov()
+# model.linear_solver = LinearBlockGS()
 
-# For Parallel exeuction, we must use KSP
-#model.root.ln_solver = PetscKSP()
-#model.root.ln_solver = LinearGaussSeidel()
+# create problem
+prob = Problem(model)
+prob.setup()
+prob.run_driver()
 
-model.setup()
-model.run()
 
-#----------------------------------------------------------------
+# ----------------------------------------------------------------
 # Below this line, code I was using for verifying and profiling.
-#----------------------------------------------------------------
+# ----------------------------------------------------------------
 
-import cProfile
-import pstats
 
 def zzz():
     # Set this range to higher to make the run longer.
     for j in range(1):
-        model.run()
+        prob.run_driver()
 
-cProfile.run("zzz()", 'profout')
+
+cProfile.run('zzz()', 'profout')
 
 p = pstats.Stats('profout')
 p.strip_dirs()
