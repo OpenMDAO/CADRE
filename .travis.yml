@@ -38,7 +38,7 @@ install:
 - conda install --yes python=$PY;
 - pip install --upgrade pip;
 - pip install coveralls;
-- pip install petsc4py;
+# - pip install petsc4py;
 - pip install git+https://github.com/OpenMDAO/MBI;
 - pip install .;
 - pip list;
@@ -46,7 +46,7 @@ install:
 script:
 - mkdir temp;
 - cd temp;
-- testflo -vs -n 1 CADRE --pre_announce --coverage --coverpkg CADRE --cover-omit \*test/\*;
+- testflo -vs -n 1 CADRE --coverage --coverpkg CADRE --cover-omit \*test/\*;
 
 after_success:
 - coveralls;

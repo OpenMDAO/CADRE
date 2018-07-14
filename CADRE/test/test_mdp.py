@@ -19,7 +19,7 @@ from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 
 # set verbose to True for debugging
-verbose = True
+verbose = False
 
 
 class TestCADRE(unittest.TestCase):
