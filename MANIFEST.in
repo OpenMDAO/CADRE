@@ -1,6 +1,6 @@
-recursive-include src/CADRE/test *.py
-recursive-include src/CADRE/test *.pkl
-recursive-include src/CADRE/data *.txt
-recursive-include src/CADRE/data *.dat
-recursive-include src/CADRE/data *.f90
-recursive-include src/CADRE/data *.py
+recursive-include CADRE/test *.py
+recursive-include CADRE/test *.pkl
+recursive-include CADRE/data *.txt
+recursive-include CADRE/data *.dat
+recursive-include CADRE/data *.f90
+recursive-include CADRE/data *.py
