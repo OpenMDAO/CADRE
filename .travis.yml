@@ -46,7 +46,7 @@ install:
 script:
 - mkdir temp;
 - cd temp;
-- testflo -n 1 CADRE --pre_announce --coverage --coverpkg CADRE --cover-omit \*test/\*;
+- testflo -vs -n 1 CADRE --pre_announce --coverage --coverpkg CADRE --cover-omit \*test/\*;
 
 after_success:
 - coveralls;
