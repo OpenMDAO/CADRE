@@ -11,9 +11,6 @@ from openmdao.core.explicitcomponent import ExplicitComponent
 from CADRE.kinematics import fixangles
 from MBI import MBI
 
-# Allow non-standard variable names for scientific calc
-# pylint: disable-msg=C0103
-
 
 class Solar_ExposedArea(ExplicitComponent):
     """
@@ -105,7 +102,8 @@ class Solar_ExposedArea(ExplicitComponent):
                         desc='Exposed area to sun for each solar cell over time',
                         units='m**2', lower=-5e-3, upper=1.834e-1)
 
-        self.declare_partials('*', '*')
+        # FIXME: MemoryError
+        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
