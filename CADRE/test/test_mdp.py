@@ -7,7 +7,6 @@ from __future__ import print_function
 
 import sys
 import os
-import time
 import pickle
 import unittest
 
@@ -20,7 +19,7 @@ from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 
 # set verbose to True for debugging
-verbose = False
+verbose = True
 
 
 class TestCADRE(unittest.TestCase):
