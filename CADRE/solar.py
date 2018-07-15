@@ -102,7 +102,6 @@ class Solar_ExposedArea(ExplicitComponent):
                         desc='Exposed area to sun for each solar cell over time',
                         units='m**2', lower=-5e-3, upper=1.834e-1)
 
-        # FIXME: MemoryError
         # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):

@@ -56,7 +56,7 @@ class ThermalTemperature(RK4):
                         desc='Temperature for the 4 fins and body over time.',
                         lower=50, upper=400)
 
-        self.declare_partials('*', '*')
+        # self.declare_partials('*', '*')
 
         self.options['state_var'] = 'temperature'
         self.options['init_state_var'] = 'T0'

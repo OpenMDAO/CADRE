@@ -46,7 +46,7 @@ class Orbit_Dynamics(rk4.RK4):
                         desc='Position and velocity vectors from earth to satellite '
                              'in Earth-centered inertial frame over time')
 
-        self.declare_partials('*', '*')
+        # self.declare_partials('*', '*')
 
         self.dfdx = np.zeros((6, 1))
 

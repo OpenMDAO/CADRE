@@ -178,7 +178,7 @@ class Power_SolarPower(ExplicitComponent):
         self.add_output('P_sol', np.zeros((n, )), units='W',
                         desc='Solar panels power over time')
 
-        self.declare_partials('*', '*')
+        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -245,7 +245,7 @@ class Power_Total(ExplicitComponent):
         self.add_output('P_bat', np.zeros((n, ), order='F'), units='W',
                         desc='Battery power over time')
 
-        self.declare_partials('*', '*')
+        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """

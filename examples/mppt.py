@@ -32,6 +32,8 @@ class Perf(ExplicitComponent):
 
         self.add_output('result', 0.0)
 
+        self.declare_partials('*', '*')
+
     def compute(self, inputs, outputs):
         outputs['result'] = -np.sum(inputs['P_sol1']) - np.sum(inputs['P_sol2'])
 
