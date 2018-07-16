@@ -1,6 +1,7 @@
 """
 Optimization of the CADRE MDP.
 """
+from __future__ import print_function
 
 import os
 import pickle
@@ -21,7 +22,6 @@ class Perf(ExplicitComponent):
         super(Perf, self).__init__()
 
         self.n = n
-        self.J = -np.ones((1, n))
 
     def setup(self):
         self.add_input('P_sol1', np.zeros((self.n, )), units='W',
@@ -33,6 +33,8 @@ class Perf(ExplicitComponent):
         self.add_output('result', 0.0)
 
         self.declare_partials('*', '*')
+
+        self.J = -np.ones((1, n))
 
     def compute(self, inputs, outputs):
         outputs['result'] = -np.sum(inputs['P_sol1']) - np.sum(inputs['P_sol2'])
@@ -85,14 +87,9 @@ class MPPT(Group):
 
 class MPPT_MDP(Group):
 
-    def __init__(self):
-        super(MPPT_MDP, self).__init__()
-        self.n = 1500
-        self.m = 300
-
     def setup(self):
-        n = self.n
-        m = self.m
+        n = 1500
+        m = 300
 
         fpath = os.path.dirname(os.path.realpath(CADRE.test.__file__))
         data = pickle.load(open(fpath + '/data1346.pkl', 'rb'))
@@ -102,11 +99,10 @@ class MPPT_MDP(Group):
 
         # CADRE instances go into a Parallel Group
         para = self.add_subsystem('parallel', ParallelGroup(), promotes=['*'])
-
         para.add_subsystem('pt0', pt0)
         para.add_subsystem('pt1', pt1)
 
-        self.add_subsystem('perf', Perf(1500))
+        self.add_subsystem('perf', Perf(n))
 
         self.connect('pt0.power.P_sol', 'perf.P_sol1')
         self.connect('pt1.power.P_sol', 'perf.P_sol2')
@@ -140,12 +136,11 @@ if __name__ == '__main__':
     # pylab.plot(prob['parallel.pt1.param.CP_Isetpt'].T)
 
     t = time.time()
-
     prob.run_driver()
+    print('time:', time.time() - t)
 
     # pylab.subplot(212)
     # pylab.plot(prob['pt0.param.CP_Isetpt'].T)
     # pylab.plot(prob['pt1.param.CP_Isetpt'].T)
 
-    print time.time() - t
     # pylab.show()
