@@ -31,8 +31,6 @@ class RKTest(RK4):
 
         self.add_output('x', np.zeros((2, self.n_times)))
 
-        # self.declare_partials(of='*', wrt='*')
-
     def f_dot(self, external, state):
         """
         Time rate of change of state variables.

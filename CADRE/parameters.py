@@ -53,8 +53,6 @@ class BsplineParameters(ExplicitComponent):
         self.add_output('Isetpt', 0.2*np.ones((12, n)), units='A',
                         desc='Currents of the solar panels over time')
 
-        # self.declare_partials('*', '*')
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.

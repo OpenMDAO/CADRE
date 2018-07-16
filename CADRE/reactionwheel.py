@@ -39,8 +39,6 @@ class ReactionWheel_Motor(ExplicitComponent):
         self.add_output('T_m', np.ones((3, n)), units='N*m',
                         desc='Torque vector of motor over time')
 
-        # self.declare_partials('*', '*')
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.
@@ -153,8 +151,6 @@ class ReactionWheel_Power(ExplicitComponent):
         self.add_output('P_RW', np.ones((3, n)), units='W',
                         desc='Reaction wheel power over time')
 
-        # self.declare_partials('*', '*')
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.
@@ -225,8 +221,6 @@ class ReactionWheel_Torque(ExplicitComponent):
         self.add_output('T_RW', np.zeros((3, n)), units='N*m',
                         desc='Torque vector of reaction wheel over time')
 
-        # self.declare_partials('*', '*')
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.
@@ -271,8 +265,6 @@ class ReactionWheel_Dynamics(rk4.RK4):
         # Outputs
         self.add_output('w_RW', np.zeros((3, n_times)), units='1/s',
                         desc='Angular velocity vector of reaction wheel over time')
-
-        # self.declare_partials('*', '*')
 
         self.options['state_var'] = 'w_RW'
         self.options['init_state_var'] = 'w_RW0'

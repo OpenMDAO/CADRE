@@ -54,8 +54,6 @@ class BatterySOC(rk4.RK4):
         self.add_output('SOC', np.zeros((1, n_times)), units=None,
                         desc='Battery state of charge over time')
 
-        # self.declare_partials('*', '*')
-
         self.options['state_var'] = 'SOC'
         self.options['init_state_var'] = 'iSOC'
         self.options['external_vars'] = ['P_bat', 'temperature']
@@ -148,8 +146,6 @@ class BatteryPower(ExplicitComponent):
         # Outputs
         self.add_output('I_bat', np.zeros((n, )), units='A',
                         desc='Battery Current over time')
-
-        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -253,8 +249,6 @@ class BatteryConstraints(ExplicitComponent):
 
         self.add_output('ConS1', 0.0, units=None,
                         desc='Constraint on maximum state of charge')
-
-        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """

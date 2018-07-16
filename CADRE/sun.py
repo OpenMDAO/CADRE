@@ -41,8 +41,6 @@ class Sun_LOS(ExplicitComponent):
         self.add_output('LOS', np.zeros((n, ), order='F'), units=None,
                         desc='Satellite to sun line of sight over time')
 
-        # self.declare_partials('*', '*')
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.
@@ -198,8 +196,6 @@ class Sun_PositionBody(ExplicitComponent):
                         desc='Position vector from Earth to Sun in body-fixed '
                              'frame over time.')
 
-        # self.declare_partials('*', '*')
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.
@@ -268,8 +264,6 @@ class Sun_PositionECI(ExplicitComponent):
         self.add_output('r_e2s_I', np.zeros((3, n, ), order='F'), units='km',
                         desc='Position vector from Earth to Sun in Earth-centered '
                              'inertial frame over time.')
-
-        # self.declare_partials('*', '*')
 
         self.Ja = np.zeros(3*n)
         self.Ji = np.zeros(3*n)
@@ -368,8 +362,6 @@ class Sun_PositionSpherical(ExplicitComponent):
         self.add_output('elevation', np.zeros((n, )), units='rad',
                         desc='Elevation angle of the Sun in the body-fixed frame '
                              'over time.')
-
-        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """

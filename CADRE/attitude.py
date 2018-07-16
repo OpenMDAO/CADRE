@@ -38,8 +38,6 @@ class Attitude_Angular(ExplicitComponent):
         self.dw_dOdot = np.zeros((n, 3, 3, 3))
         self.dw_dO = np.zeros((n, 3, 3, 3))
 
-        # self.declare_partials('*', '*')
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.
@@ -120,8 +118,6 @@ class Attitude_AngularRates(ExplicitComponent):
         self.add_output('wdot_B', np.zeros((3, n)), units='1/s**2',
                         desc='Time derivative of w_B over time')
 
-        # self.declare_partials('*', '*')
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.
@@ -201,8 +197,6 @@ class Attitude_Attitude(ExplicitComponent):
         self.add_output('O_RI', np.zeros((3, 3, n)), units=None,
                         desc='Rotation matrix from rolled body-fixed frame to '
                              'Earth-centered inertial frame over time')
-
-        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -349,8 +343,6 @@ class Attitude_Roll(ExplicitComponent):
 
         self.dO_dg = np.zeros((n, 3, 3))
 
-        # self.declare_partials('*', '*')
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.
@@ -425,8 +417,6 @@ class Attitude_RotationMtx(ExplicitComponent):
                         desc='Rotation matrix from body-fixed frame to '
                         'Earth-centered inertial frame over time')
 
-        # self.declare_partials('*', '*')
-
     def compute(self, inputs, outputs):
         """
         Calculate outputs.
@@ -490,8 +480,6 @@ class Attitude_RotationMtxRates(ExplicitComponent):
         # Outputs
         self.add_output('Odot_BI', np.zeros((3, 3, n)), units=None,
                         desc='First derivative of O_BI over time')
-
-        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -564,8 +552,6 @@ class Attitude_Sideslip(ExplicitComponent):
         self.add_output('v_e2b_B', np.zeros((3, n)), units='m/s',
                         desc='Velocity vector from earth to satellite'
                         'in body-fixed frame over time')
-
-        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
@@ -662,8 +648,6 @@ class Attitude_Torque(ExplicitComponent):
         # Outputs
         self.add_output('T_tot', np.zeros((3, n)), units='N*m',
                         desc='Total reaction wheel torque over time')
-
-        # self.declare_partials('*', '*')
 
     def compute(self, inputs, outputs):
         """
