@@ -6,18 +6,29 @@ from __future__ import print_function
 
 import numpy as np
 
-from openmdao.api import Problem, LinearBlockGS, PETScKrylov
+from openmdao.api import Problem, PETScKrylov  # , LinearBlockGS
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 import cProfile
 import pstats
 
+import sys
+argv = sys.argv[1:]
 
-# These numbers are for the CADRE problem in the paper.
-n = 1500
-m = 300
-npts = 6
+if 'paper' in argv:
+    # These numbers are for the CADRE problem in the paper.
+    n = 1500
+    m = 300
+    npts = 6
+    print("Using parameters from paper:", n, m, npts)
+else:
+    # These numbers are for quick testing
+    n = 150
+    m = 6
+    npts = 2
+    print("Using parameters for quick test:", n, m, npts)
+
 
 # instantiate model
 model = CADRE_MDP_Group(n=n, m=m, npts=npts)
@@ -58,7 +69,7 @@ prob.run_driver()
 
 
 # ----------------------------------------------------------------
-# Below this line, code I was using for verifying and profiling.
+# Below this line, code used for verifying and profiling.
 # ----------------------------------------------------------------
 
 

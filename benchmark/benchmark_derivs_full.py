@@ -62,6 +62,7 @@ class BenchmarkDerivsSerial(unittest.TestCase):
         model.parallel.pt5.linear_solver = LinearBlockGS()
 
         # run
+        prob.set_solver_print(0)
         prob.run_driver()
 
         # ----------------------------------------

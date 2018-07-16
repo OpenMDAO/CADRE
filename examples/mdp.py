@@ -13,16 +13,24 @@ from openmdao.api import Problem, pyOptSparseDriver, LinearBlockGS, SqliteRecord
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
-# These numbers are for the CADRE problem in the paper.
-n = 1500
-m = 300
-npts = 6
-restart = False
+import pickle
 
-# These numbers are for quick testing
-# n = 150
-# m = 6
-# npts = 2
+
+import sys
+argv = sys.argv[1:]
+
+if 'paper' in argv:
+    # These numbers are for the CADRE problem in the paper.
+    n = 1500
+    m = 300
+    npts = 6
+    print("Using parameters from paper:", n, m, npts)
+else:
+    # These numbers are for quick testing
+    n = 150
+    m = 6
+    npts = 2
+    print("Using parameters for quick test:", n, m, npts)
 
 
 # Instantiate CADRE model
@@ -59,7 +67,9 @@ prob.driver.opt_settings = {
     'Major feasibility tolerance': 1.0e-5,
     'Iterations limit': 500000000
 }
-prob.driver.add_recorder(SqliteRecorder('data.sql'))
+
+if 'norecord' not in argv:
+    prob.driver.add_recorder(SqliteRecorder('data.sql'))
 
 prob.setup()
 
@@ -67,61 +77,59 @@ prob.setup()
 # prob.model.linear_solver = PETScKrylov()
 model.linear_solver = LinearBlockGS()
 model.parallel.linear_solver = LinearBlockGS()
-model.parallel.pt0.linear_solver = LinearBlockGS()
-model.parallel.pt1.linear_solver = LinearBlockGS()
-model.parallel.pt2.linear_solver = LinearBlockGS()
-model.parallel.pt3.linear_solver = LinearBlockGS()
-model.parallel.pt4.linear_solver = LinearBlockGS()
-model.parallel.pt5.linear_solver = LinearBlockGS()
+for pt in range(npts):
+    model._get_subsystem('parallel.pt%d' % pt).linear_solver = LinearBlockGS()
 
+prob.set_solver_print(0)
 prob.run_driver()
 
 print('Memory Usage:', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000.0, 'MB (on unix)')
 
 # ----------------------------------------------------------------
-# Below this line, code I was using for verifying and profiling.
+# Below this line, code used for verifying and profiling.
 # ----------------------------------------------------------------
-# profile = False
-# inputs = list(prob.driver.get_desvars().keys())
-# unks = list(prob.driver.get_objectives().keys()) + list(prob.driver.get_constraints().keys())
-# if profile is True:
-#    import cProfile
-#    import pstats
-#    def zzz():
-#        for j in range(1):
-#            prob.run()
-#    cProfile.run('prob.calc_gradient(inputs, unks, mode='rev', return_format='dict')', 'profout')
-#    #cProfile.run('zzz()', 'profout')
-#    p = pstats.Stats('profout')
-#    p.strip_dirs()
-#    p.sort_stats('cumulative', 'time')
-#    p.print_stats()
-#    print('\n\n---------------------\n\n')
-#    p.print_callers()
-#    print('\n\n---------------------\n\n')
-#    p.print_callees()
-# else:
-#    #prob.check_total_derivatives()
-#    Ja = prob.calc_gradient(inputs, unks, mode='rev', return_format='dict')
-#    for key1, value in sorted(Ja.items()):
-#        for key2 in sorted(value.keys()):
-#            print(key1, key2)
-#            print(value[key2])
-#    #print(Ja)
-#    #Jf = prob.calc_gradient(inputs, unks, mode='fwd', return_format='dict')
-#    #print(Jf)
-#    #Jf = prob.calc_gradient(inputs, unks, mode='fd', return_format='dict')
-#    #print(Jf)
-#    import pickle
-#    pickle.dump(Ja, open( 'mdp_derivs.p', 'wb' ))
 
-# import pickle
-# data = {}
-# varlist = []
-# picklevars = ['obj.val',
-#               'pt0_con1.val', 'pt0_con2.val', 'pt0_con3.val', 'pt0_con4.val', 'pt0_con5.val',
-#               'pt1_con1.val', 'pt1_con2.val', 'pt1_con3.val', 'pt1_con4.val', 'pt1_con5.val',
-#               ]
-# for var in picklevars:
-#     data[var] = prob[var]
-# pickle.dump(data, open( 'mdp_execute.p', 'wb' ))
+if 'profile' in argv:
+    import cProfile
+    import pstats
+
+    def zzz():
+        for j in range(1):
+            prob.run()
+
+    cProfile.run('prob.compute_totals()', 'profout')
+    # cProfile.run('zzz()', 'profout')
+    p = pstats.Stats('profout')
+    p.strip_dirs()
+    p.sort_stats('cumulative', 'time')
+    p.print_stats()
+    print('\n\n---------------------\n\n')
+    p.print_callers()
+    print('\n\n---------------------\n\n')
+    p.print_callees()
+else:
+    # prob.check_totals()
+    Ja = prob.compute_totals()
+    for key1, value in sorted(Ja.items()):
+        for key2 in sorted(value.keys()):
+            print(key1, key2)
+            print(value[key2])
+    print(Ja)
+    Jf = prob.compute_totals()
+    print(Jf)
+    Jf = prob.compute_totals()
+    print(Jf)
+    pickle.dump(Ja, open('mdp_derivs.p', 'wb'))
+
+
+# save result (objective and constraints) to a pickle
+picklevars = ['obj.val']
+for pt in range(npts):
+    for con in ['con1', 'con2', 'con3', 'con4', 'con5']:
+        picklevars.append('pt%d_%s.val' % (pt, con))
+
+data = {}
+for var in picklevars:
+    data[var] = prob[var]
+
+pickle.dump(data, open('mdp_execute.p', 'wb'))
