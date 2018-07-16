@@ -1,4 +1,6 @@
-""" Testing the derivativs on the RK component. """
+"""
+Testing the derivativs on the RK component.
+"""
 
 import unittest
 

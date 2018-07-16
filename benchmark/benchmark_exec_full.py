@@ -1,7 +1,6 @@
 """
 Benchmark: Execution of full CADRE MDP. Serial version.
 """
-
 from __future__ import print_function
 
 import unittest

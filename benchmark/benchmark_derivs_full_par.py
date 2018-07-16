@@ -1,7 +1,6 @@
 """
 Benchmark: Gradient calculation of full CADRE MDP. Parallel version.
 """
-
 from __future__ import print_function
 
 import unittest

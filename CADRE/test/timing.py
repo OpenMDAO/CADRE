@@ -1,7 +1,6 @@
 """
 Time CADRE's execution and derivative calculations.
 """
-
 from __future__ import print_function
 
 import time

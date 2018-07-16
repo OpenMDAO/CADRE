@@ -138,12 +138,12 @@ class TestCADRE(unittest.TestCase):
                     parts[0] = 'parallel.%s.BatteryConstraints' % parts[0]
                     bkey1 = '.'.join(parts)
 
-                if key2.startswith('bp'):
+                if bkey2.startswith('bp'):
                     # the 3 broadcast params were merged into a single IndepVarComp
                     parts = bkey2.split('.')
                     parts[0] = 'bp'
                     bkey2 = '.'.join(parts)
-                elif key2.startswith('pt'):
+                elif bkey2.startswith('pt'):
                     # need full path of design vars in the parallel CADRE groups
                     parts = bkey2.split('.')
                     parts[0] = 'parallel.%s.design' % parts[0]
