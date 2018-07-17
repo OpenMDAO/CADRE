@@ -124,9 +124,12 @@ else:
 
 # save result (objective and constraints) to a pickle
 picklevars = ['obj.val']
+cons = [
+    'pt%d.ConCh', 'pt%d.ConDs', 'pt%d.ConS0', 'pt%d.ConS1', 'pt%d_con5.val'
+]
 for pt in range(npts):
-    for con in ['con1', 'con2', 'con3', 'con4', 'con5']:
-        picklevars.append('pt%d_%s.val' % (pt, con))
+    for con in cons:
+        picklevars.append(con % pt)
 
 data = {}
 for var in picklevars:
