@@ -247,6 +247,8 @@ class TestCADRE(unittest.TestCase):
         outputs = ['Dr']
         state0 = []
 
+        np.random.seed(1001)
+
         self.setup(compname, inputs, state0)
 
         # These need to be a certain magnitude so it doesn't blow up
@@ -449,6 +451,7 @@ class TestCADRE(unittest.TestCase):
         inputs = ['w_RW', 'T_RW']
         outputs = ['P_RW']
         state0 = []
+
         np.random.seed(1001)
 
         self.setup(compname, inputs, state0)
