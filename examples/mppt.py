@@ -22,6 +22,7 @@ class Perf(ExplicitComponent):
         super(Perf, self).__init__()
 
         self.n = n
+        self.J = -np.ones((1, self.n))
 
     def setup(self):
         self.add_input('P_sol1', np.zeros((self.n, )), units='W',
@@ -33,8 +34,6 @@ class Perf(ExplicitComponent):
         self.add_output('result', 0.0)
 
         self.declare_partials('*', '*')
-
-        self.J = -np.ones((1, n))
 
     def compute(self, inputs, outputs):
         outputs['result'] = -np.sum(inputs['P_sol1']) - np.sum(inputs['P_sol2'])
@@ -53,7 +52,7 @@ class MPPT(Group):
         self.temp = temp
         self.area = area
         self.m = m
-        self.n
+        self.n = n
 
     def setup(self):
         m = self.m
