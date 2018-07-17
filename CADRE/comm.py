@@ -632,15 +632,17 @@ class Comm_GainPattern(ExplicitComponent):
     Determines transmitter gain based on an external az-el map.
     """
 
-    def __init__(self, n, rawG=None):
+    def __init__(self, n, rawG_file=None):
         super(Comm_GainPattern, self).__init__()
 
         self.n = n
 
-        if rawG is None:
+        if not rawG_file:
             fpath = os.path.dirname(os.path.realpath(__file__))
-            rawGdata = np.genfromtxt(fpath + '/data/Comm/Gain.txt')
-            rawG = (10 ** (rawGdata / 10.0)).reshape((361, 361), order='F')
+            rawG_file = fpath + '/data/Comm/Gain.txt'
+
+        rawGdata = np.genfromtxt(rawG_file)
+        rawG = (10 ** (rawGdata / 10.0)).reshape((361, 361), order='F')
 
         pi = np.pi
         az = np.linspace(0, 2 * pi, 361)

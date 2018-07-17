@@ -25,46 +25,44 @@ from CADRE.power import Power_CellVoltage, Power_SolarPower, Power_Total
 class CADRE(Group):
     """
     OpenMDAO implementation of the CADRE model.
-
-    Parameters
-    ----------
-    n : int
-        Number of time integration points.
-
-    m : int
-        Number of panels in fin discretization.
-
-    solar_raw1 : string
-        Name of file containing the angle map of solar exposed area.
-
-    solar_raw2 : string
-        Name of file containing the azimuth map of solar exposed area.
-
-    comm_raw : string
-        Name of file containing the az-el map of transmitter gain.
-
-    power_raw : string
-        Name of file containing a map of solar cell output voltage versus current,
-        area, and temperature.
-
-    initial_inputs : dict, optional
-        Dictionary of initial values for all parameters. Set the keys you want to
-        change.
     """
 
-    def __init__(self, n, m, solar_raw1=None, solar_raw2=None, comm_raw=None,
-                 power_raw=None, initial_inputs=None):
+    def initialize(self):
+        """
+        Declare options.
+        """
+        self.options.declare('n', lower=1, types=int,
+                             desc='Number of time integration points.')
+        self.options.declare('m', lower=1, types=int,
+                             desc='Number of panels in fin discretization.')
+        self.options.declare('solar_raw1', types=str, default='',
+                             desc='Name of file containing the angle map of solar exposed area.')
+        self.options.declare('solar_raw2', types=str, default='',
+                             desc='Name of file containing the azimuth map of solar exposed area.')
+        self.options.declare('comm_raw', types=str, default='',
+                             desc='Name of file containing the az-el map of transmitter gain.')
+        self.options.declare('power_raw', types=str, default='',
+                             desc='Name of file containing a map of solar cell output voltage '
+                                  'versus current, area, and temperature.')
+        self.options.declare('initial_inputs', types=dict, default={},
+                             desc='Name of file containing the az-el map of transmitter gain.')
 
-        super(CADRE, self).__init__()
+    def setup(self):
+        # collect options
+        opts = self.options
+        n = opts['n']
+        m = opts['m']
 
-        # Analysis parameters
-        self.n = n
-        self.m = m
-        h = 43200.0 / (self.n - 1)
+        solar_raw1 = opts['solar_raw1']
+        solar_raw2 = opts['solar_raw2']
+        comm_raw = opts['comm_raw']
+        power_raw = opts['power_raw']
+
+        initial_inputs = opts['initial_inputs']
+
+        h = 43200.0 / (n - 1)
 
         # User-defined initial parameters
-        if initial_inputs is None:
-            initial_inputs = {}
         if 't1' not in initial_inputs:
             initial_inputs['t1'] = 0.0
         if 't2' not in initial_inputs:
@@ -72,12 +70,11 @@ class CADRE(Group):
         if 't' not in initial_inputs:
             initial_inputs['t'] = np.array(range(0, n))*h
         if 'CP_Isetpt' not in initial_inputs:
-            initial_inputs['CP_Isetpt'] = 0.2 * np.ones((12, self.m))
+            initial_inputs['CP_Isetpt'] = 0.2 * np.ones((12, m))
         if 'CP_gamma' not in initial_inputs:
-            initial_inputs['CP_gamma'] = np.pi/4 * np.ones((self.m, ))
+            initial_inputs['CP_gamma'] = np.pi/4 * np.ones((m, ))
         if 'CP_P_comm' not in initial_inputs:
-            initial_inputs['CP_P_comm'] = 0.1 * np.ones((self.m, ))
-
+            initial_inputs['CP_P_comm'] = 0.1 * np.ones((m, ))
         if 'iSOC' not in initial_inputs:
             initial_inputs['iSOC'] = np.array([0.5])
 

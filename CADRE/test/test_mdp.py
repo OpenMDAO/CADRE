@@ -27,7 +27,7 @@ class TestCADRE(unittest.TestCase):
     N_PROCS = 2
 
     def test_CADRE_MDP(self):
-        # Read pickles
+        # read pickles
         fpath = os.path.dirname(os.path.realpath(__file__))
         if sys.version_info.major == 2:
             file1 = fpath + '/mdp_execute_py2.pkl'
@@ -46,10 +46,10 @@ class TestCADRE(unittest.TestCase):
         m = 300
         npts = 2
 
-        # Instantiate
+        # instantiate
         model = CADRE_MDP_Group(n=n, m=m, npts=npts)
 
-        # Add design variables and constraints to each CADRE instance.
+        # add design variables and constraints to each CADRE instance.
         names = ['pt%s' % i for i in range(npts)]
         for i, name in enumerate(names):
             model.add_design_var('%s.CP_Isetpt' % name, lower=0., upper=0.4)
@@ -63,15 +63,15 @@ class TestCADRE(unittest.TestCase):
             model.add_constraint('%s.ConS1' % name, upper=0.0)
             model.add_constraint('%s_con5.val' % name, equals=0.0)
 
-        # Add broadcast parameters
+        # add broadcast parameters
         model.add_design_var('bp.cellInstd', lower=0., upper=1.0)
         model.add_design_var('bp.finAngle', lower=0., upper=np.pi/2.)
         model.add_design_var('bp.antAngle', lower=-np.pi/4, upper=np.pi/4)
 
-        # Add objective
+        # add objective
         model.add_objective('obj.val')
 
-        # For parallel execution, use KSP
+        # for parallel execution, use KSP
         if MPI:
             model.linear_solver = PETScKrylov()
 
@@ -80,11 +80,13 @@ class TestCADRE(unittest.TestCase):
         prob.setup(check=verbose)
         prob.run_driver()
 
-        # Check output values
+        # check output values
         abs_names = model._var_allprocs_prom2abs_list['output']
 
+        checked = 0
+
         for var in data:
-            # We changed constraint names
+            # we changed constraint names
             xvar = var
             if '_con1' in xvar:
                 xvar = xvar.replace('_con1.val', '.ConCh')
@@ -98,7 +100,7 @@ class TestCADRE(unittest.TestCase):
             # make sure var is local before we try to look it up
             compname = abs_names[xvar][0].rsplit('.', 1)[0]
             comp = model._get_subsystem(compname)
-            if comp.is_active():
+            if comp and comp.is_active():
                 computed = prob[xvar]
                 actual = data[var]
                 if isinstance(computed, np.ndarray):
@@ -113,8 +115,17 @@ class TestCADRE(unittest.TestCase):
 
                 if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
                     assert rel <= 1e-3
+                checked += 1
 
-        # Check derivatives
+        # make sure we checked everything
+        if MPI:
+            # objective + con5 for both points + con1-4 on this proc
+            self.assertEqual(checked, 7)
+        else:
+            # objective + 5 constraints for each point
+            self.assertEqual(checked, 11)
+
+        # check derivatives
         Jb = prob.compute_totals(debug_print=verbose)
 
         for key1, value in sorted(Ja.items()):

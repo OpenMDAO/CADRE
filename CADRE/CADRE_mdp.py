@@ -36,23 +36,11 @@ class CADRE_MDP_Group(Group):
         self.npts = npts
 
     def setup(self):
-        n = self.n
-        m = self.m
-        npts = self.npts
+        # Raw data to load is in 'data' directory
+        data_path = os.path.dirname(os.path.realpath(__file__))
+        data_path = os.path.join(data_path, 'data')
 
-        # Raw data to load
-        fpath = os.path.dirname(os.path.realpath(__file__))
-        fpath = os.path.join(fpath, 'data')
-
-        solar_raw1 = np.genfromtxt(fpath + '/Solar/Area10.txt')
-        solar_raw2 = np.loadtxt(fpath + '/Solar/Area_all.txt')
-
-        comm_rawGdata = np.genfromtxt(fpath + '/Comm/Gain.txt')
-        comm_raw = (10 ** (comm_rawGdata / 10.0)).reshape((361, 361), order='F')
-
-        power_raw = np.genfromtxt(fpath + '/Power/curve.dat')
-
-        launch_data = np.loadtxt(fpath + '/Launch/launch1.dat')
+        launch_data = np.loadtxt(data_path + '/Launch/launch1.dat')
 
         # orbit position and velocity data for each design point
         r_e2b_I0s = launch_data[1::2, 1:]
@@ -70,7 +58,7 @@ class CADRE_MDP_Group(Group):
         para = self.add_subsystem('parallel', ParallelGroup(), promotes=['*'])
 
         # build design points
-        names = ['pt%s' % i for i in range(npts)]
+        names = ['pt%s' % i for i in range(self.npts)]
         for i, name in enumerate(names):
             # Some initial values
             inits = {
@@ -78,8 +66,7 @@ class CADRE_MDP_Group(Group):
                 'r_e2b_I0': r_e2b_I0s[i]
             }
 
-            para.add_subsystem(name, CADRE(n, m, solar_raw1, solar_raw2,
-                               comm_raw, power_raw, initial_inputs=inits))
+            para.add_subsystem(name, CADRE(n=self.n, m=self.m, initial_inputs=inits))
 
             # Hook up broadcast inputs
             self.connect('bp.cellInstd', '%s.cellInstd' % name)
@@ -91,7 +78,7 @@ class CADRE_MDP_Group(Group):
             self.connect('%s.SOC' % name, '%s_con5.SOCi' % name,
                          src_indices=[0], flat_src_indices=True)
             self.connect('%s.SOC' % name, '%s_con5.SOCf' % name,
-                         src_indices=[n-1], flat_src_indices=True)
+                         src_indices=[self.n-1], flat_src_indices=True)
 
         # objective: sum of data from all design points
         data_totals = ['%s_DataTot' % name for name in names]
@@ -104,4 +91,4 @@ class CADRE_MDP_Group(Group):
         self.add_subsystem('obj', ExecComp('val='+obj, **meta_dicts))
         for name in names:
             self.connect('%s.Data' % name, 'obj.%s_DataTot' % name,
-                         src_indices=[n-1], flat_src_indices=True)
+                         src_indices=[self.n-1], flat_src_indices=True)

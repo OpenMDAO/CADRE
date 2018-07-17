@@ -45,7 +45,7 @@ class TestCADRE(unittest.TestCase):
         }
 
         prob = Problem()
-        prob.model.add_subsystem('pt', CADRE(n, m, initial_inputs=init), promotes=['*'])
+        prob.model.add_subsystem('pt', CADRE(n=n, m=m, initial_inputs=init), promotes=['*'])
         prob.setup(check=verbose)
         prob.run_model()
 

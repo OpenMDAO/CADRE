@@ -453,9 +453,7 @@ class TestCADRE(unittest.TestCase):
 
         self.setup(compname, inputs, state0)
 
-        # shape = self.inputs_dict['T_RW']['value'].shape
         self.prob['T_RW'] = np.random.random(self.prob['T_RW'].shape) * 1e-1
-        # shape = self.inputs_dict['w_RW']['value'].shape
         self.prob['w_RW'] = np.random.random(self.prob['w_RW'].shape) * 1e-1
 
         self.prob.run_model()

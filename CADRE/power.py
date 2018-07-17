@@ -17,14 +17,16 @@ class Power_CellVoltage(ExplicitComponent):
     Compute the output voltage of the solar panels.
     """
 
-    def __init__(self, n, dat=None):
+    def __init__(self, n, filename=None):
         super(Power_CellVoltage, self).__init__()
 
         self.n = n
 
-        if dat is None:
+        if not filename:
             fpath = os.path.dirname(os.path.realpath(__file__))
-            dat = np.genfromtxt(fpath + '/data/Power/curve.dat')
+            filename = fpath + '/data/Power/curve.dat'
+
+        dat = np.genfromtxt(filename)
 
         nT, nA, nI = dat[:3]
         nT = int(nT)
@@ -37,12 +39,12 @@ class Power_CellVoltage(ExplicitComponent):
 
         self.MBI = MBI(V, [T, A, I], [6, 6, 15], [3, 3, 3])
 
-        self.x = np.zeros((84 * self.n, 3), order='F')
-        self.xV = self.x.reshape((self.n, 7, 12, 3), order='F')
-        self.dV_dL = np.zeros((self.n, 12), order='F')
-        self.dV_dT = np.zeros((self.n, 12, 5), order='F')
-        self.dV_dA = np.zeros((self.n, 7, 12), order='F')
-        self.dV_dI = np.zeros((self.n, 12), order='F')
+        self.x = np.zeros((84 * n, 3), order='F')
+        self.xV = self.x.reshape((n, 7, 12, 3), order='F')
+        self.dV_dL = np.zeros((n, 12), order='F')
+        self.dV_dT = np.zeros((n, 12, 5), order='F')
+        self.dV_dA = np.zeros((n, 7, 12), order='F')
+        self.dV_dI = np.zeros((n, 12), order='F')
 
     def setup(self):
         n = self.n

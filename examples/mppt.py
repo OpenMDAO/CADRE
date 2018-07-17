@@ -1,5 +1,5 @@
 """
-Optimization of the CADRE MDP.
+Optimization of solar power over time for the CADRE MDP.
 """
 from __future__ import print_function
 

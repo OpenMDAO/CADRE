@@ -22,7 +22,7 @@ class TestCADRE(unittest.TestCase):
     def test_CADRE(self):
         n, m, h, setd = load_validation_data(idx='0')
 
-        prob = Problem(CADRE(n, m))
+        prob = Problem(CADRE(n=n, m=m))
         prob.setup(check=verbose)
 
         input_data = [

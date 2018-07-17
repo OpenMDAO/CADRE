@@ -24,15 +24,17 @@ class Solar_ExposedArea(ExplicitComponent):
     LOS: line of sight with the sun [0,1]
     """
 
-    def __init__(self, n, raw1=None, raw2=None):
+    def __init__(self, n, raw1_file=None, raw2_file=None):
         super(Solar_ExposedArea, self).__init__()
 
-        if raw1 is None:
-            fpath = os.path.dirname(os.path.realpath(__file__))
-            raw1 = np.genfromtxt(fpath + '/data/Solar/Area10.txt')
-        if raw2 is None:
-            fpath = os.path.dirname(os.path.realpath(__file__))
-            raw2 = np.loadtxt(fpath + '/data/Solar/Area_all.txt')
+        fpath = os.path.dirname(os.path.realpath(__file__))
+        if not raw1_file:
+            raw1_file = fpath + '/data/Solar/Area10.txt'
+        if not raw2_file:
+            raw2_file = fpath + '/data/Solar/Area_all.txt'
+
+        raw1 = np.genfromtxt(raw1_file)
+        raw2 = np.loadtxt(raw2_file)
 
         self.n = n
         self.nc = 7
