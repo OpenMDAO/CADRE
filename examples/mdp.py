@@ -5,6 +5,8 @@ from __future__ import print_function
 
 from six.moves import range
 
+from time import time
+
 import resource
 
 import numpy as np
@@ -45,10 +47,10 @@ for i, name in enumerate(names):
     model.add_design_var('%s.CP_P_comm' % name, lower=0., upper=25.)
     model.add_design_var('%s.iSOC' % name, indices=[0], lower=0.2, upper=1.)
 
-    model.add_constraint('%s.ConCh' % name, upper=0.0, parallel_deriv_color=i)
-    model.add_constraint('%s.ConDs' % name, upper=0.0, parallel_deriv_color=i)
-    model.add_constraint('%s.ConS0' % name, upper=0.0, parallel_deriv_color=i)
-    model.add_constraint('%s.ConS1' % name, upper=0.0, parallel_deriv_color=i)
+    model.add_constraint('%s.ConCh' % name, upper=0.0, parallel_deriv_color='con1')
+    model.add_constraint('%s.ConDs' % name, upper=0.0, parallel_deriv_color='con2')
+    model.add_constraint('%s.ConS0' % name, upper=0.0, parallel_deriv_color='con3')
+    model.add_constraint('%s.ConS1' % name, upper=0.0, parallel_deriv_color='con4')
     model.add_constraint('%s_con5.val' % name, equals=0.0)
 
 # Add broadcast parameters
@@ -69,8 +71,11 @@ prob.driver.opt_settings = {
     'Iterations limit': 500000000
 }
 
-if not MPI and 'record' in argv:
-    prob.driver.add_recorder(SqliteRecorder('data.sql'))
+if 'record' in argv:
+    if MPI:
+        print('recording not supported for parallel runs.')
+    else:
+        prob.driver.add_recorder(SqliteRecorder('data.sql'))
 
 prob.setup()
 
@@ -82,8 +87,12 @@ for pt in range(npts):
     model._get_subsystem('parallel.pt%d' % pt).linear_solver = LinearBlockGS()
 
 prob.set_solver_print(0)
-prob.run_driver()
 
+run_start = time()
+prob.run_driver()
+run_time = time() - run_start
+
+print('Run Time:', run_time, 's')
 print('Memory Usage:', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000.0, 'MB (on unix)')
 
 # ----------------------------------------------------------------
@@ -136,7 +145,8 @@ data = {}
 for var in picklevars:
     data[var] = prob[var]
 
-if MPI:
+if MPI and MPI.COMM_WORLD.rank == 0:
     pickle.dump(data, open('mdp_parallel.p', 'wb'))
 else:
     pickle.dump(data, open('mdp_serial.p', 'wb'))
+
