@@ -2,12 +2,14 @@
 Optimization of the CADRE MDP.
 """
 from __future__ import print_function
+from pprint import pprint
 
 from six.moves import range
 
 from time import time
 
 import resource
+import pickle
 
 import numpy as np
 
@@ -16,7 +18,6 @@ from openmdao.utils.mpi import MPI
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
-import pickle
 
 
 import sys
@@ -64,12 +65,13 @@ model.add_objective('obj.val')
 # Instantiate Problem with driver (SNOPT) and recorder
 prob = Problem(model)
 
-prob.driver = pyOptSparseDriver(optimizer='SNOPT')
-prob.driver.opt_settings = {
-    'Major optimality tolerance': 1e-3,
-    'Major feasibility tolerance': 1.0e-5,
-    'Iterations limit': 500000000
-}
+if 'nopt' not in argv:
+    prob.driver = pyOptSparseDriver(optimizer='SNOPT')
+    prob.driver.opt_settings = {
+        'Major optimality tolerance': 1e-3,
+        'Major feasibility tolerance': 1.0e-5,
+        'Iterations limit': 500000000
+    }
 
 if 'record' in argv:
     if MPI:
@@ -95,6 +97,23 @@ run_time = time() - run_start
 print('Run Time:', run_time, 's')
 print('Memory Usage:', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1000.0, 'MB (on unix)')
 
+# save result (objective and constraints) to a pickle
+data = {'obj.val': prob['obj.val']}
+cons = ['pt%d.ConCh', 'pt%d.ConDs', 'pt%d.ConS0', 'pt%d.ConS1', 'pt%d_con5.val']
+
+if MPI:
+    rank = MPI.COMM_WORLD.rank
+    for con in [con % rank for con in cons]:
+        data[con] = prob[con]
+    pprint(data)
+    pickle.dump(data, open('mdp%d.p' % rank, 'wb'))
+else:
+    for pt in range(npts):
+        for con in [con % pt for con in cons]:
+            data[con] = prob[con]
+    pprint(data)
+    pickle.dump(data, open('mdp.p', 'wb'))
+
 # ----------------------------------------------------------------
 # Below this line, code used for verifying and profiling.
 # ----------------------------------------------------------------
@@ -117,36 +136,11 @@ if 'profile' in argv:
     p.print_callers()
     print('\n\n---------------------\n\n')
     p.print_callees()
-else:
-    # prob.check_totals()
-    Ja = prob.compute_totals()
-    for key1, value in sorted(Ja.items()):
-        for key2 in sorted(value.keys()):
-            print(key1, key2)
-            print(value[key2])
-    print(Ja)
-    Jf = prob.compute_totals()
-    print(Jf)
-    Jf = prob.compute_totals()
-    print(Jf)
-    pickle.dump(Ja, open('mdp_derivs.p', 'wb'))
 
-
-# save result (objective and constraints) to a pickle
-picklevars = ['obj.val']
-cons = [
-    'pt%d.ConCh', 'pt%d.ConDs', 'pt%d.ConS0', 'pt%d.ConS1', 'pt%d_con5.val'
-]
-for pt in range(npts):
-    for con in cons:
-        picklevars.append(con % pt)
-
-data = {}
-for var in picklevars:
-    data[var] = prob[var]
-
-if MPI and MPI.COMM_WORLD.rank == 0:
-    pickle.dump(data, open('mdp_parallel.p', 'wb'))
-else:
-    pickle.dump(data, open('mdp_serial.p', 'wb'))
+if 'derivs' in argv:
+    derivs_start = time()
+    J = prob.compute_totals()
+    derivs_time = time() - derivs_start
+    print('Compute Totals Time:', derivs_time, 's')
+    pickle.dump(J, open('mdp_derivs.p', 'wb'))
 
