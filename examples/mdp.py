@@ -10,6 +10,7 @@ import resource
 import numpy as np
 
 from openmdao.api import Problem, pyOptSparseDriver, LinearBlockGS, SqliteRecorder
+from openmdao.utils.mpi import MPI
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
@@ -44,10 +45,10 @@ for i, name in enumerate(names):
     model.add_design_var('%s.CP_P_comm' % name, lower=0., upper=25.)
     model.add_design_var('%s.iSOC' % name, indices=[0], lower=0.2, upper=1.)
 
-    model.add_constraint('%s.ConCh' % name, upper=0.0)
-    model.add_constraint('%s.ConDs' % name, upper=0.0)
-    model.add_constraint('%s.ConS0' % name, upper=0.0)
-    model.add_constraint('%s.ConS1' % name, upper=0.0)
+    model.add_constraint('%s.ConCh' % name, upper=0.0, parallel_deriv_color=i)
+    model.add_constraint('%s.ConDs' % name, upper=0.0, parallel_deriv_color=i)
+    model.add_constraint('%s.ConS0' % name, upper=0.0, parallel_deriv_color=i)
+    model.add_constraint('%s.ConS1' % name, upper=0.0, parallel_deriv_color=i)
     model.add_constraint('%s_con5.val' % name, equals=0.0)
 
 # Add broadcast parameters
@@ -68,7 +69,7 @@ prob.driver.opt_settings = {
     'Iterations limit': 500000000
 }
 
-if 'norecord' not in argv:
+if not MPI and 'record' in argv:
     prob.driver.add_recorder(SqliteRecorder('data.sql'))
 
 prob.setup()
@@ -135,4 +136,7 @@ data = {}
 for var in picklevars:
     data[var] = prob[var]
 
-pickle.dump(data, open('mdp_execute.p', 'wb'))
+if MPI:
+    pickle.dump(data, open('mdp_parallel.p', 'wb'))
+else:
+    pickle.dump(data, open('mdp_serial.p', 'wb'))
