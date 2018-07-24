@@ -37,10 +37,10 @@ install:
 - export PATH=$HOME/miniconda/bin:$PATH;
 - conda install --yes python=$PY numpy scipy;
 - pip install --upgrade pip;
-- pip install coveralls;
+- pip install git+https://github.com/swryan/coveralls-python@work;
 # - pip install petsc4py;
 - pip install git+https://github.com/OpenMDAO/MBI;
-- pip install -e .;
+- pip install .;
 - pip list;
 
 script:
@@ -49,4 +49,6 @@ script:
 - testflo -vs -n 1 CADRE --coverage --coverpkg CADRE --cover-omit \*test/\*;
 
 after_success:
-- coveralls;
+- coveralls  --output=coveralls.json;
+- sed 's/\/home\/travis\/miniconda\/lib\/python'"$PY"'\/site-packages\///g' < coveralls.json > coveralls-upd.json;
+- coveralls --upload=coveralls-upd.json;
