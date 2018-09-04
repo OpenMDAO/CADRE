@@ -27,6 +27,8 @@ class RK4(ExplicitComponent):
         """
         Declare options before kwargs are processed in the init method.
         """
+        super(RK4, self)._declare_options()
+
         opts = self.options
 
         opts.declare('state_var', '',
