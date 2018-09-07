@@ -1,5 +1,13 @@
 """
 Optimization of the CADRE MDP.
+
+Optional Argments:
+
+    paper   - use parameters from paper instead of default quick test
+    nopt    - do not optimize, just run with the default driver (run once)
+    record  - add an sqlite recorder (only when not running under MPI)
+    profile - do a profiling run and report stats
+    derivs  - do a compute_totals and report the time
 """
 from __future__ import print_function
 from pprint import pprint
@@ -19,9 +27,9 @@ from openmdao.utils.mpi import MPI
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
 
-
 import sys
 argv = sys.argv[1:]
+
 
 if 'paper' in argv:
     # These numbers are for the CADRE problem in the paper.
