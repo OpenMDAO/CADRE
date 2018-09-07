@@ -9,8 +9,8 @@ language: generic
 
 env:
   matrix:
-    - PY=2.7
-    - PY=3.6
+    - PY=2
+    - PY=3
 
 git:
   depth: 99999
@@ -31,11 +31,11 @@ cache:
   apt: true
 
 install:
-- wget "https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh" -O miniconda.sh;
+- wget "https://repo.continuum.io/miniconda/Miniconda${PY}-latest-Linux-x86_64.sh" -O miniconda.sh;
 - chmod +x miniconda.sh;
 - ./miniconda.sh -b  -p $HOME/miniconda;
 - export PATH=$HOME/miniconda/bin:$PATH;
-- conda install --yes python=$PY numpy scipy;
+- conda install --yes numpy>=1.12 scipy>=1.0;
 - pip install --upgrade pip;
 - pip install git+https://github.com/swryan/coveralls-python@work;
 # - pip install petsc4py;
