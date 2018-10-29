@@ -15,7 +15,7 @@ n, m, h, setd = load_validation_data(idx='0')
 
 # instantiate Problem with CADRE model
 t0 = time.time()
-model = CADRE(n, m)
+model = CADRE(n=n, m=m)
 prob = Problem(model)
 print("Instantiation:  ", time.time() - t0, 's')
 
@@ -55,6 +55,10 @@ outputs = ['Data']
 t0 = time.time()
 J1 = prob.compute_totals(of=outputs, wrt=inputs)
 print("Compute Totals: ", time.time() - t0, 's')
+
+# Probably no reason to always do the fd totals. Should take about 300 times a single execution
+# anyway.
+exit()
 
 # calculate total derivatives via finite difference
 model.approx_totals(method='fd')
