@@ -222,11 +222,6 @@ class BatteryConstraints(ExplicitComponent):
         self.SOC0 = 0.2
         self.SOC1 = 1.0
 
-        self.KS_ch = KSfunction()
-        self.KS_ds = KSfunction()
-        self.KS_s0 = KSfunction()
-        self.KS_s1 = KSfunction()
-
     def setup(self):
         n = self.n
 
@@ -257,19 +252,22 @@ class BatteryConstraints(ExplicitComponent):
         I_bat = inputs['I_bat']
         SOC = inputs['SOC']
 
-        outputs['ConCh'] = self.KS_ch.compute(I_bat - self.Imax, self.rho)
-        outputs['ConDs'] = self.KS_ds.compute(self.Imin - I_bat, self.rho)
-        outputs['ConS0'] = self.KS_s0.compute(self.SOC0 - SOC, self.rho)
-        outputs['ConS1'] = self.KS_s1.compute(SOC - self.SOC1, self.rho)
+        outputs['ConCh'] = KSfunction.compute(I_bat - self.Imax, self.rho)
+        outputs['ConDs'] = KSfunction.compute(self.Imin - I_bat, self.rho)
+        outputs['ConS0'] = KSfunction.compute(self.SOC0 - SOC, self.rho)
+        outputs['ConS1'] = KSfunction.compute(SOC - self.SOC1, self.rho)
 
     def compute_partials(self, inputs, partials):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
-        self.dCh_dg, self.dCh_drho = self.KS_ch.derivatives()
-        self.dDs_dg, self.dDs_drho = self.KS_ds.derivatives()
-        self.dS0_dg, self.dS0_drho = self.KS_s0.derivatives()
-        self.dS1_dg, self.dS1_drho = self.KS_s1.derivatives()
+        I_bat = inputs['I_bat']
+        SOC = inputs['SOC']
+
+        self.dCh_dg, self.dCh_drho = KSfunction.derivatives(I_bat - self.Imax, self.rho)
+        self.dDs_dg, self.dDs_drho = KSfunction.derivatives(self.Imin - I_bat, self.rho)
+        self.dS0_dg, self.dS0_drho = KSfunction.derivatives(self.SOC0 - SOC, self.rho)
+        self.dS1_dg, self.dS1_drho = KSfunction.derivatives(SOC - self.SOC1, self.rho)
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
         """
