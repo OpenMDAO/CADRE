@@ -252,10 +252,10 @@ class BatteryConstraints(ExplicitComponent):
         I_bat = inputs['I_bat']
         SOC = inputs['SOC']
 
-        outputs['ConCh'] = KSfunction.compute(I_bat - self.Imax, self.rho)
-        outputs['ConDs'] = KSfunction.compute(self.Imin - I_bat, self.rho)
-        outputs['ConS0'] = KSfunction.compute(self.SOC0 - SOC, self.rho)
-        outputs['ConS1'] = KSfunction.compute(SOC - self.SOC1, self.rho)
+        outputs['ConCh'] = KSfunction.compute(I_bat - self.Imax, self.rho).flatten()
+        outputs['ConDs'] = KSfunction.compute(self.Imin - I_bat, self.rho).flatten()
+        outputs['ConS0'] = KSfunction.compute(self.SOC0 - SOC, self.rho).flatten()
+        outputs['ConS1'] = KSfunction.compute(SOC - self.SOC1, self.rho).flatten()
 
     def compute_partials(self, inputs, partials):
         """
