@@ -269,6 +269,15 @@ class BatteryConstraints(ExplicitComponent):
         self.dS0_dg, self.dS0_drho = KSfunction.derivatives(self.SOC0 - SOC, self.rho)
         self.dS1_dg, self.dS1_drho = KSfunction.derivatives(SOC - self.SOC1, self.rho)
 
+        self.dCh_dg = self.dCh_dg.flatten()
+        self.dCh_drho = self.dCh_drho.flatten()
+        self.dDs_dg = self.dDs_dg.flatten()
+        self.dDs_drho = self.dDs_drho.flatten()
+        self.dS0_dg = self.dS0_dg.flatten()
+        self.dS0_drho = self.dS0_drho.flatten()
+        self.dS1_dg = self.dS1_dg.flatten()
+        self.dS1_drho = self.dS1_drho.flatten()
+
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
         """
          Matrix-vector product with the Jacobian.
