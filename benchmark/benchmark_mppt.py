@@ -139,4 +139,7 @@ class BenchmarkMPPT(unittest.TestCase):
         prob.setup()
         prob.run_driver()
 
-        assert_rel_error(self, prob['perf.result'], -9.4308562238E+03, 1e-6)
+        # NOTE: adjusting tolerance from 1e-6 to 1e-5 because the answer is slightly
+        #       different when running with Python 3.x and the latest numpy/scipy
+        assert_rel_error(self, prob['perf.result'], -9.4308562238E+03, 1e-5)
+
