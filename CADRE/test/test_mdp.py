@@ -100,7 +100,7 @@ class TestCADRE(unittest.TestCase):
             # make sure var is local before we try to look it up
             compname = abs_names[xvar][0].rsplit('.', 1)[0]
             comp = model._get_subsystem(compname)
-            if comp and comp.is_active():
+            if comp and not (comp.comm is None or comp.comm == MPI.COMM_NULL):
                 computed = prob[xvar]
                 actual = data[var]
                 if isinstance(computed, np.ndarray):
