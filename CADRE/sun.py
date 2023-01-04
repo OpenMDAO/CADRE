@@ -75,24 +75,24 @@ class Sun_LOS(ExplicitComponent):
 
         nj = 3*self.n
 
-        Jab = np.zeros(shape=(nj, ), dtype=np.float)
-        Jib = np.zeros(shape=(nj, ), dtype=np.int)
-        Jjb = np.zeros(shape=(nj, ), dtype=np.int)
-        Jas = np.zeros(shape=(nj, ), dtype=np.float)
-        Jis = np.zeros(shape=(nj, ), dtype=np.int)
-        Jjs = np.zeros(shape=(nj, ), dtype=np.int)
+        Jab = np.zeros(shape=(nj, ), dtype=float)
+        Jib = np.zeros(shape=(nj, ), dtype=int)
+        Jjb = np.zeros(shape=(nj, ), dtype=int)
+        Jas = np.zeros(shape=(nj, ), dtype=float)
+        Jis = np.zeros(shape=(nj, ), dtype=int)
+        Jjs = np.zeros(shape=(nj, ), dtype=int)
 
-        r_b = np.zeros(shape=(3, ), dtype=np.int)
-        r_s = np.zeros(shape=(3, ), dtype=np.int)
-        Bx = np.zeros(shape=(3, 3, ), dtype=np.int)
-        Sx = np.zeros(shape=(3, 3, ), dtype=np.int)
-        cross = np.zeros(shape=(3, ), dtype=np.int)
-        # ddist_cross = np.zeros(shape=(3, ), dtype=np.int)
-        dcross_drb = np.zeros(shape=(3, 3, ), dtype=np.int)
-        dcross_drs = np.zeros(shape=(3, 3, ), dtype=np.int)
-        dLOS_dx = np.zeros(shape=(3, ), dtype=np.int)
-        dLOS_drs = np.zeros(shape=(3, ), dtype=np.int)
-        dLOS_drb = np.zeros(shape=(3, ), dtype=np.int)
+        r_b = np.zeros(shape=(3, ), dtype=int)
+        r_s = np.zeros(shape=(3, ), dtype=int)
+        Bx = np.zeros(shape=(3, 3, ), dtype=int)
+        Sx = np.zeros(shape=(3, 3, ), dtype=int)
+        cross = np.zeros(shape=(3, ), dtype=int)
+        # ddist_cross = np.zeros(shape=(3, ), dtype=int)
+        dcross_drb = np.zeros(shape=(3, 3, ), dtype=int)
+        dcross_drs = np.zeros(shape=(3, 3, ), dtype=int)
+        dLOS_dx = np.zeros(shape=(3, ), dtype=int)
+        dLOS_drs = np.zeros(shape=(3, ), dtype=int)
+        dLOS_drb = np.zeros(shape=(3, ), dtype=int)
 
         for i in range(self.n):
             r_b = r_e2b_I[:3, i]
