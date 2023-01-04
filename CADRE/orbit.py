@@ -195,12 +195,16 @@ class Orbit_Initial(ExplicitComponent):
         # h = np.sqrt(p*mu)
 
         rmag0 = p/(1+e*np.cos(d2r*trueAnomaly))
-        r0_P = np.concatenate((np.array(rmag0*np.cos(d2r*trueAnomaly)).reshape(1),
-                               np.array(rmag0*np.sin(d2r*trueAnomaly)).reshape(1),
-                               np.zeros(1)), dtype=complex)
-        v0_P = np.concatenate((np.array(-np.sqrt(mu/p)*np.sin(d2r*trueAnomaly)).reshape(1),
-                               np.array(np.sqrt(mu/p)*(e+np.cos(d2r*trueAnomaly))).reshape(1),
-                               np.zeros(1)), dtype=complex)
+
+        r0_P = np.empty(3, dtype=complex)
+        r0_P[0] = rmag0*np.cos(d2r*trueAnomaly)
+        r0_P[1] = rmag0*np.sin(d2r*trueAnomaly)
+        r0_P[2] = 0
+
+        v0_P = np.empty(3, dtype=complex)
+        v0_P[0] = -np.sqrt(mu/p)*np.sin(d2r*trueAnomaly)
+        v0_P[1] = np.sqrt(mu/p)*(e+np.cos(d2r*trueAnomaly))
+        v0_P[2] = 0
 
         O_IP = np.eye(3, dtype=complex)
         O_IP = np.dot(O_IP, getRotation(np.array([0, 0, 1]), RAAN*d2r))
