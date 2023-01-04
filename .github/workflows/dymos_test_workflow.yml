@@ -58,7 +58,6 @@ jobs:
           pip install git+https://github.com/OpenMDAO/MBI
 
       - name: Install PETSc
-        if: matrix.PETSc
         run: |
           conda install mpi4py petsc4py -q -y
 
