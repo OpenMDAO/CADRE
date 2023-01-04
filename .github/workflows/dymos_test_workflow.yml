@@ -53,6 +53,8 @@ jobs:
           python -m pip install openmdao[test]
           python -m pip install .
 
+          pip install git+https://github.com/OpenMDAO/MBI
+
       - name: Install PETSc
         if: matrix.PETSc
         run: |
