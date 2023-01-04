@@ -195,12 +195,12 @@ class Orbit_Initial(ExplicitComponent):
         # h = np.sqrt(p*mu)
 
         rmag0 = p/(1+e*np.cos(d2r*trueAnomaly))
-        r0_P = np.array([rmag0*np.cos(d2r*trueAnomaly),
-                         rmag0*np.sin(d2r*trueAnomaly),
-                         0], complex)
-        v0_P = np.array([-np.sqrt(mu/p)*np.sin(d2r*trueAnomaly),
-                         np.sqrt(mu/p)*(e+np.cos(d2r*trueAnomaly)),
-                         0], complex)
+        r0_P = np.concatenate((np.array(rmag0*np.cos(d2r*trueAnomaly)).reshape(1),
+                               np.array(rmag0*np.sin(d2r*trueAnomaly)).reshape(1),
+                               np.zeros(1)), dtype=complex)
+        v0_P = np.concatenate((np.array(-np.sqrt(mu/p)*np.sin(d2r*trueAnomaly)).reshape(1),
+                               np.array(np.sqrt(mu/p)*(e+np.cos(d2r*trueAnomaly))).reshape(1),
+                               np.zeros(1)), dtype=complex)
 
         O_IP = np.eye(3, dtype=complex)
         O_IP = np.dot(O_IP, getRotation(np.array([0, 0, 1]), RAAN*d2r))
@@ -228,9 +228,9 @@ class Orbit_Initial(ExplicitComponent):
         """
         h = 1e-16
         ih = complex(0, h)
-        v = np.zeros(6, complex)
-        v[:] = [inputs['altPerigee'], inputs['altApogee'], inputs['RAAN'],
-                inputs['Inc'], inputs['argPerigee'], inputs['trueAnomaly']]
+        v = np.array([inputs['altPerigee'], inputs['altApogee'], inputs['RAAN'],
+                      inputs['Inc'], inputs['argPerigee'], inputs['trueAnomaly']],
+                      dtype=complex)
         jacs = np.zeros((6, 6))
 
         # Find derivatives by complex step.
