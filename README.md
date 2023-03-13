@@ -6,7 +6,7 @@ CADRE CubeSat design problem
 
 This is an implementation of the CADRE CubeSat problem for OpenMDAO 2.x/3.x.
 
-It is no lopnger in active development.
+It is no longer in active development.
 
 Instructions for the latest development version:
 
