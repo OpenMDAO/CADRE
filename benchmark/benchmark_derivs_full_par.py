@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 
 from openmdao.api import Problem, LinearBlockGS
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
@@ -71,7 +71,7 @@ class BenchmarkDerivsParallel(unittest.TestCase):
         # ----------------------------------------
         J = prob.compute_totals()
 
-        assert_rel_error(self, J['obj.val', 'bp.antAngle'][0][0],
+        assert_near_equal(J['obj.val', 'bp.antAngle'][0][0],
                          67.15777407, 1e-4)
-        assert_rel_error(self, J['obj.val', 'parallel.pt1.design.CP_gamma'][-1][-1],
+        assert_near_equal(J['obj.val', 'parallel.pt1.design.CP_gamma'][-1][-1],
                          -0.62410223816776056, 1e-4)
