@@ -84,7 +84,8 @@ class TestCADRE(unittest.TestCase):
         self.assertTrue(isinstance(comp, comp_class),
                         'Could not create instance of %s' % comp_class.__name__)
 
-        prob = Problem(comp)
+        prob = Problem()
+        prob.model.add_subsystem('comp', comp, promotes=['*'])
         prob.setup()
         prob.final_setup()
 

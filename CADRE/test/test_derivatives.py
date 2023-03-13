@@ -45,7 +45,8 @@ class TestCADRE(unittest.TestCase):
                 comp = eval('%s(NTIME, 300)' % compname)
 
         # collect metadata for component inputs
-        prob = Problem(comp)
+        prob = Problem()
+        prob.model.add_subsystem('comp', comp, promotes=['*'])
         prob.setup()
         prob.final_setup()
 
