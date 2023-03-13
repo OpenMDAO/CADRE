@@ -92,4 +92,28 @@ jobs:
           echo "Run tests (from directory other than repo root)"
           echo "============================================================="
           cd $HOME
-          testflo -n 1 CADRE --timeout=120 --show_skipped
+          testflo -n 1 CADRE --timeout=120 --show_skipped --coverage  --coverpkg CADRE
+
+      - name: Submit coverage
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_SERVICE_NAME: "github"
+          COVERALLS_PARALLEL: true
+        run: |
+          echo "============================================================="
+          echo "Submit coverage"
+          echo "============================================================="
+          cd $HOME
+          python -m pip install coveralls
+          SITE_DIR=`python -c 'import site; print(site.getsitepackages()[-1])'`
+          coveralls --basedir $SITE_DIR
+
+  coveralls:
+    name: Finish coverage
+    needs: [CADRE_tests]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true
