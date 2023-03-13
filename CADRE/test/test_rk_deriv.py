@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 
 from openmdao.api import Problem, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from CADRE.rk4 import RK4
 
@@ -139,7 +139,7 @@ class TestCADRE(unittest.TestCase):
                 Jn = J[outp, inp]['J_fd']
                 Jf = J[outp, inp]['J_fwd']
                 diff = abs(Jf - Jn)
-                assert_rel_error(self, diff.max(), 0.0, 6e-5)
+                assert_near_equal(diff.max(), 0.0, 6e-5)
 
 
 if __name__ == '__main__':

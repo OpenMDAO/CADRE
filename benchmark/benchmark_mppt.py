@@ -12,7 +12,7 @@ import numpy as np
 
 from openmdao.api import Problem, Group, ParallelGroup, ExplicitComponent, IndepVarComp, \
     pyOptSparseDriver
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from CADRE.power import Power_SolarPower, Power_CellVoltage
 from CADRE.parameters import BsplineParameters
@@ -141,5 +141,4 @@ class BenchmarkMPPT(unittest.TestCase):
 
         # NOTE: adjusting tolerance from 1e-6 to 1e-5 because the answer is slightly
         #       different when running with Python 3.x and the latest numpy/scipy
-        assert_rel_error(self, prob['perf.result'], -9.4308562238E+03, 1e-5)
-
+        assert_near_equal(prob['perf.result'], -9.4308562238E+03, 1e-5)

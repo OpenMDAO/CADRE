@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 
 from openmdao.api import Problem
-from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from CADRE.CADRE_group import CADRE
 
@@ -71,7 +71,7 @@ class TestCADRE(unittest.TestCase):
                     print(np.nonzero(Jn))
                     print(np.nonzero(Jf))
                 diff = abs(Jf - Jn)
-                assert_rel_error(self, diff.max(), 0.0, 1e-4)
+                assert_near_equal(diff.max(), 0.0, 1e-4)
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 
 from openmdao.api import Problem
-from openmdao.utils.assert_utils import assert_rel_error
+from openmdao.utils.assert_utils import assert_near_equal
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
@@ -56,4 +56,4 @@ class BenchmarkExecSerial(unittest.TestCase):
         # ----------------------------------------
         prob.run_driver()
 
-        assert_rel_error(self, prob['obj.val'], -393.789941398, 1.0e-4)
+        assert_near_equal(prob['obj.val'], -393.789941398, 1.0e-4)

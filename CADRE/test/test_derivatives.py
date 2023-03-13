@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 
 from openmdao.api import Problem, IndepVarComp
-from openmdao.utils.assert_utils import assert_rel_error, assert_check_partials
+from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials
 
 from CADRE.attitude import Attitude_Angular, Attitude_AngularRates, \
     Attitude_Attitude, Attitude_Roll, Attitude_RotationMtx, \
@@ -56,7 +56,7 @@ class TestCADRE(unittest.TestCase):
         # create independent vars for each input, initialized with random values
         indep = IndepVarComp()
         for item in inputs + state0:
-            shape = self.inputs_dict[item]['value'].shape
+            shape = self.inputs_dict[item]['val'].shape
             units = self.inputs_dict[item]['units']
             indep.add_output(item, np.random.random(shape), units=units)
 
@@ -79,7 +79,7 @@ class TestCADRE(unittest.TestCase):
                     diff = np.nan_to_num(abs(Jf - Jn) / Jn)
                 else:
                     diff = abs(Jf - Jn)
-                assert_rel_error(self, diff.max(), 0.0, 1e-3)
+                assert_near_equal(diff.max(), 0.0, 1e-3)
 
         # check partials
         # FIXME: several components fail check_partials
@@ -252,9 +252,9 @@ class TestCADRE(unittest.TestCase):
         self.setup(compname, inputs, state0)
 
         # These need to be a certain magnitude so it doesn't blow up
-        shape = self.inputs_dict['P_comm']['value'].shape
+        shape = self.inputs_dict['P_comm']['val'].shape
         self.prob['P_comm'] = np.ones(shape)
-        shape = self.inputs_dict['GSdist']['value'].shape
+        shape = self.inputs_dict['GSdist']['val'].shape
         self.prob['GSdist'] = np.random.random(shape) * 1e3
 
         self.prob.run_model()
@@ -404,13 +404,13 @@ class TestCADRE(unittest.TestCase):
 
         self.setup(compname, inputs, state0)
 
-        shape = self.inputs_dict['temperature']['value'].shape
+        shape = self.inputs_dict['temperature']['val'].shape
         self.prob['temperature'] = np.random.random(shape) * 40 + 240
 
-        shape = self.inputs_dict['exposedArea']['value'].shape
+        shape = self.inputs_dict['exposedArea']['val'].shape
         self.prob['exposedArea'] = np.random.random(shape) * 1e-4
 
-        shape = self.inputs_dict['Isetpt']['value'].shape
+        shape = self.inputs_dict['Isetpt']['val'].shape
         self.prob['Isetpt'] = np.random.random(shape) * 1e-2
 
         self.prob.run_model()
@@ -483,9 +483,9 @@ class TestCADRE(unittest.TestCase):
         self.setup(compname, inputs, state0)
         self.prob.model.comp.h = 0.01
 
-        shape = self.inputs_dict['w_B']['value'].shape
+        shape = self.inputs_dict['w_B']['val'].shape
         self.prob['w_B'] = np.random.random(shape) * 1e-4
-        shape = self.inputs_dict['T_RW']['value'].shape
+        shape = self.inputs_dict['T_RW']['val'].shape
         self.prob['T_RW'] = np.random.random(shape) * 1e-9
 
         self.prob.run_model()
