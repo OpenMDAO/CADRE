@@ -4,8 +4,9 @@
 CADRE CubeSat design problem
 ----------------------------
 
-This is the implementation for OpenMDAO 2.x. It is currently a work in progress.
+This is an implementation of the CADRE CubeSat problem for OpenMDAO 2.x/3.x.
 
+It is no lopnger in active development.
 
 Instructions for the latest development version:
 
@@ -15,11 +16,9 @@ Instructions for the latest development version:
 
   `pip install -e .`
 
-
 You will also need MBI:
 
   `pip install git+https://github.com/OpenMDAO/MBI`
-
 
 And for parallel execution you will need petsc4py:
 
