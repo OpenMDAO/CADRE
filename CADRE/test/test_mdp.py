@@ -10,8 +10,11 @@ import os
 import pickle
 import unittest
 
+from packaging.version import Version
+
 import numpy as np
 
+from openmdao import __version__ as om_version
 from openmdao.api import Problem, PETScKrylov
 from openmdao.utils.mpi import MPI
 
@@ -161,7 +164,15 @@ class TestCADRE(unittest.TestCase):
                     bkey2 = '.'.join(parts)
 
                 actual = Ja[key1][key2]
-                computed = Jb[bkey1, bkey2]
+                if Version(om_version) <= Version("3.30"):
+                    computed = Jb[bkey1, bkey2]
+                else:
+                    # as of OpenMDAO 3.31.0, the keys in the jac are the 'user facing' names
+                    # given to the design vars and responses, rather than the absolute names
+                    # that were used previously
+                    computed = Jb[prob.model._var_allprocs_abs2prom['output'][bkey1],
+                                  prob.model._var_allprocs_abs2prom['output'][bkey2]]
+
                 if isinstance(computed, np.ndarray):
                     rel = np.linalg.norm(actual - computed)/np.linalg.norm(actual)
                 else:
