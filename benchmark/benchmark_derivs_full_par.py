@@ -5,8 +5,11 @@ from __future__ import print_function
 
 import unittest
 
+from packaging.version import Version
+
 import numpy as np
 
+from openmdao import __version__ as om_version
 from openmdao.api import Problem, LinearBlockGS
 from openmdao.utils.assert_utils import assert_near_equal
 
@@ -71,7 +74,16 @@ class BenchmarkDerivsParallel(unittest.TestCase):
         # ----------------------------------------
         J = prob.compute_totals()
 
-        assert_near_equal(J['obj.val', 'bp.antAngle'][0][0],
-                         67.15777407, 1e-4)
-        assert_near_equal(J['obj.val', 'parallel.pt1.design.CP_gamma'][-1][-1],
-                         -0.62410223816776056, 1e-4)
+        if Version(om_version) <= Version("3.30"):
+            assert_near_equal(J['obj.val', 'bp.antAngle'][0][0],
+                              67.15777407, 1e-4)
+            assert_near_equal(J['obj.val', 'parallel.pt1.design.CP_gamma'][-1][-1],
+                              -0.62410223816776056, 1e-4)
+        else:
+            # as of OpenMDAO 3.31.0, the keys in the jac are the 'user facing' names
+            # given to the design vars and responses, rather than the absolute names
+            # that were used previously
+            assert_near_equal(J['obj.val', 'bp.antAngle'][0][0],
+                              67.15777407, 1e-4)
+            assert_near_equal(J['obj.val', 'pt1.CP_gamma'][-1][-1],
+                              -0.62410223816776056, 1e-4)
