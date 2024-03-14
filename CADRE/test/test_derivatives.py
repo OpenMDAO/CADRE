@@ -66,7 +66,7 @@ class TestCADRE(unittest.TestCase):
         self.prob.model.add_subsystem('indep', indep, promotes=['*'])
         self.prob.model.add_subsystem('comp', comp, promotes=['*'])
 
-        self.prob.setup()
+        self.prob.setup(mode='fwd')
 
     def compare_derivatives(self, var_in, var_out, rel_error=False):
         # check totals
