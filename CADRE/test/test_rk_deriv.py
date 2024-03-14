@@ -121,7 +121,7 @@ class TestCADRE(unittest.TestCase):
         prob.model.add_subsystem('indeps', indeps, promotes=['*'])
         prob.model.add_subsystem('rktest', rktest, promotes=['*'])
 
-        prob.setup()
+        prob.setup(mode='fwd')
         prob.run_model()
 
         # check partials
