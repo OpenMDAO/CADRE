@@ -121,7 +121,7 @@ class Solar_ExposedArea(ExplicitComponent):
         self.x[:, 1] = result[0]
         self.x[:, 2] = result[1]
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -133,6 +133,7 @@ class Solar_ExposedArea(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials()
         deA = d_outputs['exposedArea']
 
         if mode == 'fwd':

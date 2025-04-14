@@ -51,7 +51,7 @@ class Attitude_Angular(ExplicitComponent):
             w_B[1, i] = np.dot(Odot_BI[0, :, i], O_BI[2, :, i])
             w_B[2, i] = np.dot(Odot_BI[1, :, i], O_BI[0, :, i])
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -72,6 +72,7 @@ class Attitude_Angular(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dw_B = d_outputs['w_B']
 
         if mode == 'fwd':
@@ -235,7 +236,7 @@ class Attitude_Attitude(ExplicitComponent):
             O_RI[1, :, i] = jB
             O_RI[2, :, i] = -v
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -302,6 +303,7 @@ class Attitude_Attitude(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dO_RI = d_outputs['O_RI']
 
         if mode == 'fwd':
@@ -357,7 +359,7 @@ class Attitude_Roll(ExplicitComponent):
         O_BR[1, 1, :] = O_BR[0, 0, :]
         O_BR[2, 2, :] = np.ones(self.n)
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -373,6 +375,7 @@ class Attitude_Roll(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dO_BR = d_outputs['O_BR']
 
         if mode == 'fwd':
@@ -563,7 +566,7 @@ class Attitude_Sideslip(ExplicitComponent):
 
         v_e2b_B[:] = computepositionrotd(self.n, r_e2b_I[3:, :], O_BI)
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -578,6 +581,7 @@ class Attitude_Sideslip(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dv_e2b_B = d_outputs['v_e2b_B']
 
         if mode == 'fwd':
@@ -665,7 +669,7 @@ class Attitude_Torque(ExplicitComponent):
             T_tot[:, i] = np.dot(self.J, wdot_B[:, i]) + \
                 np.dot(wx, np.dot(self.J, w_B[:, i]))
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -690,6 +694,7 @@ class Attitude_Torque(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dT_tot = d_outputs['T_tot']
 
         if mode == 'fwd':

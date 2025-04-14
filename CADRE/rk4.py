@@ -194,7 +194,7 @@ class RK4(ExplicitComponent):
         state_var_name = self.name_map['y']
         outputs[state_var_name][:] = self.y.T.reshape((n_time, n_state)).T
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -255,6 +255,7 @@ class RK4(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials()
         if mode == 'fwd':
             result_ext = self._applyJext(d_inputs, d_outputs)
 

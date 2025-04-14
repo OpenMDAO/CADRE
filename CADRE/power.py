@@ -90,7 +90,7 @@ class Power_CellVoltage(ExplicitComponent):
         for c in range(7):
             outputs['V_sol'] += self.raw[:, c, :].T
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -120,6 +120,7 @@ class Power_CellVoltage(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dV_sol = d_outputs['V_sol']
 
         if mode == 'fwd':

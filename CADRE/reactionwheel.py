@@ -57,7 +57,7 @@ class ReactionWheel_Motor(ExplicitComponent):
 
             T_m[:, i] = -T_RW[:, i] - np.dot(w_Bx, h_RW[:, i])
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -98,6 +98,7 @@ class ReactionWheel_Motor(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dT_m = d_outputs['T_m']
 
         if mode == 'fwd':
@@ -165,7 +166,7 @@ class ReactionWheel_Power(ExplicitComponent):
                               self.b * T_RW[k, i])**2 +
                               self.V * self.I0)
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -184,6 +185,7 @@ class ReactionWheel_Power(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dP_RW = d_outputs['P_RW']
 
         if mode == 'fwd':

@@ -66,7 +66,7 @@ class Sun_LOS(ExplicitComponent):
                 x = (dist - self.r1) / (self.r2 - self.r1)
                 LOS[i] = 3*x**2 - 2*x**3
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -143,6 +143,7 @@ class Sun_LOS(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dLOS = d_outputs['LOS']
 
         if mode == 'fwd':
@@ -203,7 +204,7 @@ class Sun_PositionBody(ExplicitComponent):
         outputs['r_e2s_B'] = computepositionrotd(self.n, inputs['r_e2s_I'],
                                                  inputs['O_BI'])
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -214,6 +215,7 @@ class Sun_PositionBody(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dr_e2s_B = d_outputs['r_e2s_B']
 
         if mode == 'fwd':
@@ -285,7 +287,7 @@ class Sun_PositionECI(ExplicitComponent):
             r_e2s_I[1, i] = np.sin(Lambda)*np.cos(eps)
             r_e2s_I[2, i] = np.sin(Lambda)*np.sin(eps)
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -321,6 +323,7 @@ class Sun_PositionECI(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         dr_e2s_I = d_outputs['r_e2s_I']
 
         if mode == 'fwd':
@@ -372,7 +375,7 @@ class Sun_PositionSpherical(ExplicitComponent):
         outputs['azimuth'] = azimuth
         outputs['elevation'] = elevation
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -389,6 +392,7 @@ class Sun_PositionSpherical(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
+        self._compute_partials(inputs)
         if mode == 'fwd':
             if 'r_e2s_B' in d_inputs:
                 r_e2s_B = d_inputs['r_e2s_B'].reshape((3*self.n), order='F')

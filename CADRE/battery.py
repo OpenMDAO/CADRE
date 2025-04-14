@@ -161,7 +161,7 @@ class BatteryPower(ExplicitComponent):
 
         outputs['I_bat'] = P_bat / self.V
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -183,7 +183,7 @@ class BatteryPower(ExplicitComponent):
         """
         Matrix-vector product with the Jacobian.
         """
-
+        self._compute_partials(inputs)
         dI_bat = d_outputs['I_bat']
 
         if mode == 'fwd':
@@ -257,7 +257,7 @@ class BatteryConstraints(ExplicitComponent):
         outputs['ConS0'] = KSfunction.compute(self.SOC0 - SOC, self.rho).flatten()
         outputs['ConS1'] = KSfunction.compute(SOC - self.SOC1, self.rho).flatten()
 
-    def compute_partials(self, inputs, partials):
+    def _compute_partials(self, inputs):
         """
         Calculate and save derivatives. (i.e., Jacobian)
         """
@@ -280,8 +280,9 @@ class BatteryConstraints(ExplicitComponent):
 
     def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
         """
-         Matrix-vector product with the Jacobian.
-         """
+        Matrix-vector product with the Jacobian.
+        """
+        self._compute_partials(inputs)
         if mode == 'fwd':
             if 'I_bat' in d_inputs:
                 if 'ConCh' in d_outputs:
