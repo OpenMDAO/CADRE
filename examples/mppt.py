@@ -8,13 +8,13 @@ import pickle
 
 import numpy as np
 
-from openmdao.api import Problem, Group, ParallelGroup, IndepVarComp, ExplicitComponent
+from openmdao.api import Problem, Group, ParallelGroup, IndepVarComp
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
 from CADRE.power import Power_SolarPower, Power_CellVoltage
 from CADRE.parameters import BsplineParameters
 import CADRE.test
-
+from CADRE.explicit import ExplicitComponent
 
 class Perf(ExplicitComponent):
 

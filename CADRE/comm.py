@@ -9,7 +9,7 @@ import numpy as np
 import scipy.sparse
 from MBI import MBI
 
-from openmdao.core.explicitcomponent import ExplicitComponent
+from CADRE.explicit import ExplicitComponent
 
 from CADRE.kinematics import fixangles, computepositionspherical, \
     computepositionsphericaljacobian, computepositionrotd,\

@@ -5,7 +5,7 @@ Bspline module for CADRE
 from six.moves import range
 import numpy as np
 
-from openmdao.core.explicitcomponent import ExplicitComponent
+from CADRE.explicit import ExplicitComponent
 
 from MBI import MBI
 

@@ -124,10 +124,6 @@ class TestCADRE(unittest.TestCase):
         prob.setup(mode='fwd')
         prob.run_model()
 
-        # check partials
-        partials = prob.check_partials(out_stream=None)
-        assert_check_partials(partials, atol=6e-5, rtol=6e-5)
-
         # check totals
         inputs = ['yi', 'yv', 'x0']
         outputs = ['x']
@@ -140,6 +136,10 @@ class TestCADRE(unittest.TestCase):
                 Jf = J[outp, inp]['J_fwd']
                 diff = abs(Jf - Jn)
                 assert_near_equal(diff.max(), 0.0, 6e-5)
+
+        # check partials
+        partials = prob.check_partials(out_stream=None)
+        assert_check_partials(partials, atol=6e-5, rtol=6e-5)
 
 
 if __name__ == '__main__':

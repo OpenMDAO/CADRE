@@ -6,7 +6,7 @@ from math import sqrt
 from six.moves import range
 import numpy as np
 
-from openmdao.api import ExplicitComponent
+from CADRE.explicit import ExplicitComponent
 
 from CADRE import rk4
 
