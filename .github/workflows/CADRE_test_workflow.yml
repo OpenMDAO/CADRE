@@ -57,7 +57,7 @@ jobs:
 
       - name: Create Environment
         run: |
-          conda install numpy=1.23 scipy -q -y
+          conda install numpy=1.26 scipy liblapack gcc gfortran -q -y
 
           python -m pip install --upgrade pip
 
@@ -67,6 +67,7 @@ jobs:
         run: |
           conda install -c conda-forge pyoptsparse -q -y
           if [[ "${{ secrets.SNOPT_LOCATION_77 }}" ]]; then
+            pip install git+https://github.com/OpenMDAO/build_pyoptsparse
             echo "  > Secure copying SNOPT 7.7 over SSH"
             mkdir SNOPT
             scp -qr ${{ secrets.SNOPT_LOCATION_77 }} SNOPT
