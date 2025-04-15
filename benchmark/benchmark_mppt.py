@@ -10,13 +10,13 @@ import pickle
 
 import numpy as np
 
-from openmdao.api import Problem, Group, ParallelGroup, ExplicitComponent, IndepVarComp, \
-    pyOptSparseDriver
+from openmdao.api import Problem, Group, ParallelGroup, IndepVarComp, pyOptSparseDriver
 from openmdao.utils.assert_utils import assert_near_equal
 
 from CADRE.power import Power_SolarPower, Power_CellVoltage
 from CADRE.parameters import BsplineParameters
 import CADRE.test
+from CADRE.explicit import ExplicitComponent
 
 
 class Perf(ExplicitComponent):

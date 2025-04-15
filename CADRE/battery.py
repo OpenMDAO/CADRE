@@ -4,7 +4,7 @@ Battery discipline for CADRE
 
 import numpy as np
 
-from openmdao.api import ExplicitComponent
+from CADRE.explicit import ExplicitComponent
 from openmdao.components.ks_comp import KSfunction
 
 from CADRE import rk4

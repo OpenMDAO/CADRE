@@ -5,7 +5,7 @@ Attitude discipline for CADRE.
 from six.moves import range
 import numpy as np
 
-from openmdao.api import ExplicitComponent
+from CADRE.explicit import ExplicitComponent
 
 from CADRE.kinematics import computepositionrotd, computepositionrotdjacobian
 
