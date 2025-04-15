@@ -12,6 +12,7 @@ import numpy as np
 
 from openmdao.api import Problem, Group, ParallelGroup, IndepVarComp, pyOptSparseDriver
 from openmdao.utils.assert_utils import assert_near_equal
+from openmdao.utils.testing_utils import require_pyoptsparse
 
 from CADRE.power import Power_SolarPower, Power_CellVoltage
 from CADRE.parameters import BsplineParameters
@@ -120,6 +121,7 @@ class BenchmarkMPPT(unittest.TestCase):
 
     N_PROCS = 2
 
+    @require_pyoptsparse('SNOPT')
     def benchmark_mppt(self):
         model = MPPT_MDP()
 

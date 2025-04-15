@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling", "numpy>=2.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "CADRE"
+dynamic = ["version"]
+description = "Implementation of the CADRE CubeSat design problem for OpenMDAO 2.x"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Kenneth T. Moore", email = "kenneth.t.moore-1@nasa.gov" },
+]
+maintainers = [
+    { name = "Kenneth T. Moore", email = "kenneth.t.moore-1@nasa.gov" },
+]
+keywords = [
+    "CADRE",
+    "openmdao",
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+
+dependencies = [
+    "numpy<2.0",
+    "openmdao>=2.3",
+    "six",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[project.optional-dependencies]
+all = [
+    "CADRE[MBI,test]",
+]
+MBI = [
+    "MBI@git+https://github.com/OpenMDAO/MBI",
+]
+test = [
+    "parameterized",
+    "testflo",
+]
+
+[project.urls]
+Download = "http://github.com/OpenMDAO/CADRE.git"
+Homepage = "http://github.com/OpenMDAO/CADRE.git"
+
+[tool.hatch.version]
+path = "CADRE/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/CADRE",
+]
