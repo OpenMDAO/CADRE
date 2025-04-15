@@ -9,6 +9,12 @@ import pickle
 import numpy as np
 
 from openmdao.api import Problem, Group, ParallelGroup, IndepVarComp
+
+from openmdao.utils.general_utils import set_pyoptsparse_opt
+try:
+    OPT, OPTIMIZER = set_pyoptsparse_opt('SNOPT', fallback=False)
+except:
+    raise RuntimeError("This example requires pyOptSparse with SNOPT.")
 from openmdao.drivers.pyoptsparse_driver import pyOptSparseDriver
 
 from CADRE.power import Power_SolarPower, Power_CellVoltage
@@ -120,7 +126,7 @@ if __name__ == '__main__':
 
     # create problem and add optimizer
     prob = Problem(model)
-    prob.driver = pyOptSparseDriver(optimizer='SNOPT')
+    prob.driver = pyOptSparseDriver(optimizer=OPTIMIZER)
     prob.driver.opt_settings = {
         'Major optimality tolerance': 1e-3,
         'Major feasibility tolerance': 1.0e-5,

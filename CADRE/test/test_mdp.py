@@ -17,6 +17,10 @@ import numpy as np
 from openmdao import __version__ as om_version
 from openmdao.api import Problem, PETScKrylov
 from openmdao.utils.mpi import MPI
+try:
+    from openmdao.vectors.petsc_vector import PETScVector
+except ImportError:
+    PETScVector = None
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
@@ -24,7 +28,7 @@ from CADRE.CADRE_mdp import CADRE_MDP_Group
 # set verbose to True for debugging
 verbose = False
 
-
+@unittest.skipUnless(MPI and PETScVector, "MPI and PETSc are required.")
 class TestCADRE(unittest.TestCase):
 
     N_PROCS = 2
