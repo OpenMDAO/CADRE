@@ -16,7 +16,7 @@ import numpy as np
 
 from openmdao import __version__ as om_version
 from openmdao.api import Problem, PETScKrylov
-from openmdao.utils.mpi import MPI
+from openmdao.utils.mpi import MPI, multi_proc_exception_check
 
 from CADRE.CADRE_mdp import CADRE_MDP_Group
 
@@ -87,6 +87,7 @@ class TestCADRE(unittest.TestCase):
         abs_names = model._var_allprocs_prom2abs_list['output']
 
         checked = 0
+        bad = {}
 
         for var in data:
             # we changed constraint names
@@ -103,7 +104,7 @@ class TestCADRE(unittest.TestCase):
             # make sure var is local before we try to look it up
             compname = abs_names[xvar][0].rsplit('.', 1)[0]
             comp = model._get_subsystem(compname)
-            if comp and not (comp.comm is None or comp.comm == MPI.COMM_NULL):
+            if comp and not (comp.comm is None or (MPI is not None and comp.comm == MPI.COMM_NULL)):
                 computed = prob[xvar]
                 actual = data[var]
                 if isinstance(computed, np.ndarray):
@@ -117,13 +118,19 @@ class TestCADRE(unittest.TestCase):
                     print(actual)
 
                 if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
-                    assert rel <= 1e-3
+                    if not rel <= 1e-3:
+                        bad[xvar] = rel
                 checked += 1
+
+        with multi_proc_exception_check(prob.comm):
+            if bad:
+                self.fail(f"Bad norms: {bad}")
 
         # make sure we checked everything
         if MPI:
             # objective + con5 for both points + con1-4 on this proc
-            self.assertEqual(checked, 7)
+            with multi_proc_exception_check(prob.comm):
+                self.assertEqual(checked, 7)
         else:
             # objective + 5 constraints for each point
             self.assertEqual(checked, 11)
@@ -184,7 +191,12 @@ class TestCADRE(unittest.TestCase):
                     print(actual)
 
                 if np.mean(actual) > 1e-3 or np.mean(computed) > 1e-3:
-                    assert rel <= 1e-3
+                    if not rel <= 1e-3:
+                        bad[bkey1, bkey2] = rel
+
+        with multi_proc_exception_check(prob.comm):
+            if bad:
+                self.fail(f'Bad derivatives: {bad}')
 
 
 if __name__ == '__main__':
