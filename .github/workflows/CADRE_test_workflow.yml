@@ -34,6 +34,16 @@ jobs:
           echo "Initiated by: ${GITHUB_ACTOR}"
           echo "============================================================="
 
+      - name: Create SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          sudo chmod 600 ~/.ssh/id_rsa
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
       - name: Checkout code
         uses: actions/checkout@v3
 
