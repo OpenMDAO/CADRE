@@ -92,20 +92,16 @@ class TestCADRE(unittest.TestCase):
             resolver = model._resolver
 
             def get_abs_name(prom_name):
-                print(f"prom_name: {prom_name} -> {resolver.prom2abs(prom_name, 'output')}")
-                return resolver.prom2abs(prom_name, 'output')
+                return resolver.prom2abs(prom_name)
 
             def get_prom_name(abs_name):
-                print(f"abs_name: {abs_name} -> {resolver.abs2prom(abs_name, 'output')}")
-                return resolver.prom2abs(abs_name, 'output')
+                return resolver.abs2prom(abs_name)
 
         except AttributeError:
             def get_abs_name(prom_name):
-                print(f"prom_name: {prom_name} -> {model._var_allprocs_prom2abs_list['output'][prom_name][0]}")
                 return model._var_allprocs_prom2abs_list['output'][prom_name][0]
 
             def get_prom_name(abs_name):
-                print(f"abs_name: {abs_name} -> {model._var_allprocs_abs2prom['output'][abs_name]}")
                 return model._var_allprocs_abs2prom['output'][abs_name]
 
         # check output values
@@ -193,9 +189,7 @@ class TestCADRE(unittest.TestCase):
                     # as of OpenMDAO 3.31.0, the keys in the jac are the 'user facing' names
                     # given to the design vars and responses, rather than the absolute names
                     # that were used previously
-                    prom_bkey1 = get_prom_name(bkey1)
-                    prom_bkey2 = get_prom_name(bkey2)
-                    computed = Jb[prom_bkey1, prom_bkey2]
+                    computed = Jb[get_prom_name(bkey1), get_prom_name(bkey2)]
 
                 if isinstance(computed, np.ndarray):
                     rel = np.linalg.norm(actual - computed)/np.linalg.norm(actual)
