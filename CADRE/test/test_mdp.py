@@ -87,9 +87,24 @@ class TestCADRE(unittest.TestCase):
         prob.setup(check=verbose)
         prob.run_driver()
 
-        # check output values
-        abs_names = model._var_allprocs_prom2abs_list['output']
+        # a change in OpenMDAO 3.38.1-dev adds a resolver in place of the prom2abs/abs2prom attributes
+        try:
+            resolver = model._resolver
 
+            def get_abs_name(prom_name):
+                return resolver.prom2abs(prom_name, 'output')
+
+            def get_prom_name(abs_name):
+                return resolver.abs2prom(abs_name, 'output')
+
+        except AttributeError:
+            def get_abs_name(prom_name):
+                return model._var_allprocs_prom2abs_list['output'][prom_name][0]
+
+            def get_prom_name(abs_name):
+                return model._var_allprocs_abs2prom['output'][abs_name]
+
+        # check output values
         checked = 0
 
         for var in data:
@@ -105,7 +120,7 @@ class TestCADRE(unittest.TestCase):
                 xvar = xvar.replace('_con4.val', '.ConS1')
 
             # make sure var is local before we try to look it up
-            compname = abs_names[xvar][0].rsplit('.', 1)[0]
+            compname = get_abs_name(xvar).rsplit('.', 1)[0]
             comp = model._get_subsystem(compname)
             if comp and not (comp.comm is None or comp.comm == MPI.COMM_NULL):
                 computed = prob[xvar]
@@ -174,8 +189,7 @@ class TestCADRE(unittest.TestCase):
                     # as of OpenMDAO 3.31.0, the keys in the jac are the 'user facing' names
                     # given to the design vars and responses, rather than the absolute names
                     # that were used previously
-                    computed = Jb[prob.model._var_allprocs_abs2prom['output'][bkey1],
-                                  prob.model._var_allprocs_abs2prom['output'][bkey2]]
+                    computed = Jb[get_prom_name(bkey1), get_prom_name(bkey2)]
 
                 if isinstance(computed, np.ndarray):
                     rel = np.linalg.norm(actual - computed)/np.linalg.norm(actual)
