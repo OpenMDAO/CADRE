@@ -92,10 +92,10 @@ class TestCADRE(unittest.TestCase):
             resolver = model._resolver
 
             def get_abs_name(prom_name):
-                return resolver.prom2abs(prom_name)
+                return resolver.prom2abs(prom_name, 'output')
 
             def get_prom_name(abs_name):
-                return resolver.abs2prom(abs_name)
+                return resolver.abs2prom(abs_name, 'output')
 
         except AttributeError:
             def get_abs_name(prom_name):
