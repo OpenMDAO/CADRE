@@ -1,4 +1,6 @@
 
+from openmdao import __version__ as om_version
+
 from openmdao.core.explicitcomponent import ExplicitComponent as om_ExplicitComponent
 
 class ExplicitComponent(om_ExplicitComponent):
@@ -18,6 +20,9 @@ class ExplicitComponent(om_ExplicitComponent):
         save = self.matrix_free
         self.matrix_free = False
         try:
-            super()._linearize(jac, sub_do_ln)
+            if om_version > '3.39.0':
+                super()._linearize(sub_do_ln)
+            else:
+                super()._linearize(jac, sub_do_ln)
         finally:
             self.matrix_free = save
